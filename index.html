@@ -5,12 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0c171b">
 <title>Дальномір</title>
-  <link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){})</script>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0c171b;--panel:rgba(12,23,27,.88);--ink:#e9efe6;--mute:#8fa3a0;--amb:#ffb21e;--red:#ff5a3c;--line:rgba(233,239,230,.16)}
+:root{--bg:#0c171b;--panel:rgba(12,23,27,.9);--ink:#e9efe6;--mute:#8fa3a0;--amb:#ffb21e;--red:#ff5a3c;--line:rgba(233,239,230,.16)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 #stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
@@ -27,31 +25,35 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 .mk:nth-child(2){border-color:var(--red)}.mk:nth-child(2) i::after{background:var(--red)}
 #cross{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;pointer-events:none;display:none}
 #cross::before,#cross::after{content:"";position:absolute;background:var(--amb)}
-#cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
-#cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
+#cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
+#cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
 #cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
-#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 0;display:flex;gap:8px}
-.tab{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-weight:600}
+#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:6px}
+.tab{flex:1;padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:13px;font-weight:600}
 .tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
-#sheet{position:absolute;left:0;right:0;bottom:0;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
+#sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
 #sheet.min #ctl{display:none}
 #read{display:flex;align-items:baseline;gap:10px}
-#num{font:700 64px/1 "Barlow Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.5px}
-#unit{font:500 26px "Barlow Condensed",system-ui,sans-serif;color:var(--amb)}
+#num{font:700 60px/1 "Arial Narrow","Roboto Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+#unit{font:600 24px system-ui,sans-serif;color:var(--amb)}
 #sub{margin-left:auto;text-align:right;color:var(--mute);font-size:13px}
 #col{align-self:center;padding:6px 12px;font-size:18px;line-height:1}
 #warn{color:var(--amb);font-size:13px;min-height:18px}
+#res{font-size:13px}
+#lvl{font-size:13px;color:var(--mute);margin-top:4px}#lvl.bad{color:var(--red)}
 .row{display:flex;gap:8px;align-items:center;margin-top:8px}
 .row label{color:var(--mute);font-size:13px;flex:0 0 auto}
 select,input,button{font:inherit;color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0}
 input[type=number]{width:84px}
 select{flex:1}
 button{cursor:pointer;font-weight:600}
+.row>button{flex:1;padding:9px 4px;font-size:14px}
 button.pri{background:var(--amb);color:var(--bg);border-color:var(--amb)}
-button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
 input[type=range]{flex:1;padding:0;accent-color:var(--amb)}
 .hide{display:none!important}
-small{color:var(--mute);font-size:12px}
+small{color:var(--mute);font-size:12px;display:block;margin-top:6px}
+summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -64,12 +66,14 @@ small{color:var(--mute);font-size:12px}
 <div id="top">
   <button class="tab on" data-m="size">За розміром</button>
   <button class="tab" data-m="ground">По землі</button>
+  <button class="tab" data-m="height">Висота</button>
+  <button class="tab" data-m="dim">Розмір</button>
 </div>
 <div id="sheet">
   <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div><button id="col" aria-label="Згорнути панель">⌄</button></div>
-  <div id="warn"></div>
+  <div id="warn"></div><div id="res"></div><div id="lvl" class="hide"></div>
   <div id="ctl">
-    <div id="p-size">
+    <div id="p-size" class="pn">
       <div class="row"><label>Об'єкт</label>
         <select id="obj">
           <option value="1.75">Людина, зріст — 1,75 м</option>
@@ -82,38 +86,78 @@ small{color:var(--mute);font-size:12px}
         <input id="sz" type="number" step="0.01" min="0.01" inputmode="decimal" aria-label="Розмір, м">
       </div>
       <div class="row">
-        <button id="ori">Міряю висоту ↕</button>
-        <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1;width:auto">
+        <button class="ori">Міряю висоту ↕</button>
+        <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto">
         <button id="cal">Калібрувати</button>
       </div>
-      <small>Постав маркери на краї об'єкта. Для точності відкалібруй один раз на об'єкті з відомою відстанню.</small>
+      <small id="kinfo"></small>
+      <small>Постав маркери на краї об'єкта. Калібруй на кількох відстанях, точність зросте.</small>
     </div>
 
-    <div id="p-ground" class="hide">
-      <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"></div>
-      <small>Тримай телефон вертикально. Торкнись екрана там, де ціль стоїть на землі, — хрестик покаже точку. Працює для цілей на рівній поверхні.</small>
+    <div id="p-dim" class="pn hide">
+      <div class="row"><label>Відстань до об'єкта, м</label><input id="dd" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="fromG">З «По землі»</button></div>
+      <div class="row"><button class="ori">Міряю висоту ↕</button></div>
+      <small>Спочатку виміряй відстань у режимі «По землі», потім постав маркери на краї об'єкта.</small>
+    </div>
+
+    <div id="p-tilt" class="pn hide">
+      <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="zero">Обнулити нахил</button></div>
+      <small>Обнулення: поклади телефон екраном вгору на рівну поверхню і натисни кнопку. Роби це раз після встановлення.</small>
       <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчик нахилу</button>
     </div>
 
-    <div class="row">
-      <button id="frz" style="flex:1">Стоп-кадр</button>
-      <span id="zwrap" class="row hide" style="margin:0;flex:2"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></span>
+    <div id="p-ground" class="pn hide">
+      <small>Торкнись екрана там, де ціль стоїть на землі. Число — горизонтальна відстань, поруч — відстань по лінії погляду. Ухил показує кут, на який дивишся.</small>
     </div>
+
+    <div id="p-height" class="pn hide">
+      <div class="row"><label>Відстань, м (необов'язково)</label><input id="hd" type="number" step="0.1" min="0.1" inputmode="decimal"></div>
+      <div class="row"><button id="lo">1 · Низ</button><button id="hi">2 · Верх</button><button id="hr">Скинути</button></div>
+      <small>Наведи хрестик на низ споруди і натисни «Низ», потім на верх і «Верх». Якщо низ видно на землі, відстань порахується сама, інакше впиши її.</small>
+    </div>
+
+    <div class="row">
+      <button id="frz">Стоп-кадр</button>
+      <button id="ser">Серія ×10</button>
+      <button id="sa">Швидкість A</button>
+      <button id="sb">B</button>
+    </div>
+    <div class="row hide" id="zwrap"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></div>
+
+    <details>
+      <summary>Налаштування</summary>
+      <div class="row"><label>Камера</label><select id="cam"></select></div>
+      <div class="row"><label>Одиниці</label><select id="unitSel"><option value="m">Метри</option><option value="ft">Фути</option><option value="yd">Ярди</option></select></div>
+      <div class="row"><button id="kreset">Скинути калібрування цієї камери</button></div>
+      <small>Розміри, висоту камери й відстані вводь у метрах.</small>
+    </details>
   </div>
 </div>
 
 <script>
 (function(){
-const $=s=>document.querySelector(s);
+const $=s=>document.querySelector(s),R=Math.PI/180;
 const V=$('#vid'),stage=$('#stage'),cross=$('#cross'),sheet=$('#sheet');
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
+const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
 
-let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,track=null,elev=null,ema=null;
-let p=[.25,.5],tgt={x:.5,y:.4},buf=[],inited=false;
-let K=store.get('K',0.75);           // фокус у частках довшої сторони кадру
-let camH=store.get('h',1.5),objSize=store.get('sz',1.75);
+let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
+let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
+let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),camKey='default';
 
-/* ---------- видима зона для маркерів ---------- */
+function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
+const fs=m=>fmt(m).join(' ');
+const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
+const say=t=>{$('#res').textContent=t};
+
+/* ---------- калібрування (по камері) ---------- */
+const pts=()=>(store.get('Kp',{})[camKey]||[]);
+const getK=()=>{const a=pts();return a.length?med(a):0.75};
+function kinfo(){const n=pts().length;$('#kinfo').textContent='Камера: '+camKey+' · '+(n?'точок калібрування: '+n:'стандартне калібрування')+' · K='+getK().toFixed(3)}
+
+/* ---------- видима зона маркерів ---------- */
 function zone(){
   const r=stage.getBoundingClientRect();
   if(vert){
@@ -121,47 +165,50 @@ function zone(){
     const b=(sheet.getBoundingClientRect().top-r.top-8)/r.height;
     return b>a+.05?{min:a,max:b}:{min:.1,max:.5};
   }
-  return {min:.03,max:.97};
+  return{min:.03,max:.97};
 }
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function resetMarkers(){
-  const z=zone(),w=z.max-z.min;
-  p=[z.min+w*.2,z.min+w*.8];
-}
-function fitMarkers(){
-  const z=zone();
-  p=p.map(v=>clamp(v,z.min,z.max));
-}
+function resetMarkers(){const z=zone(),w=z.max-z.min;p=[z.min+w*.2,z.min+w*.8]}
 function layout(){
   stage.style.setProperty('--sh',sheet.getBoundingClientRect().height+'px');
-  if(!inited){inited=true;resetMarkers()}else fitMarkers();
+  if(!inited){inited=true;resetMarkers()}else{const z=zone();p=p.map(v=>clamp(v,z.min,z.max))}
   render();
 }
 if(window.ResizeObserver)new ResizeObserver(layout).observe(sheet);
 window.addEventListener('resize',layout);
 
 /* ---------- камера ---------- */
-async function startCam(){
+async function startCam(id){
   $('#msg').style.display='none';
   try{
-    const st=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
-    V.srcObject=st;track=st.getVideoTracks()[0];
+    if(V.srcObject)V.srcObject.getTracks().forEach(t=>t.stop());
+    const vc={width:{ideal:1920},height:{ideal:1080}};
+    if(id)vc.deviceId={exact:id};else vc.facingMode={ideal:'environment'};
+    const st=await navigator.mediaDevices.getUserMedia({audio:false,video:vc});
+    V.srcObject=st;track=st.getVideoTracks()[0];camKey=track.label||'default';
+    zoom=1;$('#zwrap').classList.add('hide');
     const caps=track.getCapabilities?track.getCapabilities():{};
     if(caps.zoom){const z=$('#zoom');z.min=caps.zoom.min;z.max=caps.zoom.max;z.step=caps.zoom.step||0.1;z.value=caps.zoom.min;zoom=caps.zoom.min;$('#zwrap').classList.remove('hide');$('#zv').textContent=zoom.toFixed(1)+'×'}
+    try{
+      const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+      const cur=track.getSettings().deviceId;
+      $('#cam').innerHTML=devs.map((d,i)=>'<option value="'+d.deviceId+'"'+(d.deviceId===cur?' selected':'')+'>'+(d.label||'Камера '+(i+1))+'</option>').join('');
+    }catch(_){}
+    kinfo();
   }catch(e){
     $('#msgt').textContent='Немає доступу до камери. Дозволь камеру в браузері і відкрий сторінку напряму (https).';
     $('#msg').style.display='flex';
   }
 }
-$('#retry').onclick=startCam;
+$('#retry').onclick=()=>startCam();
+$('#cam').onchange=e=>{ema=null;buf=[];startCam(e.target.value)};
 $('#zoom').oninput=e=>{zoom=+e.target.value;$('#zv').textContent=zoom.toFixed(1)+'×';ema=null;try{track.applyConstraints({advanced:[{zoom}]})}catch(_){}};
 
 /* ---------- датчик нахилу ---------- */
 function onOri(e){
   if(e.beta==null)return;
-  const b=e.beta*Math.PI/180,g=(e.gamma||0)*Math.PI/180;
-  const up=-Math.cos(b)*Math.cos(g);           // вертикальна складова осі камери
-  elev=Math.asin(Math.max(-1,Math.min(1,up)))*180/Math.PI;
+  const b=e.beta*R,g=(e.gamma||0)*R;
+  eRaw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))/R;
+  roll=e.gamma||0;
 }
 function listenOri(){window.addEventListener('deviceorientation',onOri,true)}
 async function askSensor(){
@@ -174,54 +221,108 @@ async function askSensor(){
   }catch(e){$('#sens').classList.remove('hide')}
 }
 $('#sens').onclick=askSensor;
+$('#zero').onclick=()=>{
+  if(eRaw==null)return say('Немає даних датчика нахилу');
+  if(Math.abs(eRaw+90)>8)return say('Поклади телефон екраном вгору на рівну поверхню');
+  bias=eRaw+90;store.set('b',bias);ema=null;buf=[];say('Нахил обнулено ✓ (поправка '+bias.toFixed(2)+'°)');
+};
+function lvl(t){
+  const el=$('#lvl'),bad=Math.abs(roll)>3;
+  el.className=bad?'bad':'';
+  el.textContent='Крен '+roll.toFixed(1)+'°'+(t!=null?' · кут '+t.toFixed(1)+'° · ухил '+(Math.tan(t*R)*100).toFixed(0)+'%':'')+(bad?' — випрями телефон':'');
+}
 
 /* ---------- геометрія ---------- */
 function geo(){
   const vw=V.videoWidth||1280,vh=V.videoHeight||720,r=stage.getBoundingClientRect();
-  const s=Math.max(r.width/vw,r.height/vh);          // object-fit: cover
-  return {r,s,f:K*Math.max(vw,vh)*zoom};             // f — у пікселях відео
+  const s=Math.max(r.width/vw,r.height/vh);
+  return{r,s,f:getK()*Math.max(vw,vh)*zoom};
+}
+function tElev(g){
+  if(eRaw==null)return null;
+  const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
+  return eRaw-bias-off;                                   // кут візування цілі над горизонтом
 }
 function compute(){
   const g=geo();
-  if(mode==='size'){
-    const len=vert?g.r.height:g.r.width;
-    const span=Math.abs(p[1]-p[0])*len/g.s;
+  if(mode==='size'||mode==='dim'){
+    const len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
     if(span<4)return{warn:'Розведи маркери по краях об\'єкта'};
-    const d=objSize*g.f/span;
-    return{d,err:d*(2/g.s)/span};                     // ±2 px точності маркера
+    if(mode==='size'){const d=objSize*g.f/span;return{d,err:d*(2/g.s)/span}}
+    const D=parseFloat($('#dd').value);
+    if(!(D>0))return{warn:'Задай відстань до об\'єкта'};
+    const s=span*D/g.f;return{d:s,err:s*(2/g.s)/span,sub:vert?'висота':'ширина'};
   }
-  if(elev==null)return{warn:'Чекаю дані датчика нахилу…'};
-  const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)*180/Math.PI;
-  const dep=-elev+off;
-  if(dep<1.2)return{warn:'Ціль біля горизонту або вище — опусти хрестик до основи цілі'};
-  const rad=dep*Math.PI/180;
-  return{d:camH/Math.tan(rad),err:camH*0.0087/Math.pow(Math.sin(rad),2)}; // ±0,5° нахилу
+  const t=tElev(g);
+  if(t==null)return{warn:'Чекаю дані датчика нахилу…'};
+  if(mode==='height')return{t};
+  if(t>-1.2)return{warn:'Ціль біля горизонту або вище — опусти хрестик до основи цілі',t};
+  const r=-t*R;
+  return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
 }
-const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
-function fmt(d){return d>=1000?[(d/1000).toFixed(2),'км']:d>=100?[d.toFixed(0),'м']:d>=10?[d.toFixed(1),'м']:[d.toFixed(2),'м']}
+function view(){
+  const raw=compute();
+  if(mode==='height'){
+    lvl(raw.t);
+    if(raw.t!=null){eBuf.push(raw.t);if(eBuf.length>15)eBuf.shift()}
+    if(raw.warn)return raw;
+    if(hs.e1==null)return{warn:'Наведи хрестик на низ і натисни «Низ»'};
+    if(hs.e2==null)return{warn:'Тепер наведи на верх і натисни «Верх»',res:'Низ: '+hs.e1.toFixed(1)+'°'};
+    const m=parseFloat($('#hd').value);
+    const D=m>0?m:(hs.e1<-1.2?camH/Math.tan(-hs.e1*R):null);
+    if(!D)return{warn:'Низ вище горизонту — впиши відстань вручну'};
+    const a1=hs.e1*R,a2=hs.e2*R;
+    return{d:D*(Math.tan(a2)-Math.tan(a1)),err:D*.0087*Math.hypot(1/Math.cos(a1)**2,1/Math.cos(a2)**2),sub:'відстань '+fs(D),res:'Низ '+hs.e1.toFixed(1)+'° · Верх '+hs.e2.toFixed(1)+'°'};
+  }
+  if(mode==='ground'){
+    lvl(raw.t);
+    if(raw.d==null){ema=null;return raw}
+    buf.push(raw.d);if(buf.length>25)buf.shift();
+    ema=ema==null?raw.d:ema+(raw.d-ema)*.2;
+    lastDist=ema;
+    if(frozen&&frozenVal)return frozenVal;
+    return{d:ema,err:raw.err,sub:'по лінії '+fs(raw.L),raw:raw.d};
+  }
+  if(raw.d==null)return raw;
+  if(mode==='size')lastDist=raw.d;
+  return{d:raw.d,err:raw.err,sub:raw.sub,raw:raw.d};
+}
 
 /* ---------- цикл ---------- */
-function loop(){
-  let r=null;
-  if(frozen&&mode==='ground'&&frozenVal)r=frozenVal;
-  else{
-    r=compute();
-    if(r.d!=null){
-      if(mode==='ground'){buf.push(r.d);if(buf.length>25)buf.shift();ema=ema==null?r.d:ema+(r.d-ema)*.2;r={d:frozen?r.d:ema,err:r.err}}
-    }else{ema=null}
+function loop(now){
+  const o=view();lastO=o;
+  if(o.d!=null&&isFinite(o.d)){
+    const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
+    $('#sub').textContent=(o.err!=null?'±'+ef(o.err):'')+(o.sub?' · '+o.sub:'');
+  }else{$('#num').textContent='—';$('#sub').textContent=''}
+  $('#warn').textContent=o.warn||'';
+  if(o.res!==undefined)say(o.res);
+  if(ser&&o.raw!=null&&now-ser.t>130){
+    ser.a.push(o.raw);ser.t=now;$('#ser').textContent='Серія '+ser.a.length+'/10';
+    if(ser.a.length>=10)endSeries();
   }
-  if(r&&r.d!=null&&isFinite(r.d)){
-    const[n,u]=fmt(r.d);$('#num').textContent=n;$('#unit').textContent=u;
-    $('#sub').textContent='±'+(r.err<1?r.err.toFixed(2):r.err.toFixed(1))+' м';$('#warn').textContent='';
-  }else{$('#num').textContent='—';$('#sub').textContent='';$('#warn').textContent=(r&&r.warn)||''}
   requestAnimationFrame(loop);
 }
+function endSeries(){
+  const a=ser.a;ser=null;$('#ser').textContent='Серія ×10';
+  const m=med(a),mad=med(a.map(x=>Math.abs(x-m)))*1.4826;
+  const k=mad>0?a.filter(x=>Math.abs(x-m)<=2.5*mad):a;
+  const mean=k.reduce((s,x)=>s+x,0)/k.length;
+  const sd=Math.sqrt(k.reduce((s,x)=>s+(x-mean)**2,0)/Math.max(1,k.length-1));
+  say('Серія: '+fs(mean)+' ± '+ef(sd)+' (використано '+k.length+' з '+a.length+')');
+}
+$('#ser').onclick=()=>{
+  if(ser){ser=null;$('#ser').textContent='Серія ×10';return}
+  if(mode==='height')return say('Серія працює в режимах «За розміром», «По землі», «Розмір»');
+  ser={a:[],t:0};say('Тримай телефон нерухомо…');
+};
 
 /* ---------- інтерфейс ---------- */
 function render(){
   stage.className=vert?'v':'h';
-  [$('#m1'),$('#m2')].forEach((m,i)=>{m.style[vert?'top':'left']=p[i]*100+'%';m.style[vert?'left':'top']='';m.style.display=mode==='size'?'block':'none'});
-  cross.style.display=mode==='ground'?'block':'none';
+  const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height';
+  [$('#m1'),$('#m2')].forEach((m,i)=>{m.style[vert?'top':'left']=p[i]*100+'%';m.style[vert?'left':'top']='';m.style.display=mk?'block':'none'});
+  cross.style.display=cr?'block':'none';
   cross.style.left=tgt.x*100+'%';cross.style.top=tgt.y*100+'%';
 }
 document.querySelectorAll('.mk i').forEach((h,i)=>{
@@ -233,54 +334,85 @@ document.querySelectorAll('.mk i').forEach((h,i)=>{
   });
 });
 stage.addEventListener('pointerdown',e=>{
-  if(mode!=='ground')return;
+  if(mode!=='ground'&&mode!=='height')return;
   const r=stage.getBoundingClientRect();
-  tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];render();
+  tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];eBuf=[];render();
 });
 $('#col').onclick=()=>{
   const m=sheet.classList.toggle('min');
   $('#col').textContent=m?'⌃':'⌄';
   $('#col').setAttribute('aria-label',m?'Розгорнути панель':'Згорнути панель');
 };
+const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height']};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
-  $('#p-size').classList.toggle('hide',mode!=='size');
-  $('#p-ground').classList.toggle('hide',mode!=='ground');
-  ema=null;buf=[];frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';
-  if(mode==='ground')askSensor();
+  document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!PN[mode].includes(x.id)));
+  $('#lvl').classList.toggle('hide',mode!=='ground'&&mode!=='height');
+  ema=null;buf=[];eBuf=[];ser=null;$('#ser').textContent='Серія ×10';
+  frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';say('');
+  if(mode==='ground'||mode==='height')askSensor();
   layout();
 });
-$('#ori').onclick=()=>{vert=!vert;$('#ori').textContent=vert?'Міряю висоту ↕':'Міряю ширину ↔';resetMarkers();render()};
+document.querySelectorAll('.ori').forEach(b=>b.onclick=()=>{
+  vert=!vert;
+  document.querySelectorAll('.ori').forEach(x=>x.textContent=vert?'Міряю висоту ↕':'Міряю ширину ↔');
+  resetMarkers();render();
+});
 $('#obj').onchange=e=>{
   if(e.target.value!=='custom'){objSize=+e.target.value;$('#sz').value=objSize;store.set('sz',objSize)}
   else $('#sz').focus();
 };
 $('#sz').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){objSize=v;store.set('sz',v)}};
 $('#hh').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){camH=v;store.set('h',v);ema=null;buf=[]}};
+$('#fromG').onclick=()=>{
+  if(lastDist==null)return say('Спочатку виміряй відстань у режимі «По землі» або «За розміром»');
+  $('#dd').value=lastDist.toFixed(2);say('Відстань взято: '+fs(lastDist));
+};
 $('#cal').onclick=()=>{
   const d=parseFloat($('#cd').value);
-  if(!(d>0)){$('#warn').textContent='Введи справжню відстань до об\'єкта, м';return}
+  if(!(d>0))return say('Введи справжню відстань до об\'єкта, м');
   const g=geo(),len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
-  if(span<4){$('#warn').textContent='Спочатку постав маркери на об\'єкт';return}
+  if(span<4)return say('Спочатку постав маркери на об\'єкт');
   const vw=V.videoWidth||1280,vh=V.videoHeight||720;
   const k=d*span/(objSize*Math.max(vw,vh)*zoom);
-  if(k<.3||k>1.6){$('#warn').textContent='Дивні дані — перевір розмір об\'єкта й відстань';return}
-  K=k;store.set('K',K);$('#warn').textContent='Відкалібровано ✓';
+  if(k<.3||k>1.6)return say('Дивні дані — перевір розмір об\'єкта й відстань');
+  const all=store.get('Kp',{}),a=all[camKey]||[];a.push(k);all[camKey]=a.slice(-7);store.set('Kp',all);
+  kinfo();say('Відкалібровано ✓ (точок: '+all[camKey].length+')');
 };
+$('#kreset').onclick=()=>{const all=store.get('Kp',{});delete all[camKey];store.set('Kp',all);kinfo();say('Калібрування цієї камери скинуто')};
 $('#frz').onclick=()=>{
   frozen=!frozen;
-  if(frozen){
-    if(mode==='ground'){const r=compute();if(r.d!=null)frozenVal={d:buf.length>4?med(buf):r.d,err:r.err}}
-    V.pause();
-  }else{frozenVal=null;ema=null;buf=[];V.play()}
+  if(frozen){if(mode==='ground'&&lastO&&lastO.d!=null)frozenVal=lastO;V.pause()}
+  else{frozenVal=null;ema=null;buf=[];V.play()}
   $('#frz').textContent=frozen?'Продовжити':'Стоп-кадр';
 };
+$('#lo').onclick=()=>{if(eBuf.length<3)return say('Немає даних нахилу');hs={e1:med(eBuf),e2:null};say('Низ: '+hs.e1.toFixed(1)+'°')};
+$('#hi').onclick=()=>{
+  if(hs.e1==null)return say('Спочатку натисни «Низ»');
+  if(eBuf.length<3)return say('Немає даних нахилу');
+  hs.e2=med(eBuf);
+};
+$('#hr').onclick=()=>{hs={e1:null,e2:null};say('')};
+$('#sa').onclick=()=>{
+  if(lastDist==null||(mode!=='ground'&&mode!=='size'))return say('Швидкість міряється в режимах «За розміром» і «По землі»');
+  spd={d:lastDist,t:performance.now()};say('A: '+fs(lastDist)+'. Через кілька секунд натисни B');
+};
+$('#sb').onclick=()=>{
+  if(!spd||lastDist==null)return say('Спочатку натисни «Швидкість A»');
+  const dt=(performance.now()-spd.t)/1000,dd=Math.abs(lastDist-spd.d);
+  if(dt<.5)return say('Зачекай трохи між A і B');
+  const v=dd/dt;
+  say('Швидкість (радіальна): '+(v*3.6).toFixed(1)+' км/год · '+v.toFixed(1)+' м/с'+(unit!=='m'?' · '+(v*2.23694).toFixed(1)+' миль/год':'')+' · Δ '+fs(dd)+' за '+dt.toFixed(1)+' с');
+  spd=null;
+};
+$('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit)};
 
-$('#sz').value=objSize;$('#hh').value=camH;
+$('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;
 if(![1.75,2.03,1.8,1.5,0.297].includes(objSize))$('#obj').value='custom';
-layout();startCam();listenOri();loop();
+layout();startCam();listenOri();requestAnimationFrame(loop);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
 </script>
 </body>
-</html>
+  </html>
