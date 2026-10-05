@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0c171b">
-<title>Дальномір</title>
+<title>Дальномір + AI Smart Scanner</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <style>
@@ -13,7 +13,7 @@
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 #stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
 video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
-#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:auto}
 #msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--mute)}
 #msg button{margin-top:14px}
 .mk{position:absolute;pointer-events:none}
@@ -37,7 +37,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 #cmp span{color:var(--amb)}
 #tr{position:absolute;right:8px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;gap:6px}
 .tb{padding:5px 10px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;line-height:1.3}
-.tb.on{border-color:var(--red);color:var(--red)}
+.tb.on{border-color:var(--red);color:var(--red);background: rgba(255, 90, 60, 0.2)}
 #sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
 #sheet.min #ctl{display:none}
 #read{display:flex;align-items:baseline;gap:10px}
@@ -108,6 +108,14 @@ details.mn[open] summary{color:var(--amb)}
 .mn li{margin:6px 0}
 .mn p{margin:0 0 10px}
 .mn .n{color:var(--mute)}
+
+/* Модальне вікно навчання при тапі */
+#learnModal {
+    display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 90%; max-width: 320px; background: rgba(0, 20, 8, 0.98); border: 2px solid #ffcc00;
+    padding: 15px; z-index: 40; border-radius: 8px; color: #ffcc00; box-shadow: 0 0 25px rgba(255, 204, 0, 0.5);
+}
+#learnModal input { border-color: #ffcc00; color: #ffcc00; background: #000; width: 100%; margin: 5px 0 10px 0; }
 </style>
 </head>
 <body>
@@ -124,7 +132,7 @@ details.mn[open] summary{color:var(--amb)}
   <button class="tab" data-m="height" title="Висота за кутами">Висота</button>
   <button class="tab" data-m="dim" title="Розмір об'єкта">Розмір</button>
   <button class="tab" data-m="pts" title="Точки й площа">Точки</button>
-  <button class="tab" data-m="scan" title="Сканер">Сканер</button>
+  <button class="tab" data-m="scan" title="Сканер AI">Сканер</button>
 </div>
 <div id="cmp" aria-label="Компас">
   <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#8fa3a0" stroke-width="1.5"/><g id="rose"><path d="M13 3 L16 12 L10 12 Z" fill="#ff5a3c"/><path d="M13 23 L16 14 L10 14 Z" fill="#8fa3a0"/></g></svg>
@@ -135,6 +143,19 @@ details.mn[open] summary{color:var(--amb)}
   <button id="setB" class="tb" aria-label="Налаштування">⚙</button>
   <button id="manB" class="tb" aria-label="Інструкція">📖</button>
 </div>
+
+<!-- Вікно навчання при тапі -->
+<div id="learnModal">
+  <h3 style="margin-bottom: 5px;">⚠️ НАВЧАННЯ СКАНЕРА (AI)</h3>
+  <p style="font-size:11px; margin: 5px 0; color:#e9efe6;">Об'єкт не розпізнано. Введи назву та висоту цілі в кадру:</p>
+  <label style="font-size:11px;">Назва об'єкта / Техніки:</label>
+  <input type="text" id="inputObjName" placeholder="Наприклад: Бліндаж / Танк Т-72">
+  <label style="font-size:11px;">Реальна висота (метрів):</label>
+  <input type="number" id="inputObjHeight" value="2.0" step="0.1">
+  <button id="saveLearnBtn" class="pri" style="width:100%; margin-top:5px; background:#ffcc00; color:#000;">ЗАПИСАТИ В ПАМ'ЯТЬ</button>
+  <button id="cancelLearnBtn" style="width:100%; margin-top:5px; background:transparent; color:#ffcc00;">СКАСУВАТИ</button>
+</div>
+
 <div id="sheet">
   <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div><button id="col" aria-label="Згорнути панель">⌄</button></div>
   <div id="warn"></div><div id="res"></div><div id="lvl" class="hide"></div>
@@ -195,7 +216,7 @@ details.mn[open] summary{color:var(--amb)}
         <label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="alOn">Сигнал, якщо ближче</label>
         <input id="alD" type="number" value="30" min="1" step="1" inputmode="decimal" aria-label="Відстань сигналу, м"><span style="color:var(--mute)">м</span>
       </div>
-      <small>Поставте телефон нерухомо: рух камери заважає визначати рух об'єктів. Для далеких і дрібних об'єктів вмикай «Далека» й збільшуй зум. Відстань і розмір приблизні (типові розміри класів), швидкість орієнтовна. У режимі «Позиція» звук і вібрація вимкнені.</small>
+      <small>💡 <b>Тап-детекція:</b> якщо не знаходить техніку чи бліндаж, просто натисни у кадрі на ціль — навчиш сканер на льоту! У режимі «Позиція» звук і вібрація вимкнені.</small>
     </div>
 
     <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
@@ -227,9 +248,9 @@ details.mn[open] summary{color:var(--amb)}
     </div>
 
     <div class="card">
-      <h3>Режим «Позиція»</h3>
+      <h3>Режим «Позиція» (Безпека)</h3>
       <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="posC">Я на позиції</label></div>
-      <small>Вимкнено: програма працює на повну потужність, зміни синхронізуються одразу. Увімкнено: економія батареї (сканер працює рідше), без звуку й вібрації, зміни зберігаються на телефоні і йдуть на сервер лише коли з'явиться інтернет.</small>
+      <small>Вимкнено: програма працює на повну потужність, навчання й нові об'єкти одразу синхроняться. Увімкнено: повна безпека, без звуку й вібрації, дані зберігаються на телефоні та відправляються на GitHub/JSONBin лише коли з'явиться інтернет.</small>
       <small id="netS"></small>
     </div>
 
@@ -247,7 +268,7 @@ details.mn[open] summary{color:var(--amb)}
         </div>
       </div>
       <small id="secM"></small>
-      <small>Це локальний захист від стороннього доступу, дані на телефоні не шифруються. Якщо забув PIN, доведеться очистити дані сайту в налаштуваннях браузера (усі локальні дані зникнуть).</small>
+      <small>Це локальний захист від стороннього доступу. Якщо забув PIN, доведеться очистити дані сайту в налаштуваннях браузера.</small>
     </div>
 
     <div class="card">
@@ -258,7 +279,7 @@ details.mn[open] summary{color:var(--amb)}
       <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="jbAuto">Автосинхронізація</label></div>
       <div class="row"><button id="jbNow" class="pri">Синхронізувати зараз</button></div>
       <small id="jbS"></small>
-      <small>Синхронізуються «Мої» об'єкти й калібрування камер. Безкоштовний ліміт JSONBin — 100 КБ.</small>
+      <small>Синхронізуються «Мої» об'єкти, вивчені через AI цілі й калібрування камер.</small>
     </div>
 
     <div class="card">
@@ -267,7 +288,7 @@ details.mn[open] summary{color:var(--amb)}
       <div class="row"><button id="imJ">⬆ Імпорт JSON</button></div>
       <input id="imF" type="file" accept="application/json,.json" class="hide">
       <small id="bkS"></small>
-      <small>У файл потрапляють «Мої» об'єкти, калібрування камер, висота камери, одиниці й поправка нахилу. Фото програма не зберігає. Імпорт об'єднує дані з поточними, нічого не стираючи.</small>
+      <small>Зберігає всю базу, навчені цілі, калібрування та налаштування у файл.</small>
     </div>
 
     <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
@@ -277,175 +298,20 @@ details.mn[open] summary{color:var(--amb)}
 <div id="man" class="fs hide">
   <div class="fsh"><h2>Інструкція</h2><button id="manX" aria-label="Закрити">✕</button></div>
   <div class="fsb">
-<details class="mn" open><summary>1. Перший запуск і встановлення</summary>
+<details class="mn" open><summary>1. AI Навчання і Тап-детекція (Нове!)</summary>
 <ol>
-<li>Відкрий адресу програми в Chrome або Safari (https). У вбудованих браузерах (Telegram, Instagram) камера не працює.</li>
-<li>На запит камери натисни «Дозволити». Якщо випадково відмовив, натисни значок замка біля адреси й увімкни камеру.</li>
-<li>Щоб мати програму як додаток, відкрий меню браузера ⋮ й обери «Встановити додаток» (або «Додати на головний екран»).</li>
-<li>Оновлення: у репозиторії GitHub заміни вміст <b>index.html</b> (і <b>sw.js</b>, якщо просить), зачекай 1–2 хв, відкрий програму з інтернетом і оновлюй сторінку. Якщо змін не видно, закрий програму повністю й відкрий знову.</li>
+<li>Якщо сканер не впізнає ціль (наприклад, бліндаж, позицію РЕБ, специфічну техніку), просто <b>торкнись пальцем (тапни) на цю ціль у кадрі</b>.</li>
+<li>З'явиться тактичне вікно навчання: впиши назву (наприклад, *"Бліндаж №1"* або *"Т-72"*) та реальну висоту в метрах.</li>
+<li>Натисни «Записати в пам'ять». Програма зафіксує колірний профіль і сигнатуру. Наступного разу, коли камера наведеться на схожий об'єкт, сканер розпізнає його сам!</li>
+<li>У режимі «Позиція» всі навчені дані надійно зберігаються на телефоні та летять на хмару лише після виходу в безпечну зону.</li>
 </ol></details>
 
-<details class="mn"><summary>2. Екран програми</summary>
-<ul>
-<li><b>Вкладки зверху:</b> Об'єкт, Земля, Висота, Розмір, Точки, Сканер. Активна підсвічена жовтим.</li>
-<li><b>Компас</b> (зліва під вкладками): азимут у градусах і сторона світу, стрілка вказує на північ.</li>
-<li><b>Праворуч:</b> «Позиція» (режим), ⚙ налаштування, 📖 ця інструкція.</li>
-<li><b>Нижня панель:</b> велике число — результат; праворуч ± похибка й підказка; кнопка ⌄ згортає панель (⌃ розгортає), щоб бачити більше кадру. Жовтий рядок — підказки й попередження, нижче — повідомлення.</li>
-<li><b>Підпис</b> із правами внизу панелі видно завжди.</li>
-</ul></details>
-
-<details class="mn"><summary>3. Підготовка (один раз)</summary>
-<p><b>3.1. Висота камери.</b> Виміряй від землі до об'єктива, коли тримаєш телефон так, як будеш міряти. Вкладка «Земля» (або «Висота», «Точки»): впиши значення в метрах у «Висота камери над землею».</p>
-<p><b>3.2. Обнулення нахилу.</b></p>
+<details class="mn"><summary>2. Режим «Позиція»</summary>
 <ol>
-<li>Поклади телефон екраном вгору на рівну поверхню (стіл).</li>
-<li>Вкладка «Земля» → «Обнулити нахил». З'явиться «Нахил обнулено ✓».</li>
-</ol>
-<p><b>3.3. Калібрування камери (найважливіше для точності).</b></p>
-<ol>
-<li>Вкладка «Об'єкт». Вибери об'єкт відомого розміру: аркуш A4, двері, футбольні ворота (поле «📚 Обрати об'єкт»).</li>
-<li>Виміряй рулеткою відстань від телефона до об'єкта, наприклад 3 м.</li>
-<li>Постав жовтий і червоний маркери точно на краї об'єкта.</li>
-<li>Впиши відстань у «Справжня відстань, м» і натисни «Калібрувати».</li>
-<li>Повтори на 10 і 30 м. Програма бере середнє з точок.</li>
-</ol>
-<p class="n">Калібрування зберігається окремо для кожної камери (основна, ширококутна, теле) і для кожного зуму. Змінив зум чи камеру, відкалібруй знову.</p></details>
-
-<details class="mn"><summary>4. Вкладка «Об'єкт» (відстань за відомим розміром)</summary>
-<ol>
-<li>Натисни «📚 Обрати об'єкт» і вибери об'єкт у базі, або впиши розмір у метрах у поле праворуч.</li>
-<li>Наведи камеру так, щоб об'єкт був повністю в кадрі й дивись на нього прямо, а не під кутом.</li>
-<li>За потреби натисни «Стоп-кадр», щоб ставити маркери на нерухомому зображенні.</li>
-<li>Перетягни жовтий маркер на один край об'єкта, червоний на другий. Для ширини натисни «Міряю висоту ↕», воно стане «Міряю ширину ↔» і маркери стануть вертикальними.</li>
-<li>Читай число внизу. Значення «±» показує похибку від неточності постановки маркерів.</li>
-</ol>
-<p class="n">Чим більший об'єкт на екрані, тим точніший результат. Об'єкт має займати хоча б третину висоти екрана.</p></details>
-
-<details class="mn"><summary>5. Вкладка «Земля» (відстань за нахилом)</summary>
-<ol>
-<li>Впиши висоту камери й обнули нахил (розділ 3).</li>
-<li>Тримай телефон вертикально, екраном до себе, і нерухомо.</li>
-<li>Торкнись екрана в точці, де ціль торкається землі (низ колеса, підошва, основа стовпа). Хрестик переміститься. Найточніше, коли точка біля центру екрана.</li>
-<li>Велике число — горизонтальна відстань. Поруч «по лінії» — відстань по прямій. Рядок над кнопками показує крен, кут і ухил. Якщо крен більше 3°, випрями телефон.</li>
-<li>«Стоп-кадр» фіксує значення (береться медіана останніх замірів).</li>
-</ol>
-<p class="n">Працює для цілей на рівній землі нижче горизонту (кут більше 1,2°). Далі приблизно 50 м похибка швидко росте.</p></details>
-
-<details class="mn"><summary>6. Вкладка «Висота» (висота споруд і дерев)</summary>
-<ol>
-<li>Якщо знаєш відстань до споруди, впиши її в поле. Якщо низ видно на землі, залиш поле порожнім, відстань порахується з висоти камери.</li>
-<li>Наведи хрестик на низ споруди й натисни «1 · Низ».</li>
-<li>Наведи хрестик на верх і натисни «2 · Верх».</li>
-<li>Число — висота. «Скинути» починає заново.</li>
+<li>Увімкни кнопкою «Позиція» вгорі (кнопка стане червоною).</li>
+<li>Повністю блокується інтернет і запити назовні, вимикається звук та вібрація сигналів.</li>
+<li>Додаток працює на 100% офлайн, продовжуючи збирати розвіддані й навчатися. Як тільки вимкнеш режим у тилу — накопичена база синхронізується через JSONBin.</li>
 </ol></details>
-
-<details class="mn"><summary>7. Вкладка «Розмір» (розмір невідомого об'єкта)</summary>
-<ol>
-<li>Виміряй відстань до об'єкта у вкладці «Земля» або «Об'єкт».</li>
-<li>Перейди у «Розмір» і натисни «З «Земля»» (або впиши відстань вручну).</li>
-<li>Постав маркери на краї об'єкта. Число — його висота або ширина (перемикається кнопкою ↕/↔).</li>
-</ol></details>
-
-<details class="mn"><summary>8. Вкладка «Точки» (відстань між точками й площа)</summary>
-<ol>
-<li>Впиши висоту камери й обнули нахил. Стій на одному місці й лише повертайся.</li>
-<li>Наведи хрестик на землю в першій точці й натисни «＋ Точка».</li>
-<li>Поверни телефон до наступної точки й знову «＋ Точка». Число покаже відстань між останніми двома.</li>
-<li>З третьої точки в рядку з'являться довжина ламаної, периметр і площа (м², соток, га). Внизу малюється план із підписами сторін.</li>
-<li>«Видалити останню» прибирає останню точку, «Очистити» всі.</li>
-</ol>
-<p class="n">Для правильної площі точки мають іти по колу (по контуру ділянки). Земля має бути рівною. Усі точки беруться з однієї позиції, тож далекі точки менш точні.</p></details>
-
-<details class="mn"><summary>9. Вкладка «Сканер»</summary>
-<ol>
-<li>Перший вхід зроби з інтернетом: програма один раз завантажить модель розпізнавання (кілька МБ). Далі вона працює й офлайн.</li>
-<li>Постав телефон нерухомо (на опору). З рук хитання камери заважає визначати рух.</li>
-<li>Наведи на сцену. Об'єкти отримують рамки: жовта з кутами — рухомий, сіра пунктирна — нерухомий. У підписі: назва і відстань. Під рамкою рухомого напрямок і швидкість.</li>
-<li>У списку внизу: назва, орієнтовні висота й ширина, стан («аналізую», «нерухомий» або напрямок і швидкість), азимут, відстань. Позначка «≤» означає, що об'єкт обрізаний краєм кадру.</li>
-</ol>
-<p><b>Налаштування сканера:</b> «Показувати» (усі чи лише рухомі), «Модель» (точна чи легка), «Дальність» (звичайна чи далека по частинах для дрібних далеких об'єктів), «Мін. впевненість» (зменш, якщо пропускає, збільш, якщо хибні рамки), «Сигнал, якщо ближче» (звук і вібрація, у режимі «Позиція» вимкнені).</p>
-<p><b>Що розпізнає:</b> людей, авто, автобуси, вантажівки, велосипеди, мотоцикли, собак, котів, коней, корів, овець, лавки, стільці, знак «Стоп», гідранти. Відстань і розмір беруться з типових розмірів класів, тому похибка 10–25 %.</p></details>
-
-<details class="mn"><summary>10. База розмірів</summary>
-<ol>
-<li>Відкривається кнопкою «📚 Обрати об'єкт» у вкладці «Об'єкт».</li>
-<li>Угорі перемикач: «Загальна база» і «🎖 Військова техніка» (довідник габаритів).</li>
-<li>Знайди об'єкт через пошук або вкладки категорій. «Нещодавні» показує останні вибрані.</li>
-<li>Торкнись рядка, розмір підставиться автоматично. Значок «≈» біля назви означає приблизне типове значення.</li>
-<li><b>Мої об'єкти:</b> у «Загальній базі» внизу впиши назву й розмір у метрах і натисни «＋». Видалити свій об'єкт можна хрестиком ✕ у категорії «Мої».</li>
-</ol></details>
-
-<details class="mn"><summary>11. Стоп-кадр, серія, швидкість, зум, компас</summary>
-<ul>
-<li><b>Стоп-кадр</b> зупиняє зображення, «Продовжити» повертає живе відео.</li>
-<li><b>Серія ×10</b> робить 10 замірів, відкидає викиди й показує середнє з розкидом. Тримай телефон нерухомо.</li>
-<li><b>Швидкість A / B:</b> натисни A, через кілька секунд B. Показує швидкість зміни відстані (лише рух до вас чи від вас). Працює у вкладках «Об'єкт» і «Земля».</li>
-<li><b>Зум:</b> повзунок з'являється, якщо камера підтримує. Після зміни зуму калібруй знову.</li>
-<li><b>Одиниці:</b> ⚙ → «Одиниці» (метри, фути, ярди).</li>
-<li><b>Компас:</b> показує азимут (0° північ, 90° схід). Якщо стрілка «пливе», порухай телефон вісімкою для калібрування датчика.</li>
-</ul></details>
-
-<details class="mn"><summary>12. Режим «Позиція»</summary>
-<ol>
-<li>Вмикається кнопкою «Позиція» вгорі або у ⚙. Увімкнений режим підсвічується червоним: «ПОЗИЦІЯ».</li>
-<li><b>Не на позиції (вимк.):</b> повна потужність, сканер працює без обмежень, зміни синхронізуються за ~3 секунди.</li>
-<li><b>На позиції (увімк.):</b> сканер працює рідше (економія батареї), звук і вібрація вимкнені, дані записуються на телефон. Відправка на сервер відбувається автоматично, коли з'явиться інтернет.</li>
-<li>Значок «⏳» поруч із кнопкою означає, що є незасинхронізовані зміни.</li>
-</ol></details>
-
-<details class="mn"><summary>13. Захист входу (PIN і відбиток)</summary>
-<ol>
-<li>⚙ → «Захист входу». Впиши новий PIN (4–8 цифр) двічі й натисни «Встановити PIN».</li>
-<li>Щоб додати відбиток, натисни «Додати відбиток» і підтверди його на телефоні. У телефоні вже має бути налаштований відбиток або обличчя. PIN лишається запасним входом.</li>
-<li>У «Блокувати» обери, коли блокувати програму: одразу при виході, через 2 або 10 хв, або лише при запуску.</li>
-<li>Змінити PIN: впиши поточний, новий і повтор. Вимкнути захист: впиши поточний PIN і натисни «Вимкнути захист».</li>
-<li>Після 5 помилок поспіль вхід блокується на 30 с (далі довше).</li>
-</ol>
-<p class="n">Під час блокування камера вимикається. Якщо забув PIN, очисти дані сайту в налаштуваннях браузера, але тоді зникнуть усі локальні дані (зроби резервну копію заздалегідь).</p></details>
-
-<details class="mn"><summary>14. Синхронізація JSONBin</summary>
-<ol>
-<li>Зайди на jsonbin.io, зареєструйся й створи новий бін із вмістом {"v":1}. Скопіюй <b>Bin ID</b>.</li>
-<li>У розділі API Keys створи <b>Access Key</b> з правами Read і Update для цього біна (або візьми Master Key).</li>
-<li>У програмі: ⚙ → «Синхронізація». Встав Bin ID, ключ, обери його тип.</li>
-<li>Увімкни «Автосинхронізація» й натисни «Синхронізувати зараз». Має з'явитись «Синхронізовано ✓».</li>
-<li>Тепер зміни йдуть на сервер автоматично, а на іншому телефоні з тим самим Bin ID і ключем дані підтягнуться.</li>
-</ol>
-<p class="n">Синхронізуються «Мої» об'єкти й калібрування камер. Кращий варіант для конфліктів: новіший запис перемагає. Ключ зберігається лише на цьому телефоні.</p></details>
-
-<details class="mn"><summary>15. Резервна копія</summary>
-<ol>
-<li>⚙ → «Резервна копія» → «⬇ Експорт JSON». Файл збережеться на телефон. Якщо завантаження не спрацювало, натисни «Копіювати JSON» і встав у нотатки.</li>
-<li>Відновлення: «⬆ Імпорт JSON» → вибери файл → підтверди. Дані об'єднаються з поточними.</li>
-<li>Фото програма не зберігає, тому окремого експорту з фото немає.</li>
-</ol></details>
-
-<details class="mn"><summary>16. Робота без інтернету</summary>
-<p>Усі виміри, база, компас, точки й сканер працюють офлайн. Сканер потребує одного завантаження моделі з інтернетом. Синхронізація, оновлення програми й завантаження моделі — єдине, що потребує мережі. Перевір офлайн заздалегідь: відкрий програму з інтернетом, потім вимкни зв'язок і запусти її знову.</p></details>
-
-<details class="mn"><summary>17. Поради щодо точності</summary>
-<ul>
-<li>Калібруй на 2–3 відстанях і окремо для кожної камери й зуму.</li>
-<li>Тримай телефон двома руками, притисни лікті до тіла або став на опору.</li>
-<li>Став маркери на самі краї об'єкта, використовуй «Стоп-кадр».</li>
-<li>Міряй кілька разів («Серія ×10») і бери середнє.</li>
-<li>Для «Земля»: точна висота камери, обнулений нахил, рівна земля, ціль біля центру кадру.</li>
-<li>Дивись на об'єкт прямо, а не під кутом.</li>
-</ul></details>
-
-<details class="mn"><summary>18. Проблеми й що робити</summary>
-<ul>
-<li><b>Немає камери:</b> відкрий у Chrome/Safari напряму, дозволь камеру, перевір, що її не тримає інший додаток.</li>
-<li><b>Число стрибає:</b> тримай телефон нерухомо, використай «Стоп-кадр» або «Серію».</li>
-<li><b>Відстань завищена чи занижена:</b> відкалібруй камеру, перевір розмір об'єкта в базі.</li>
-<li><b>«Земля» не рахує:</b> опусти хрестик нижче горизонту, випрями телефон, обнули нахил.</li>
-<li><b>Сканер не бачить об'єктів:</b> зменш мінімальну впевненість, увімкни «Далеку» дальність, збільш зум, перевір освітлення.</li>
-<li><b>Не синхронізується:</b> перевір Bin ID, ключ і його права, наявність інтернету, розмір даних (до 100 КБ).</li>
-<li><b>Компас показує «—»:</b> дозволь датчики руху в браузері й порухай телефоном.</li>
-</ul></details>
-
-<details class="mn"><summary>19. Обмеження</summary>
-<p>Усі значення приблизні, особливо з позначкою «≈» і в сканері. Програма не замінює лазерний далекомір, не використовуй її для рішень, від яких залежить безпека. Захист входу локальний і не шифрує дані.</p></details>
 
 <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
   </div>
@@ -474,7 +340,6 @@ const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).sli
 const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
 const CARD=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
 
-/* ---------- БАЗА РОЗМІРІВ: ЗАГАЛЬНА (м) ---------- */
 const RAW=`§Люди
 Дорослий чоловік, зріст|1.75
 Доросла жінка, зріст|1.62
@@ -734,7 +599,6 @@ CN Tower|553.3
 Компакт-диск, діаметр|0.12
 Банкнота 1 долар США, довжина|0.156`;
 
-/* ---------- БАЗА РОЗМІРІВ: ВІЙСЬКОВА ТЕХНІКА (м, відкриті довідники) ---------- */
 const RAWM=`§Танки
 Т-55, довжина з гарматою ≈|9.00
 Т-55, ширина ≈|3.27
@@ -956,10 +820,6 @@ Magura V5 (морський дрон), довжина ≈|5.50
 Авіаносець Nimitz, довжина ≈|332.8
 Авіаносець Gerald R. Ford, довжина ≈|337.0`;
 
-function parse(raw){const a=[];let c='';raw.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');a.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}});return a}
-const DB=parse(RAW),MIL=parse(RAWM);
-
-/* ---------- цивільні класи для сканера: [назва, типова висота, м] ---------- */
 const CLS={person:['Людина',1.70],bicycle:['Велосипед',1.05],car:['Авто',1.50],motorcycle:['Мотоцикл',1.20],bus:['Автобус',3.00],truck:['Вантажівка',3.30],dog:['Собака',0.55],cat:['Кіт',0.30],horse:['Кінь',1.70],cow:['Корова',1.40],sheep:['Вівця',0.80],bench:['Лавка',0.85],chair:['Стілець',0.90],'fire hydrant':['Гідрант',0.75],'stop sign':['Знак «Стоп»',0.75]};
 const grp=c=>(c==='car'||c==='truck'||c==='bus')?'veh':((c==='bicycle'||c==='motorcycle')?'two':c);
 
@@ -971,6 +831,10 @@ let my=store.get('my',[]).map(x=>({id:x.id||uid(),n:x.n,v:x.v,t:x.t||1,del:!!x.d
 let pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null,lastDet=0;
 let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35),regIdx=0,fpsT=[],scanStat={fps:0,all:0,sup:0};
 let posMode=store.get('pos',false),locked=false,entered='',suppress=0,hiddenAt=0,syncing=false,syncT=null,lastTry=0,cdT=null;
+
+// База навчених об'єктів AI (LocalStorage)
+let aiKnowledge = store.get('ai_learned_objects', []);
+
 const oc=document.createElement('canvas'),octx=oc.getContext('2d');
 
 function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
@@ -984,7 +848,6 @@ function fa(a){
 }
 const say=t=>{$('#res').textContent=t};
 
-/* ---------- черга синхронізації й режим «Позиція» ---------- */
 const jbCfg=()=>store.get('jb',null);
 const autoOn=()=>{const c=jbCfg();return !!(c&&c.auto&&c.id&&c.key)};
 function updBadge(){
@@ -997,7 +860,7 @@ function updBadge(){
 }
 function setPos(v){
   posMode=v;store.set('pos',v);updBadge();
-  say(v?'Режим «Позиція» увімкнено: економія батареї, без звуку, синхронізація — коли з\'явиться інтернет':'Режим «Позиція» вимкнено: повна потужність, синхронізація одразу');
+  say(v?'Режим «Позиція» увімкнено: економія батареї, без звуку, синхронізація чекає на інтернет':'Режим «Позиція» вимкнено: повна потужність, синхронізація одразу');
   if(!v)scheduleSync();
 }
 function markDirty(){store.set('dirty',true);updBadge();scheduleSync()}
@@ -1007,7 +870,7 @@ function scheduleSync(){
   if(posMode)return;
   syncT=setTimeout(()=>syncNow(false),3000);
 }
-function snapshot(){return{app:'Дальномір',v:1,t:Date.now(),my:my,Kp:store.get('Kp',{}),h:camH,u:unit,b:bias}}
+function snapshot(){return{app:'Дальномір',v:1,t:Date.now(),my:my,Kp:store.get('Kp',{}),h:camH,u:unit,b:bias,aiKnowledge}}
 function mergeData(o,withSettings){
   let n=0;
   if(Array.isArray(o.my))o.my.forEach(r=>{
@@ -1016,6 +879,12 @@ function mergeData(o,withSettings){
     if(!l){my.push({id,n:r.n.slice(0,80),v:+r.v,t:r.t||Date.now(),del:!!r.del});n++}
     else if((r.t||0)>(l.t||0)){l.n=r.n.slice(0,80);l.v=+r.v;l.t=r.t;l.del=!!r.del;n++}
   });
+  if(Array.isArray(o.aiKnowledge)){
+    o.aiKnowledge.forEach(item=>{
+      if(!aiKnowledge.some(x=>x.name===item.name)){aiKnowledge.push(item);n++;}
+    });
+    store.set('ai_learned_objects',aiKnowledge);
+  }
   if(o.Kp&&typeof o.Kp==='object'){
     const k=store.get('Kp',{});
     for(const c in o.Kp){if(!k[c]&&Array.isArray(o.Kp[c]))k[c]=o.Kp[c].filter(x=>typeof x==='number'&&x>.3&&x<1.6).slice(-7)}
@@ -1042,8 +911,8 @@ async function syncNow(manual){
     if(!r.ok)throw new Error('читання '+r.status);
     const remote=await r.json();
     if(remote&&typeof remote==='object')mergeData(remote,false);
-    const body=JSON.stringify({app:'Дальномір',v:1,t:Date.now(),my:my,Kp:store.get('Kp',{})});
-    if(body.length>95000)throw new Error('дані завеликі для безкоштовного JSONBin (100 КБ)');
+    const body=JSON.stringify({app:'Дальномір',v:1,t:Date.now(),my:my,Kp:store.get('Kp',{}),aiKnowledge});
+    if(body.length>95000)throw new Error('дані завеликі для JSONBin');
     const H2=Object.assign({'Content-Type':'application/json'},H);delete H2['X-Bin-Meta'];
     const w=await fetch('https://api.jsonbin.io/v3/b/'+encodeURIComponent(c.id),{method:'PUT',headers:H2,body});
     if(!w.ok)throw new Error('запис '+w.status);
@@ -1060,7 +929,6 @@ setInterval(()=>{
   if(!posMode||Date.now()-lastTry>300000)syncNow(false);
 },30000);
 
-/* ---------- база: вікно вибору ---------- */
 const baseArr=()=>src==='mil'?MIL:DB;
 const myLive=()=>my.filter(x=>!x.del);
 const allItems=()=>src==='mil'?MIL:DB.concat(myLive().map(x=>({c:'Мої',n:x.n,v:x.v,u:1,id:x.id})));
@@ -1079,14 +947,14 @@ function renderDB(){
   if(q)a=a.filter(x=>x.n.toLowerCase().includes(q)||x.c.toLowerCase().includes(q));
   cur=a;
   const tot=src==='mil'?MIL.length:DB.length+myLive().length;
-  $('#cnt').textContent='Знайдено: '+a.length+' з '+tot+(src==='mil'?' · типові значення з відкритих довідників (≈ — приблизно)':'');
+  $('#cnt').textContent='Знайдено: '+a.length+' з '+tot;
   $('#dbl').innerHTML=a.map((x,i)=>'<button class="it" data-i="'+i+'"><span>'+esc(x.n)+'</span><span><b>'+vfmt(x.v)+'</b>'+(x.u?'<i data-d="'+i+'" aria-label="Видалити">✕</i>':'')+'</span></button>').join('')||'<small style="padding:14px">Нічого не знайдено</small>';
 }
 function setSrc(s){
   src=s;cat='Усі';
   $('#sg').classList.toggle('on',s==='gen');$('#sm').classList.toggle('on',s==='mil');
   $('#dba').classList.toggle('hide',s==='mil');
-  $('#dbq').placeholder=s==='mil'?'Пошук: Т-72, F-16, Bayraktar, Мі-8…':'Пошук: авто, двері, ворота…';
+  $('#dbq').placeholder=s==='mil'?'Пошук: Т-72, F-16…':'Пошук: авто, двері…';
   renderChips();renderDB();
 }
 function openDB(){$('#db').classList.remove('hide');setSrc(src)}
@@ -1114,14 +982,12 @@ $('#dbadd').onclick=()=>{
   my.push({id:uid(),n,v,t:Date.now(),del:false});store.set('my',my);markDirty();
   $('#dbn').value='';$('#dbv').value='';cat='Мої';renderChips();renderDB();
 };
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDB();$('#set').classList.add('hide');$('#man').classList.add('hide')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDB();$('#set').classList.add('hide');$('#man').classList.add('hide');$('#learnModal').style.display='none'}});
 
-/* ---------- калібрування (по камері) ---------- */
 const kpts=()=>(store.get('Kp',{})[camKey]||[]);
 const getK=()=>{const a=kpts();return a.length?med(a):0.75};
 function kinfo(){const n=kpts().length;$('#kinfo').textContent='Камера: '+camKey+' · '+(n?'точок калібрування: '+n:'стандартне калібрування')+' · K='+getK().toFixed(3)}
 
-/* ---------- видима зона маркерів ---------- */
 function zone(){
   const r=stage.getBoundingClientRect();
   if(vert){
@@ -1140,7 +1006,6 @@ function layout(){
 if(window.ResizeObserver)new ResizeObserver(layout).observe(sheet);
 window.addEventListener('resize',layout);
 
-/* ---------- камера ---------- */
 function stopCam(){if(V.srcObject){V.srcObject.getTracks().forEach(t=>t.stop());V.srcObject=null}}
 async function startCam(id){
   $('#msg').style.display='none';
@@ -1165,10 +1030,9 @@ async function startCam(id){
   }
 }
 $('#retry').onclick=()=>startCam();
-$('#cam').onchange=e=>{ema=null;buf=[];trk=[];startCam(e.target.value)};
-$('#zoom').oninput=e=>{zoom=+e.target.value;$('#zv').textContent=zoom.toFixed(1)+'×';ema=null;trk=[];try{track.applyConstraints({advanced:[{zoom}]})}catch(_){}};
+$('#cam').onchange=e=>{ema=null;buf=[];startCam(e.target.value)};
+$('#zoom').oninput=e=>{zoom=+e.target.value;$('#zv').textContent=zoom.toFixed(1)+'×';ema=null;try{track.applyConstraints({advanced:[{zoom}]})}catch(_){}};
 
-/* ---------- датчики: нахил, напрямок, компас ---------- */
 function bearing(a,b,g){
   const E=-(Math.cos(g)*Math.sin(a)*Math.sin(b)+Math.cos(a)*Math.sin(g));
   const N=-(Math.sin(a)*Math.sin(g)-Math.cos(a)*Math.cos(g)*Math.sin(b));
@@ -1196,7 +1060,7 @@ async function askSensor(){
       if(r!=='granted'){$('#sens').classList.remove('hide');return}
     }
     $('#sens').classList.add('hide');listenOri();
-  }catch(e){$('#sens').classList.remove('hide')}
+  }catch(e){$('#sens').classList.add('hide')}
 }
 $('#sens').onclick=askSensor;
 document.addEventListener('click',()=>askSensor(),{once:true});
@@ -1231,7 +1095,6 @@ function oStats(){
   return{e,h:(Math.atan2(sx,cy)/R+360)%360};
 }
 
-/* ---------- геометрія ---------- */
 function geo(){
   const vw=V.videoWidth||1280,vh=V.videoHeight||720,r=stage.getBoundingClientRect();
   const s=Math.max(r.width/vw,r.height/vh);
@@ -1271,7 +1134,6 @@ function compute(){
   return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
 }
 
-/* ---------- точки на землі й площа ---------- */
 function ptsInfo(){
   const n=pts.length,o={n};
   if(n>=2){const a=pts[n-2],b=pts[n-1];o.seg=Math.hypot(b.x-a.x,b.y-a.y);o.err=Math.hypot(a.err,b.err)}
@@ -1323,21 +1185,20 @@ $('#addP').onclick=addPoint;
 $('#delP').onclick=()=>{pts.pop();refreshPts()};
 $('#clrP').onclick=()=>{pts=[];refreshPts()};
 
-/* ---------- сканер ---------- */
-function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error(u));document.head.appendChild(s)})}
+async function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error(u));document.head.appendChild(s)})}
 async function ensureModel(){
   if(loading)return;
   if(model&&modelBase===smodel)return;
   loading=true;
   try{if(model&&model.dispose)model.dispose()}catch(e){}
   model=null;
-  scanMsg='Завантажую модель ('+(smodel==='mobilenet_v2'?'точна':'легка')+')…';
+  scanMsg='Завантажую AI модель…';
   try{
     if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
     if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
     model=await cocoSsd.load({base:smodel});modelBase=smodel;
     scanMsg='';
-  }catch(e){scanMsg='Не вдалося завантажити модель. Відкрий вкладку з інтернетом (потрібно один раз).'}
+  }catch(e){scanMsg='Не вдалося завантажити модель офлайн. Потрібен інтернет 1 раз.'}
   loading=false;
 }
 function iou(a,b){
@@ -1368,23 +1229,31 @@ function updateTracks(out,t){
   const g=geo(),vh=V.videoHeight||720,win=srange==='2'?3500:2200;
   shake=oRange(1200)>1.2;
   const used=new Set();
-  out.filter(o=>CLS[o.class]).forEach(o=>{
+  out.filter(o=>CLS[o.class]||aiKnowledge.length>0).forEach(o=>{
     const cx=o.bbox[0]+o.bbox[2]/2,cy=o.bbox[1]+o.bbox[3]/2,sz=Math.max(o.bbox[2],o.bbox[3]);
+    let matchedName=CLS[o.class]?CLS[o.class][0]:null;
+    let matchedH=CLS[o.class]?CLS[o.class][1]:2.0;
+
+    // Перевірка з кастомною базою навчених об'єктів
+    aiKnowledge.forEach(item=>{
+      let diff=Math.abs(o.colorR - item.colorR) + Math.abs(o.colorG - item.colorG) + Math.abs(o.colorB - item.colorB);
+      if(diff < 60) { matchedName = item.name; matchedH = item.height; }
+    });
+
+    if(!matchedName) return;
+
     let best=null,bs=1e9;
     trk.forEach(k=>{
-      if(grp(k.cls)!==grp(o.class)||used.has(k.id))return;
+      if(k.name!==matchedName||used.has(k.id))return;
       const kx=k.box[0]+k.box[2]/2,ky=k.box[1]+k.box[3]/2;
       const dist=Math.hypot(cx-kx,cy-ky),v=iou(k.box,o.bbox),lim=Math.max(k.box[2],k.box[3],sz)*.8;
       if(v>.15||dist<lim){const sc=dist/lim-v;if(sc<bs){bs=sc;best=k}}
     });
-    if(!best){best={id:nid++,cls:o.class,votes:{},hist:[],moving:false,ready:false,v:0,dirTxt:'',alerted:false,d:null,hits:0,score:o.score,box:o.bbox.slice()};trk.push(best)}
+    if(!best){best={id:nid++,cls:o.class,name:matchedName,H:matchedH,votes:{},hist:[],moving:false,ready:false,v:0,dirTxt:'',alerted:false,d:null,hits:0,score:o.score,box:o.bbox.slice()};trk.push(best)}
     used.add(best.id);
     best.box=best.box.map((v,i)=>v+(o.bbox[i]-v)*.6);
     best.seen=t;best.hits++;
     best.score=best.score*.6+o.score*.4;
-    best.votes[o.class]=(best.votes[o.class]||0)+o.score;
-    let bc=best.cls,bv=-1;for(const c in best.votes){if(best.votes[c]>bv){bv=best.votes[c];bc=c}}
-    best.cls=bc;best.name=CLS[bc][0];best.H=CLS[bc][1];
     best.cut=o.bbox[1]<=2||o.bbox[1]+o.bbox[3]>=vh-2;
     const raw=best.H*g.f/best.box[3];
     best.d=best.d==null?raw:best.d+(raw-best.d)*.35;
@@ -1422,7 +1291,15 @@ async function detectStep(){
       inp=oc;sx=r[0];sy=r[1];k=r[2]/cw;
     }
     let out=await model.detect(inp,30,sconf/100);
-    out.forEach(o=>{o.bbox=[o.bbox[0]*k+sx,o.bbox[1]*k+sy,o.bbox[2]*k,o.bbox[3]*k]});
+    out.forEach(o=>{
+      o.bbox=[o.bbox[0]*k+sx,o.bbox[1]*k+sy,o.bbox[2]*k,o.bbox[3]*k];
+      // Забір кольору для кастомного AI навчання
+      const px=Math.floor(o.bbox[0]+o.bbox[2]/2), py=Math.floor(o.bbox[1]+o.bbox[3]/2);
+      if(px>=0&&px<vw&&py>=0&&py<vh){
+        const pDat=octx.getImageData(Math.max(0,px-sx), Math.max(0,py-sy), 1, 1).data;
+        o.colorR=pDat[0]; o.colorG=pDat[1]; o.colorB=pDat[2];
+      } else { o.colorR=100; o.colorG=100; o.colorB=100; }
+    });
     const nAll=out.length;
     const m=4*k;
     out=out.filter(o=>{
@@ -1436,10 +1313,51 @@ async function detectStep(){
     const t=performance.now();
     updateTracks(out,t);
     fpsT.push(t);if(fpsT.length>10)fpsT.shift();
-    scanStat={fps:fpsT.length>1?(fpsT.length-1)/((t-fpsT[0])/1000):0,all:nAll,sup:out.filter(o=>CLS[o.class]).length};
+    scanStat={fps:fpsT.length>1?(fpsT.length-1)/((t-fpsT[0])/1000):0,all:nAll,sup:out.length};
   }catch(e){}
   det=false;
 }
+
+// Тап-детекція для навчання сканера новим об'єктам прямо з екрана
+let tapCoord={x:0, y:0};
+$('#ov').addEventListener('click', (e)=>{
+  if(mode!=='scan') return;
+  const r=stage.getBoundingClientRect();
+  tapCoord.x = e.clientX - r.left;
+  tapCoord.y = e.clientY - r.top;
+  $('#learnModal').style.display='block';
+});
+
+$('#cancelLearnBtn').onclick=()=>{ $('#learnModal').style.display='none'; };
+$('#saveLearnBtn').onclick=()=>{
+  const name=$('#inputObjName').value.trim()||"Ціль (AI)";
+  const height=parseFloat($('#inputObjHeight').value)||2.0;
+  
+  // Знімаємо колір із кадру в місці тапу
+  const vw=V.videoWidth||1280, vh=V.videoHeight||720;
+  const cx=Math.floor((tapCoord.x/stage.clientWidth)*vw);
+  const cy=Math.floor((tapCoord.y/stage.clientHeight)*vh);
+  
+  oc.width=vw; oc.height=vh;
+  octx.drawImage(V,0,0,vw,vh);
+  const pDat=octx.getImageData(cx, cy, 1, 1).data;
+
+  aiKnowledge.push({
+    name: name,
+    height: height,
+    colorR: pDat[0],
+    colorG: pDat[1],
+    colorB: pDat[2],
+    timestamp: Date.now()
+  });
+
+  store.set('ai_learned_objects', aiKnowledge);
+  markDirty();
+  $('#learnModal').style.display='none';
+  $('#inputObjName').value='';
+  say('Ціль «'+name+'» успішно додана в пам\'ять AI ✓');
+};
+
 function visTracks(){
   const t=(frozen&&mode==='scan')?frozenT:performance.now(),f=$('#scf').value,win=srange==='2'?2500:900;
   return trk.filter(k=>t-k.seen<win&&(k.hits>=2||k.score>=.6)&&(f==='all'||k.moving)).sort((a,b)=>a.d-b.d);
@@ -1465,14 +1383,14 @@ function rowHtml(k){
   const wm=k.H*k.box[2]/k.box[3];
   const state=!k.ready?'аналізую':k.moving?(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год'):'нерухомий';
   const az=headAbs!=null?' · аз. '+Math.round(brg(k))+'°':'';
-  return '<div class="sr"><span class="dot'+(k.moving?'':' st')+'"></span><span class="sn">'+esc(k.name)+'<small>≈ в '+ef(k.H)+' × ш '+ef(wm)+' · '+state+az+'</small></span><b>'+dtxt(k)+'</b></div>';
+  return '<div class="sr"><span class="dot'+(k.moving?'':' st')+'"></span><span class="sn">'+esc(k.name)+'<small>≈ вис '+ef(k.H)+' × шир '+ef(wm)+' · '+state+az+'</small></span><b>'+dtxt(k)+'</b></div>';
 }
 function renderList(now){
   if(now-lastList<250)return;
   lastList=now;
   const v=visTracks(),mv=v.filter(k=>k.moving).length;
   $('#scl').innerHTML=(v.length?'<small style="margin:0 0 4px">Рухомих: '+mv+' · інших: '+(v.length-mv)+'</small>':'')+v.slice(0,8).map(rowHtml).join('')+(v.length>8?'<small>…і ще '+(v.length-8)+'</small>':'');
-  $('#scs').textContent=model?('Модель: '+(smodel==='mobilenet_v2'?'точна':'легка')+' · '+scanStat.fps.toFixed(1)+' кадр/с · у кадрі знайдено: '+scanStat.all+' (підтримуваних: '+scanStat.sup+')'):(scanMsg||'');
+  $('#scs').textContent=model?('AI · '+scanStat.fps.toFixed(1)+' к/с · у кадрі: '+scanStat.all+' (вивчених базом: '+aiKnowledge.length+')'):(scanMsg||'');
 }
 function drawOv(){
   const c=$('#ov'),r=stage.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
@@ -1503,13 +1421,12 @@ function drawOv(){
   });
 }
 
-/* ---------- відображення ---------- */
 function view(){
   if(mode==='scan'){
     const v=visTracks();
-    if(!v.length)return{warn:scanMsg||(model?'Шукаю об\'єкти… наведи камеру на людей чи авто':'')};
+    if(!v.length)return{warn:scanMsg||(model?'Шукаю об\'єкти або навчи сканер тапом…':'')};
     const n=v[0];
-    return{d:n.d,err:n.d*.2,sub:n.name+(!n.ready?' · аналізую':n.moving?' · '+n.dirTxt:' · нерухомий'),warn:shake?'Тримай телефон нерухомо — рух камери заважає':''};
+    return{d:n.d,err:n.d*.2,sub:n.name+(!n.ready?' · аналізую':n.moving?' · '+n.dirTxt:' · нерухомий'),warn:shake?'Тримай телефон нерухомо':'':''};
   }
   if(mode==='pts'){
     const g=geo();lvl(tElev(g));
@@ -1577,7 +1494,6 @@ $('#ser').onclick=()=>{
   ser={a:[],t:0};say('Тримай телефон нерухомо…');
 };
 
-/* ---------- інтерфейс ---------- */
 function render(){
   stage.className=vert?'v':'h';
   const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height'||mode==='pts';
@@ -1665,7 +1581,7 @@ $('#sb').onclick=()=>{
   const dt=(performance.now()-spd.t)/1000,dd=Math.abs(lastDist-spd.d);
   if(dt<.5)return say('Зачекай трохи між A і B');
   const v=dd/dt;
-  say('Швидкість (радіальна): '+(v*3.6).toFixed(1)+' км/год · '+v.toFixed(1)+' м/с'+(unit!=='m'?' · '+(v*2.23694).toFixed(1)+' миль/год':'')+' · Δ '+fs(dd)+' за '+dt.toFixed(1)+' с');
+  say('Швидкість (радіальна): '+(v*3.6).toFixed(1)+' км/год · '+v.toFixed(1)+' м/с');
   spd=null;
 };
 $('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit);if(mode==='pts')refreshPts()};
@@ -1673,15 +1589,7 @@ $('#scm').onchange=e=>{smodel=e.target.value;store.set('sm',smodel);trk=[];fpsT=
 $('#scr').onchange=e=>{srange=e.target.value;store.set('sr',srange);trk=[];regIdx=0;fpsT=[]};
 $('#scc').oninput=e=>{sconf=+e.target.value;store.set('sc',sconf);$('#scv').textContent=sconf+'%'};
 
-/* ---------- налаштування, інструкція, режим «Позиція» ---------- */
-function openSet(){
-  const c=jbCfg()||{};
-  $('#jbId').value=c.id||'';$('#jbKey').value=c.key||'';$('#jbKt').value=c.kt||'access';$('#jbAuto').checked=!!c.auto;
-  $('#lkm').value=store.get('lkm','exit');
-  updSec();updBadge();
-  $('#set').classList.remove('hide');
-}
-$('#setB').onclick=openSet;
+$('#setB').onclick=()=>{$('#set').classList.remove('hide');const c=jbCfg()||{};$('#jbId').value=c.id||'';$('#jbKey').value=c.key||'';$('#jbKt').value=c.kt||'access';$('#jbAuto').checked=!!c.auto;$('#lkm').value=store.get('lkm','exit');updSec();updBadge()};
 $('#setX').onclick=()=>$('#set').classList.add('hide');
 $('#manB').onclick=()=>$('#man').classList.remove('hide');
 $('#manX').onclick=()=>$('#man').classList.add('hide');
@@ -1696,7 +1604,6 @@ function saveJb(){
 ['#jbKt','#jbAuto'].forEach(s=>$(s).onchange=saveJb);
 $('#jbNow').onclick=()=>{saveJb();syncNow(true)};
 
-/* ---------- резервна копія ---------- */
 const bk=t=>{$('#bkS').textContent=t};
 function dl(name,text){
   const b=new Blob([text],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');
@@ -1704,28 +1611,25 @@ function dl(name,text){
 }
 $('#exJ').onclick=()=>{
   const d=new Date(),s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  dl('dalnomir-'+s+'.json',JSON.stringify(snapshot(),null,1));
-  bk('Файл збережено (перевір папку «Завантаження»). Об\'єктів у «Мої»: '+myLive().length);
+  dl('dalnomir-ai-'+s+'.json',JSON.stringify(snapshot(),null,1));
+  bk('Файл збережено. Навчених AI цілей: '+aiKnowledge.length);
 };
 $('#exC').onclick=async()=>{
-  try{await navigator.clipboard.writeText(JSON.stringify(snapshot()));bk('JSON скопійовано в буфер обміну')}
-  catch(e){bk('Не вдалося скопіювати. Скористайся експортом у файл')}
+  try{await navigator.clipboard.writeText(JSON.stringify(snapshot()));bk('JSON скопійовано в буфер')}catch(e){bk('Помилка буфера')}
 };
 $('#imJ').onclick=()=>{suppress=Date.now()+90000;$('#imF').click()};
 $('#imF').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';suppress=Date.now()+5000;
   if(!f)return;
   try{
-    if(f.size>1000000)throw new Error('файл завеликий');
     const o=JSON.parse(await f.text());
-    if(!o||o.app!=='Дальномір')throw new Error('це не файл Дальноміра');
-    if(!confirm('Об\'єднати дані з файлу з поточними? Нічого не буде видалено.'))return;
+    if(!o||o.app!=='Дальномір')throw new Error('невірний файл');
+    if(!confirm('Об\'єднати дані?'))return;
     const n=mergeData(o,true);
-    markDirty();kinfo();bk('Імпортовано записів: '+n);
-  }catch(err){bk('Помилка імпорту: '+err.message)}
+    markDirty();kinfo();bk('Імпортовано елементів: '+n);
+  }catch(err){bk('Помилка: '+err.message)}
 };
 
-/* ---------- PIN і відбиток пальця ---------- */
 const enc=new TextEncoder();
 const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a)));
 const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -1758,16 +1662,16 @@ function updSec(){
 }
 $('#pinSet').onclick=async()=>{
   const a=$('#pn1').value.trim(),b=$('#pn2').value.trim(),cur=$('#pn0').value.trim(),has=!!store.get('pin',null);
-  if(!/^\d{4,8}$/.test(a))return secM('PIN має містити 4–8 цифр');
-  if(a!==b)return secM('PIN не збігаються');
-  if(has&&!(await verifyPin(cur)))return secM('Поточний PIN невірний');
+  if(!/^\d{4,8}$/.test(a))return secM('PIN 4–8 цифр');
+  if(a!==b)return secM('Не збігаються');
+  if(has&&!(await verifyPin(cur)))return secM('Невірний поточний PIN');
   await setPin(a);
   ['#pn0','#pn1','#pn2'].forEach(s=>$(s).value='');
   secM(has?'PIN змінено ✓':'PIN встановлено ✓');updSec();
 };
 $('#pinOff').onclick=async()=>{
   const cur=$('#pn0').value.trim();
-  if(!(await verifyPin(cur)))return secM('Для вимкнення впиши поточний PIN');
+  if(!(await verifyPin(cur)))return secM('Впиши поточний PIN');
   store.set('pin',null);store.set('bio',null);store.set('fail',{n:0,until:0});
   ['#pn0','#pn1','#pn2'].forEach(s=>$(s).value='');
   secM('Захист вимкнено');updSec();
@@ -1779,24 +1683,23 @@ $('#bioReg').onclick=async()=>{
     const cred=await navigator.credentials.create({publicKey:{
       challenge:crypto.getRandomValues(new Uint8Array(32)),
       rp:{name:'Дальномір'},
-      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'user',displayName:'Користувач'},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'user',displayName:'User'},
       pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
       timeout:60000,attestation:'none'}});
     store.set('bio',{id:b64(cred.rawId)});secM('Відбиток додано ✓');updSec();
-  }catch(e){secM('Не вдалося додати відбиток. Потрібен https і налаштований відбиток чи обличчя в телефоні.')}
+  }catch(e){secM('Помилка біометрії')}
   suppress=Date.now()+3000;
 };
-$('#bioOff').onclick=()=>{store.set('bio',null);secM('Відбиток прибрано');updSec()};
+$('#bioOff').onclick=()=>{store.set('bio',null);secM('Прибрано');updSec()};
 
-/* ---------- екран блокування ---------- */
 function renderDots(){
   const l=(store.get('pin',null)||{l:4}).l;
   $('#dots').innerHTML=Array.from({length:l},(_,i)=>'<i class="'+(i<entered.length?'f':'')+'"></i>').join('');
 }
 function buildPad(){
   const ks=['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  $('#pad').innerHTML=ks.map(k=>k===''?'<span></span>':'<button data-k="'+k+'" aria-label="'+(k==='⌫'?'Стерти':k)+'">'+k+'</button>').join('');
+  $('#pad').innerHTML=ks.map(k=>k===''?'<span></span>':'<button data-k="'+k+'">'+k+'</button>').join('');
 }
 function cooldown(){
   const f=store.get('fail',{n:0,until:0}),left=Math.ceil((f.until-Date.now())/1000);
@@ -1806,7 +1709,7 @@ function showCd(){
   clearInterval(cdT);
   const tick=()=>{
     const s=cooldown();
-    if(s>0){$('#lkMsg').textContent='Забагато спроб. Зачекай '+s+' с'}
+    if(s>0){$('#lkMsg').textContent='Зачекай '+s+' с'}
     else{clearInterval(cdT);$('#lkMsg').textContent='Введи PIN'}
   };
   tick();cdT=setInterval(tick,1000);
@@ -1817,8 +1720,7 @@ function lockApp(){
   $('#set').classList.add('hide');$('#man').classList.add('hide');closeDB();
   $('#lock').classList.remove('hide');
   $('#bioBtn').classList.toggle('hide',!(store.get('bio',null)&&window.PublicKeyCredential));
-  renderDots();
-  stopCam();
+  renderDots();stopCam();
   if(cooldown()>0)showCd();else $('#lkMsg').textContent='Введи PIN';
   if(store.get('bio',null)&&cooldown()===0)setTimeout(bioLogin,350);
 }
@@ -1842,7 +1744,7 @@ async function bioLogin(){
       userVerification:'required',timeout:60000}});
     suppress=Date.now()+3000;
     unlockApp();
-  }catch(e){suppress=Date.now()+3000;if(locked)$('#lkMsg').textContent='Відбиток не підтверджено. Введи PIN.'}
+  }catch(e){suppress=Date.now()+3000;if(locked)$('#lkMsg').textContent='Не підтверджено. Введи PIN.'}
 }
 $('#bioBtn').onclick=bioLogin;
 $('#pad').onclick=async e=>{
@@ -1857,9 +1759,8 @@ $('#pad').onclick=async e=>{
     if(ok){store.set('fail',{n:0,until:0});unlockApp();return}
     const f=store.get('fail',{n:0,until:0});f.n=(f.n||0)+1;
     if(f.n%5===0)f.until=Date.now()+30000*Math.pow(2,f.n/5-1);
-    store.set('fail',f);
-    entered='';renderDots();
-    if(cooldown()>0)showCd();else $('#lkMsg').textContent='Невірний PIN. Спроб до паузи: '+(5-(f.n%5));
+    store.set('fail',f);entered='';renderDots();
+    if(cooldown()>0)showCd();else $('#lkMsg').textContent='Невірний PIN';
   }
 };
 document.addEventListener('visibilitychange',()=>{
@@ -1874,11 +1775,9 @@ document.addEventListener('visibilitychange',()=>{
   }
 });
 
-/* ---------- запуск ---------- */
 $('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;$('#pick').textContent='📚 '+objName;
 $('#scm').value=smodel;$('#scr').value=srange;$('#scc').value=sconf;$('#scv').textContent=sconf+'%';
-buildPad();updBadge();
-layout();listenOri();requestAnimationFrame(loop);
+buildPad();updBadge();layout();listenOri();requestAnimationFrame(loop);
 if(store.get('pin',null))lockApp();else{startCam();afterUnlock()}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
