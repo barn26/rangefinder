@@ -31,7 +31,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 #top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:6px}
 .tab{flex:1;padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:13px;font-weight:600}
 .tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
-#sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
+#sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
 #sheet.min #ctl{display:none}
 #read{display:flex;align-items:baseline;gap:10px}
 #num{font:700 60px/1 "Arial Narrow","Roboto Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
@@ -54,6 +54,22 @@ input[type=range]{flex:1;padding:0;accent-color:var(--amb)}
 .hide{display:none!important}
 small{color:var(--mute);font-size:12px;display:block;margin-top:6px}
 summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
+.ft{text-align:center;color:var(--mute);font-size:10.5px;line-height:1.35;margin-top:10px;letter-spacing:.2px}
+#pick{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#db{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
+.dbh{display:flex;gap:8px}
+#dbq{flex:1}
+#chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 8px;flex:0 0 auto}
+.chip{flex:0 0 auto;padding:7px 12px;border-radius:99px;font-size:13px;white-space:nowrap}
+.chip.on{background:var(--amb);color:var(--bg);border-color:var(--amb)}
+#cnt{color:var(--mute);font-size:12px;padding-bottom:6px}
+#dbl{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
+.it{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:12px 4px;font-weight:500}
+.it b{color:var(--amb);white-space:nowrap;font-variant-numeric:tabular-nums}
+.it i{font-style:normal;color:var(--mute);padding:4px 8px;margin-left:6px}
+.dba{display:flex;gap:6px;margin-top:8px}
+.dba input:first-child{flex:1}
+.dba input[type=number]{width:90px}
 </style>
 </head>
 <body>
@@ -74,17 +90,7 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
   <div id="warn"></div><div id="res"></div><div id="lvl" class="hide"></div>
   <div id="ctl">
     <div id="p-size" class="pn">
-      <div class="row"><label>Об'єкт</label>
-        <select id="obj">
-          <option value="1.75">Людина, зріст — 1,75 м</option>
-          <option value="2.03">Двері — 2,03 м</option>
-          <option value="1.8">Легкове авто, ширина — 1,8 м</option>
-          <option value="1.5">Легкове авто, висота — 1,5 м</option>
-          <option value="0.297">Аркуш A4, довга сторона — 0,297 м</option>
-          <option value="custom">Свій розмір…</option>
-        </select>
-        <input id="sz" type="number" step="0.01" min="0.01" inputmode="decimal" aria-label="Розмір, м">
-      </div>
+      <div class="row"><button id="pick">📚 Обрати об'єкт</button><input id="sz" type="number" step="0.001" min="0.001" inputmode="decimal" aria-label="Розмір, м"></div>
       <div class="row">
         <button class="ori">Міряю висоту ↕</button>
         <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto">
@@ -132,6 +138,16 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
       <small>Розміри, висоту камери й відстані вводь у метрах.</small>
     </details>
   </div>
+  <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+</div>
+
+<div id="db" class="hide">
+  <div class="dbh"><input id="dbq" type="search" placeholder="Пошук: авто, двері, ворота…" aria-label="Пошук об'єкта"><button id="dbx" aria-label="Закрити">✕</button></div>
+  <div id="chips"></div>
+  <div id="cnt"></div>
+  <div id="dbl"></div>
+  <div class="dba"><input id="dbn" placeholder="Свій об'єкт: назва"><input id="dbv" type="number" step="0.001" min="0.001" inputmode="decimal" placeholder="м"><button id="dbadd" class="pri">＋</button></div>
+  <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
 </div>
 
 <script>
@@ -141,16 +157,321 @@ const V=$('#vid'),stage=$('#stage'),cross=$('#cross'),sheet=$('#sheet');
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
+
+/* ---------- БАЗА РОЗМІРІВ (м) ---------- */
+const RAW=`§Люди
+Дорослий чоловік, зріст|1.75
+Доросла жінка, зріст|1.62
+Підліток 14 років, зріст|1.65
+Дитина 10 років, зріст|1.40
+Дитина 5 років, зріст|1.10
+Дитина 2 роки, зріст|0.85
+Баскетболіст, зріст|2.00
+Людина сидячи, висота ≈|1.30
+Ширина плечей дорослого|0.45
+Голова людини, висота|0.23
+§Двері, вікна й паркани
+Міжкімнатні двері, висота|2.00
+Вхідні двері, висота|2.05
+Двері, ширина|0.90
+Подвійні двері, ширина ≈|1.40
+Балконні двері, висота ≈|2.20
+Вікно, висота ≈|1.40
+Вікно, ширина ≈|1.40
+Ворота гаража, висота ≈|2.10
+Ворота гаража, ширина ≈|2.50
+Паркан із профнастилу, висота|2.00
+Паркан-сітка, висота ≈|1.50
+Перила, висота ≈|1.00
+Сходинка, висота|0.17
+Кладка цегли, висота 10 рядів ≈|0.75
+§Меблі й побут
+Письмовий стіл, висота|0.75
+Сидіння стільця, висота|0.45
+Кухонна стільниця, висота|0.90
+Ліжко двоспальне, довжина ≈|2.00
+Ліжко двоспальне, ширина ≈|1.60
+Диван, довжина ≈|2.00
+Шафа-купе, висота ≈|2.40
+Холодильник, висота ≈|1.85
+Пральна машина, висота|0.85
+Газова плита, висота|0.85
+Телевізор 32″, ширина екрана|0.71
+Телевізор 43″, ширина екрана|0.95
+Телевізор 55″, ширина екрана|1.22
+Телевізор 65″, ширина екрана|1.44
+Телевізор 75″, ширина екрана|1.66
+Монітор 27″, ширина екрана|0.60
+Ноутбук 15″, ширина ≈|0.36
+Смартфон, довжина ≈|0.15
+Цегла, довжина|0.25
+Шлакоблок, довжина|0.39
+Лист ГКЛ, довжина|2.50
+Лист ГКЛ, ширина|1.20
+Лист фанери/OSB, довжина|2.44
+Лист фанери/OSB, ширина|1.22
+Піддон EUR, довжина|1.20
+Піддон EUR, ширина|0.80
+Бочка 200 л, висота|0.88
+Бочка 200 л, діаметр|0.58
+§Автомобілі
+Седан, довжина ≈|4.70
+Седан, ширина ≈|1.82
+Седан, висота ≈|1.45
+Хетчбек, довжина ≈|4.00
+Хетчбек, висота ≈|1.50
+Кросовер, висота ≈|1.65
+Позашляховик (SUV), довжина ≈|4.80
+Позашляховик (SUV), ширина ≈|1.90
+Позашляховик (SUV), висота ≈|1.80
+Пікап, довжина ≈|5.30
+Пікап, висота ≈|1.85
+Мінівен, висота ≈|1.75
+Колесо легковика, діаметр ≈|0.65
+Колесо джипа, діаметр ≈|0.78
+Номерний знак ЄС, ширина|0.52
+Номерний знак ЄС, висота|0.112
+§Вантажний і громадський транспорт
+Мікроавтобус, довжина ≈|5.50
+Мікроавтобус, висота ≈|2.50
+Мікроавтобус, ширина ≈|2.00
+Маршрутка (Sprinter), довжина ≈|6.00
+Маршрутка (Sprinter), висота ≈|2.60
+Газель, довжина ≈|5.50
+Газель, висота ≈|2.40
+Вантажівка 5 т, довжина ≈|7.00
+Вантажівка 5 т, висота ≈|3.20
+Фура, довжина (тягач + напівпричіп)|16.50
+Фура, висота (макс.)|4.00
+Фура, ширина|2.55
+Міський автобус, довжина|12.00
+Міський автобус, ширина|2.55
+Міський автобус, висота ≈|3.00
+Зчленований автобус, довжина|18.00
+Тролейбус, довжина ≈|12.00
+Трамвай Tatra T3, довжина|15.10
+Трамвай Tatra T3, ширина|2.50
+§Мото й велосипеди
+Велосипед, довжина ≈|1.75
+Велосипед, висота по кермо ≈|1.05
+Колесо велосипеда 28″, діаметр ≈|0.70
+Мотоцикл, довжина ≈|2.10
+Мотоцикл, висота ≈|1.20
+Скутер, довжина ≈|1.80
+Квадроцикл, довжина ≈|2.00
+§Залізниця й контейнери
+Колія, ширина (1520 мм)|1.52
+Колія, ширина (1435 мм)|1.435
+Пасажирський вагон, довжина|24.50
+Товарний піввагон, довжина ≈|13.90
+Електровоз ВЛ80, довжина ≈|32.80
+Контейнер 20′, довжина|6.06
+Контейнер 40′, довжина|12.19
+Контейнер, ширина|2.44
+Контейнер, висота|2.59
+Контейнер 40′ HC, висота|2.90
+§Авіація
+Cessna 172, довжина|8.28
+Cessna 172, розмах крил|11.0
+Cessna 172, висота|2.72
+Ан-2, довжина|12.40
+Ан-2, розмах крил|18.18
+Airbus A320, довжина|37.57
+Airbus A320, розмах крил|35.80
+Airbus A320, висота|11.76
+Boeing 737-800, довжина|39.50
+Boeing 737-800, розмах крил|35.80
+Boeing 737-800, висота|12.50
+Boeing 747-400, довжина|70.70
+Boeing 747-400, розмах крил|64.40
+Airbus A380, довжина|72.70
+Airbus A380, розмах крил|79.80
+Airbus A380, висота|24.10
+Вертоліт Мі-8, довжина фюзеляжу ≈|18.20
+Вертоліт Мі-8, діаметр гвинта|21.30
+§Сільгосптехніка
+Трактор МТЗ-82, довжина ≈|3.90
+Трактор МТЗ-82, висота ≈|2.80
+Трактор МТЗ-82, ширина ≈|1.97
+Круглий тюк соломи, діаметр ≈|1.50
+Зерновий комбайн, висота ≈|4.00
+§Дороги й розмітка
+Смуга руху, ширина ≈|3.50
+Смуга автомагістралі, ширина ≈|3.75
+Паркомісце, ширина ≈|2.50
+Паркомісце, довжина ≈|5.00
+Лінія розмітки, ширина ≈|0.15
+Смуга «зебри», ширина ≈|0.50
+Круглий знак, діаметр (II типорозмір) ≈|0.70
+Трикутний знак, сторона (II типорозмір) ≈|0.90
+Шлагбаум, довжина стріли ≈|4.00
+Дорожній конус, висота ≈|0.75
+Бордюр, висота ≈|0.15
+Автобусна зупинка, висота ≈|2.50
+§Мережі й опори
+Опора ЛЕП 0,4 кВ (бетон), над землею ≈|8.0
+Опора ЛЕП 10 кВ, висота ≈|10.0
+Опора ЛЕП 110 кВ, висота ≈|25.0
+Опора ЛЕП 330 кВ, висота ≈|35.0
+Вуличний ліхтар, висота ≈|8.0
+Опора контактної мережі, висота ≈|8.0
+Вишка мобільного зв'язку, висота ≈|40.0
+Водонапірна вежа, висота ≈|25.0
+Димар котельні, висота ≈|40.0
+Вітрогенератор, висота башти ≈|90.0
+Вітрогенератор, діаметр ротора ≈|100.0
+Біг-борд, ширина|6.00
+Біг-борд, висота|3.00
+Сітілайт, висота|1.75
+Сітілайт, ширина|1.20
+§Спорт
+Футбольні ворота, ширина|7.32
+Футбольні ворота, висота|2.44
+Футбольне поле, довжина ≈|105.0
+Футбольне поле, ширина ≈|68.0
+Міні-футбольні ворота, ширина|3.00
+Міні-футбольні ворота, висота|2.00
+Гандбольні ворота, ширина|3.00
+Гандбольні ворота, висота|2.00
+Хокейні ворота, ширина|1.83
+Хокейні ворота, висота|1.22
+Хокейний майданчик, довжина ≈|60.0
+Баскетбольне кільце, висота над підлогою|3.05
+Баскетбольне кільце, діаметр|0.45
+Баскетбольний щит, ширина|1.80
+Баскетбольний майданчик, довжина|28.0
+Баскетбольний майданчик, ширина|15.0
+Волейбольна сітка, висота (чоловіки)|2.43
+Волейбольна сітка, висота (жінки)|2.24
+Волейбольний майданчик, довжина|18.0
+Волейбольний майданчик, ширина|9.0
+Тенісний корт, довжина|23.77
+Тенісний корт, ширина (одиночна гра)|8.23
+Тенісний корт, ширина (парна гра)|10.97
+Тенісна сітка, висота в центрі|0.914
+Футбольний м'яч, діаметр|0.22
+Баскетбольний м'яч, діаметр|0.24
+Волейбольний м'яч, діаметр|0.21
+Тенісний м'яч, діаметр|0.067
+Лунка для гольфу, діаметр|0.108
+Бігова доріжка, довжина кола|400.0
+Бігова доріжка, ширина смуги|1.22
+Плавальний басейн, довжина (короткий)|25.0
+Плавальний басейн, довжина (олімпійський)|50.0
+Плавальна доріжка, ширина|2.50
+§Будівлі й споруди
+Поверх сучасного будинку, висота ≈|3.00
+Поверх панельного будинку, висота ≈|2.80
+Одноповерховий будинок, висота до коника ≈|5.0
+Двоповерховий будинок, висота ≈|8.0
+5-поверхова «хрущовка», висота ≈|14.5
+9-поверховий будинок, висота ≈|27.0
+16-поверховий будинок, висота ≈|48.0
+25-поверховий будинок, висота ≈|80.0
+Київська телевежа|385.0
+Батьківщина-Мати (з постаментом)|102.0
+Лаврська дзвіниця|96.5
+Ейфелева вежа|330.0
+Статуя Свободи (з постаментом)|93.0
+Бурдж-Халіфа|828.0
+CN Tower|553.3
+Біг-Бен (вежа)|96.0
+Пізанська вежа, висота|56.0
+Піраміда Хеопса, висота|138.5
+Колізей, висота|48.0
+Христос-Спаситель (Ріо), висота|38.0
+§Рослини
+Сосна, висота ≈|25.0
+Ялина, висота ≈|30.0
+Береза, висота ≈|20.0
+Дуб, висота ≈|25.0
+Тополя, висота ≈|30.0
+Липа, висота ≈|25.0
+Каштан, висота ≈|25.0
+Верба, висота ≈|15.0
+Яблуня, висота ≈|5.0
+Кущ, висота ≈|1.5
+§Тварини
+Лось, висота в холці ≈|1.90
+Благородний олень, висота в холці ≈|1.30
+Косуля, висота в холці ≈|0.75
+Кабан, висота в холці ≈|0.90
+Вовк, висота в холці ≈|0.80
+Лисиця, висота в холці ≈|0.40
+Ведмідь бурий на задніх лапах ≈|1.90
+Корова, висота в холці ≈|1.35
+Кінь, висота в холці ≈|1.60
+Вівця, висота в холці ≈|0.75
+Вівчарка, висота в холці ≈|0.62
+Лелека, розмах крил ≈|1.90
+Беркут, розмах крил ≈|2.10
+Африканський слон, висота в холці ≈|3.20
+Жираф, висота ≈|5.00
+Синій кит, довжина ≈|25.0
+§Папір і дрібниці
+Аркуш A4, довга сторона|0.297
+Аркуш A4, коротка сторона|0.210
+Аркуш A3, довга сторона|0.420
+Аркуш A2, довга сторона|0.594
+Аркуш A1, довга сторона|0.841
+Кредитна картка, довжина|0.0856
+Компакт-диск, діаметр|0.12
+Банкнота 1 долар США, довжина|0.156`;
+const DB=[];(function(){let c='';RAW.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');DB.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}})})();
 
 let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
 let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
-let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),camKey='default';
+let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
+let my=store.get('my',[]),cat='Усі',cur=[];
 
 function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
 const fs=m=>fmt(m).join(' ');
 const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
 const say=t=>{$('#res').textContent=t};
+
+/* ---------- база: вікно вибору ---------- */
+const allItems=()=>DB.concat(my.map(x=>({c:'Мої',n:x.n,v:x.v,u:1})));
+function vfmt(v){const k=U[unit][0]*v;return Number(k.toFixed(k>=100?0:k>=10?1:k>=1?2:3))+' '+U[unit][1]}
+function renderChips(){
+  const cats=[];DB.forEach(x=>{if(!cats.includes(x.c))cats.push(x.c)});
+  const list=['Усі','Нещодавні'].concat(cats,['Мої']);
+  $('#chips').innerHTML=list.map(c=>'<button class="chip'+(c===cat?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>').join('');
+}
+function renderDB(){
+  const q=$('#dbq').value.trim().toLowerCase(),rc=store.get('rc',[]);
+  let a=allItems();
+  if(cat==='Нещодавні')a=rc.map(n=>a.find(x=>x.n===n)).filter(Boolean);
+  else if(cat!=='Усі')a=a.filter(x=>x.c===cat);
+  if(q)a=a.filter(x=>x.n.toLowerCase().includes(q)||x.c.toLowerCase().includes(q));
+  cur=a;
+  $('#cnt').textContent='Знайдено: '+a.length+' з '+(DB.length+my.length);
+  $('#dbl').innerHTML=a.map((x,i)=>'<button class="it" data-i="'+i+'"><span>'+esc(x.n)+'</span><span><b>'+vfmt(x.v)+'</b>'+(x.u?'<i data-d="'+i+'" aria-label="Видалити">✕</i>':'')+'</span></button>').join('')||'<small style="padding:14px">Нічого не знайдено</small>';
+}
+function openDB(){$('#db').classList.remove('hide');renderChips();renderDB()}
+function closeDB(){$('#db').classList.add('hide')}
+function choose(it){
+  objSize=it.v;objName=it.n;$('#sz').value=it.v;$('#pick').textContent='📚 '+it.n;
+  store.set('sz',it.v);store.set('sn',it.n);
+  const rc=store.get('rc',[]).filter(n=>n!==it.n);rc.unshift(it.n);store.set('rc',rc.slice(0,8));
+  closeDB();say('Об\'єкт: '+it.n+' — '+vfmt(it.v));
+}
+$('#pick').onclick=openDB;
+$('#dbx').onclick=closeDB;
+$('#dbq').oninput=renderDB;
+$('#chips').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;cat=b.dataset.c;renderChips();renderDB()};
+$('#dbl').onclick=e=>{
+  const d=e.target.closest('[data-d]');
+  if(d){const it=cur[+d.dataset.d];my=my.filter(m=>!(m.n===it.n&&m.v===it.v));store.set('my',my);renderDB();return}
+  const b=e.target.closest('[data-i]');if(b)choose(cur[+b.dataset.i]);
+};
+$('#dbadd').onclick=()=>{
+  const n=$('#dbn').value.trim(),v=parseFloat($('#dbv').value);
+  if(!n||!(v>0))return;
+  my.push({n,v});store.set('my',my);$('#dbn').value='';$('#dbv').value='';cat='Мої';renderChips();renderDB();
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDB()});
 
 /* ---------- калібрування (по камері) ---------- */
 const pts=()=>(store.get('Kp',{})[camKey]||[]);
@@ -191,7 +512,7 @@ async function startCam(id){
     try{
       const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
       const cur=track.getSettings().deviceId;
-      $('#cam').innerHTML=devs.map((d,i)=>'<option value="'+d.deviceId+'"'+(d.deviceId===cur?' selected':'')+'>'+(d.label||'Камера '+(i+1))+'</option>').join('');
+      $('#cam').innerHTML=devs.map((d,i)=>'<option value="'+d.deviceId+'"'+(d.deviceId===cur?' selected':'')+'>'+esc(d.label||'Камера '+(i+1))+'</option>').join('');
     }catch(_){}
     kinfo();
   }catch(e){
@@ -241,7 +562,7 @@ function geo(){
 function tElev(g){
   if(eRaw==null)return null;
   const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
-  return eRaw-bias-off;                                   // кут візування цілі над горизонтом
+  return eRaw-bias-off;
 }
 function compute(){
   const g=geo();
@@ -359,11 +680,10 @@ document.querySelectorAll('.ori').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.ori').forEach(x=>x.textContent=vert?'Міряю висоту ↕':'Міряю ширину ↔');
   resetMarkers();render();
 });
-$('#obj').onchange=e=>{
-  if(e.target.value!=='custom'){objSize=+e.target.value;$('#sz').value=objSize;store.set('sz',objSize)}
-  else $('#sz').focus();
+$('#sz').oninput=e=>{
+  const v=parseFloat(e.target.value);
+  if(v>0){objSize=v;objName='Свій розмір';store.set('sz',v);store.set('sn',objName);$('#pick').textContent='📚 Свій розмір'}
 };
-$('#sz').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){objSize=v;store.set('sz',v)}};
 $('#hh').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){camH=v;store.set('h',v);ema=null;buf=[]}};
 $('#fromG').onclick=()=>{
   if(lastDist==null)return say('Спочатку виміряй відстань у режимі «По землі» або «За розміром»');
@@ -408,8 +728,7 @@ $('#sb').onclick=()=>{
 };
 $('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit)};
 
-$('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;
-if(![1.75,2.03,1.8,1.5,0.297].includes(objSize))$('#obj').value='custom';
+$('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;$('#pick').textContent='📚 '+objName;
 layout();startCam();listenOri();requestAnimationFrame(loop);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
