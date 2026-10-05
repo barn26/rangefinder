@@ -149,22 +149,14 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
 
     <div id="p-scan" class="pn hide">
       <div id="scl"></div>
-      <small id="scs"></small>
       <div class="row"><label>Показувати</label>
         <select id="scf"><option value="all">Усі об'єкти</option><option value="mov">Лише рухомі</option></select>
       </div>
-      <div class="row"><label>Модель</label>
-        <select id="scm"><option value="mobilenet_v2">Точна (повільніша)</option><option value="lite_mobilenet_v2">Легка (швидка)</option></select>
-      </div>
-      <div class="row"><label>Дальність</label>
-        <select id="scr"><option value="1">Звичайна (весь кадр)</option><option value="2">Далека (по частинах)</option></select>
-      </div>
-      <div class="row"><label>Мін. впевненість</label><input id="scc" type="range" min="20" max="80" step="5" value="35"><b id="scv" style="min-width:38px;text-align:right">35%</b></div>
       <div class="row">
         <label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="alOn">Сигнал, якщо ближче</label>
         <input id="alD" type="number" value="30" min="1" step="1" inputmode="decimal" aria-label="Відстань сигналу, м"><span style="color:var(--mute)">м</span>
       </div>
-      <small>Поставте телефон нерухомо: рух камери заважає визначати рух об'єктів. Для далеких і дрібних об'єктів вмикай «Далека» й збільшуй зум. Відстань і розмір приблизні (типові розміри класів), швидкість орієнтовна.</small>
+      <small>Поставте телефон нерухомо: рух камери заважає визначати рух об'єктів. Відстань і розмір приблизні (типові розміри класів), швидкість орієнтовна.</small>
     </div>
 
     <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
@@ -690,16 +682,13 @@ const DB=parse(RAW),MIL=parse(RAWM);
 
 /* ---------- цивільні класи для сканера: [назва, типова висота, м] ---------- */
 const CLS={person:['Людина',1.70],bicycle:['Велосипед',1.05],car:['Авто',1.50],motorcycle:['Мотоцикл',1.20],bus:['Автобус',3.00],truck:['Вантажівка',3.30],dog:['Собака',0.55],cat:['Кіт',0.30],horse:['Кінь',1.70],cow:['Корова',1.40],sheep:['Вівця',0.80],bench:['Лавка',0.85],chair:['Стілець',0.90],'fire hydrant':['Гідрант',0.75],'stop sign':['Знак «Стоп»',0.75]};
-const grp=c=>(c==='car'||c==='truck'||c==='bus')?'veh':((c==='bicycle'||c==='motorcycle')?'two':c);
 
 let mode='size',vert=true,frozen=false,frozenVal=null,frozenT=0,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
 let hrel=null,headAbs=null,absSeen=false,oBuf=[];
 let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
 let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
 let my=store.get('my',[]),cat='Усі',cur=[],src='gen';
-let pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null;
-let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35),regIdx=0,fpsT=[],scanStat={fps:0,all:0,sup:0};
-const oc=document.createElement('canvas'),octx=oc.getContext('2d');
+let pts=[],model=null,loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null;
 
 function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
 const fs=m=>fmt(m).join(' ');
@@ -975,16 +964,12 @@ $('#clrP').onclick=()=>{pts=[];refreshPts()};
 /* ---------- сканер ---------- */
 function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error(u));document.head.appendChild(s)})}
 async function ensureModel(){
-  if(loading)return;
-  if(model&&modelBase===smodel)return;
-  loading=true;
-  try{if(model&&model.dispose)model.dispose()}catch(e){}
-  model=null;
-  scanMsg='Завантажую модель ('+(smodel==='mobilenet_v2'?'точна':'легка')+')…';
+  if(model||loading)return;
+  loading=true;scanMsg='Завантажую модель розпізнавання…';
   try{
     if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
     if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
-    model=await cocoSsd.load({base:smodel});modelBase=smodel;
+    model=await cocoSsd.load({base:'lite_mobilenet_v2'});
     scanMsg='';
   }catch(e){scanMsg='Не вдалося завантажити модель. Відкрий вкладку з інтернетом (потрібно один раз).'}
   loading=false;
@@ -994,54 +979,35 @@ function iou(a,b){
   const i=Math.max(0,x2-x1)*Math.max(0,y2-y1);
   return i/(a[2]*a[3]+b[2]*b[3]-i||1);
 }
-function slope(a,b){
-  const n=a.length,ma=a.reduce((s,x)=>s+x,0)/n,mb=b.reduce((s,x)=>s+x,0)/n;
-  let num=0,den=0;for(let i=0;i<n;i++){num+=(a[i]-ma)*(b[i]-mb);den+=(a[i]-ma)*(a[i]-ma)}
-  return den>0?num/den:0;
-}
 function motion(k,g,shk){
   const h=k.hist;if(h.length<4)return;
-  const t0=h[0].t,dt=(h[h.length-1].t-t0)/1000;if(dt<1.0)return;
-  const ts=h.map(q=>(q.t-t0)/1000),W=(V.videoWidth||1280)/2;
-  const ds=h.map(q=>q.d),ls=h.map(q=>(q.cx-W)*q.d/g.f);
-  const vr=slope(ts,ds),vl=slope(ts,ls),sp=Math.hypot(vr,vl);
-  const dm=ds.reduce((s,x)=>s+x,0)/ds.length;
-  k.v=sp;k.ready=true;
+  const a=h[0],b=h[h.length-1],dt=(b.t-a.t)/1000;if(dt<.7)return;
+  const dm=(a.d+b.d)/2,vr=(b.d-a.d)/dt,vl=((b.cx-a.cx)*dm/g.f)/dt,sp=Math.hypot(vr,vl);
+  k.v=sp;
   if(shk)return;
-  const disp=sp*dt,thr=Math.max(.7,.12*dm);
-  if(!k.moving&&sp>1.0&&disp>thr)k.moving=true;
-  else if(k.moving&&(sp<.6||disp<thr*.6))k.moving=false;
+  const jit=Math.abs(b.cx-a.cx)<.05*k.box[3]&&Math.abs(b.d-a.d)<.05*dm;
+  if(!k.moving&&sp>1.0&&!jit)k.moving=true;
+  else if(k.moving&&(sp<.6||jit))k.moving=false;
   k.dirTxt=Math.abs(vr)>.7*Math.abs(vl)&&Math.abs(vr)>.8?(vr<0?'до вас':'від вас'):'вбік';
 }
 function updateTracks(out,t){
-  const g=geo(),vh=V.videoHeight||720,win=srange==='2'?3500:2200;
+  const g=geo();
   shake=oRange(1200)>1.2;
   const used=new Set();
   out.filter(o=>CLS[o.class]).forEach(o=>{
-    const cx=o.bbox[0]+o.bbox[2]/2,cy=o.bbox[1]+o.bbox[3]/2,sz=Math.max(o.bbox[2],o.bbox[3]);
-    let best=null,bs=1e9;
-    trk.forEach(k=>{
-      if(grp(k.cls)!==grp(o.class)||used.has(k.id))return;
-      const kx=k.box[0]+k.box[2]/2,ky=k.box[1]+k.box[3]/2;
-      const dist=Math.hypot(cx-kx,cy-ky),v=iou(k.box,o.bbox),lim=Math.max(k.box[2],k.box[3],sz)*.8;
-      if(v>.15||dist<lim){const sc=dist/lim-v;if(sc<bs){bs=sc;best=k}}
-    });
-    if(!best){best={id:nid++,cls:o.class,votes:{},hist:[],moving:false,ready:false,v:0,dirTxt:'',alerted:false,d:null,hits:0,score:o.score,box:o.bbox.slice()};trk.push(best)}
-    used.add(best.id);
-    best.box=best.box.map((v,i)=>v+(o.bbox[i]-v)*.6);
-    best.seen=t;best.hits++;
-    best.score=best.score*.6+o.score*.4;
-    best.votes[o.class]=(best.votes[o.class]||0)+o.score;
-    let bc=best.cls,bv=-1;for(const c in best.votes){if(best.votes[c]>bv){bv=best.votes[c];bc=c}}
-    best.cls=bc;best.name=CLS[bc][0];best.H=CLS[bc][1];
-    best.cut=o.bbox[1]<=2||o.bbox[1]+o.bbox[3]>=vh-2;
-    const raw=best.H*g.f/best.box[3];
+    let best=null,bi=.25;
+    trk.forEach(k=>{if(k.cls!==o.class||used.has(k.id))return;const v=iou(k.box,o.bbox);if(v>bi){bi=v;best=k}});
+    if(!best){best={id:nid++,cls:o.class,hist:[],moving:false,v:0,dirTxt:'',alerted:false,d:null};trk.push(best)}
+    used.add(best.id);best.box=o.bbox;best.seen=t;
+    const nm=CLS[o.class][0],H=CLS[o.class][1];
+    best.name=nm;best.H=H;
+    const raw=H*g.f/o.bbox[3];
     best.d=best.d==null?raw:best.d+(raw-best.d)*.35;
-    best.hist.push({t,cx:best.box[0]+best.box[2]/2,d:best.d});
-    while(best.hist.length&&t-best.hist[0].t>win)best.hist.shift();
+    best.hist.push({t,cx:o.bbox[0]+o.bbox[2]/2,d:best.d});
+    while(best.hist.length&&t-best.hist[0].t>1800)best.hist.shift();
     motion(best,g,shake);
   });
-  trk=trk.filter(k=>t-k.seen<(srange==='2'?4000:2000));
+  trk=trk.filter(k=>t-k.seen<1500);
   if($('#alOn').checked){
     const lim=parseFloat($('#alD').value)||30;
     visTracks().forEach(k=>{
@@ -1050,45 +1016,15 @@ function updateTracks(out,t){
     });
   }
 }
-function regions(){
-  const vw=V.videoWidth,vh=V.videoHeight;
-  if(srange!=='2')return[[0,0,vw,vh]];
-  const w=Math.round(vw*.6),h=Math.round(vh*.6);
-  return[[0,0,vw,vh],[0,0,w,h],[vw-w,0,w,h],[0,vh-h,w,h],[vw-w,vh-h,w,h]];
-}
 async function detectStep(){
   if(det||!model||mode!=='scan'||frozen||V.readyState<2||!V.videoWidth)return;
   det=true;
-  try{
-    const vw=V.videoWidth,vh=V.videoHeight,rs=regions(),r=rs[regIdx%rs.length];regIdx++;
-    let inp=V,sx=0,sy=0,k=1;
-    if(r[2]<vw||r[3]<vh){
-      const cw=Math.min(r[2],960),ch=Math.round(r[3]*cw/r[2]);
-      oc.width=cw;oc.height=ch;octx.drawImage(V,r[0],r[1],r[2],r[3],0,0,cw,ch);
-      inp=oc;sx=r[0];sy=r[1];k=r[2]/cw;
-    }
-    let out=await model.detect(inp,30,sconf/100);
-    out.forEach(o=>{o.bbox=[o.bbox[0]*k+sx,o.bbox[1]*k+sy,o.bbox[2]*k,o.bbox[3]*k]});
-    const nAll=out.length;
-    const m=4*k;
-    out=out.filter(o=>{
-      const x1=o.bbox[0],y1=o.bbox[1],x2=x1+o.bbox[2],y2=y1+o.bbox[3];
-      if(sx>0&&x1<=sx+m)return false;
-      if(sx+r[2]<vw&&x2>=sx+r[2]-m)return false;
-      if(sy>0&&y1<=sy+m)return false;
-      if(sy+r[3]<vh&&y2>=sy+r[3]-m)return false;
-      return o.bbox[3]>=12;
-    });
-    const t=performance.now();
-    updateTracks(out,t);
-    fpsT.push(t);if(fpsT.length>10)fpsT.shift();
-    scanStat={fps:fpsT.length>1?(fpsT.length-1)/((t-fpsT[0])/1000):0,all:nAll,sup:out.filter(o=>CLS[o.class]).length};
-  }catch(e){}
+  try{const out=await model.detect(V,20,0.45);updateTracks(out,performance.now())}catch(e){}
   det=false;
 }
 function visTracks(){
-  const t=(frozen&&mode==='scan')?frozenT:performance.now(),f=$('#scf').value,win=srange==='2'?2500:900;
-  return trk.filter(k=>t-k.seen<win&&(k.hits>=2||k.score>=.6)&&(f==='all'||k.moving)).sort((a,b)=>a.d-b.d);
+  const t=(frozen&&mode==='scan')?frozenT:performance.now(),f=$('#scf').value;
+  return trk.filter(k=>t-k.seen<800&&k.hist.length>=2&&(f==='all'||k.moving)).sort((a,b)=>a.d-b.d);
 }
 function beep(){
   try{
@@ -1105,19 +1041,17 @@ function brg(k){
   const f=geo().f;
   return (headAbs+Math.atan(((k.box[0]+k.box[2]/2)-(V.videoWidth||1280)/2)/f)/R+360)%360;
 }
-const dtxt=k=>(k.cut?'≤ ':'')+fs(k.d);
 function rowHtml(k){
   const wm=k.H*k.box[2]/k.box[3];
-  const state=!k.ready?'аналізую':k.moving?(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год'):'нерухомий';
+  const state=k.moving?(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год'):'нерухомий';
   const az=headAbs!=null?' · аз. '+Math.round(brg(k))+'°':'';
-  return '<div class="sr"><span class="dot'+(k.moving?'':' st')+'"></span><span class="sn">'+esc(k.name)+'<small>≈ в '+ef(k.H)+' × ш '+ef(wm)+' · '+state+az+'</small></span><b>'+dtxt(k)+'</b></div>';
+  return '<div class="sr"><span class="dot'+(k.moving?'':' st')+'"></span><span class="sn">'+esc(k.name)+'<small>≈ в '+ef(k.H)+' × ш '+ef(wm)+' · '+state+az+'</small></span><b>'+fs(k.d)+'</b></div>';
 }
 function renderList(now){
   if(now-lastList<250)return;
   lastList=now;
   const v=visTracks(),mv=v.filter(k=>k.moving).length;
-  $('#scl').innerHTML=(v.length?'<small style="margin:0 0 4px">Рухомих: '+mv+' · інших: '+(v.length-mv)+'</small>':'')+v.slice(0,8).map(rowHtml).join('')+(v.length>8?'<small>…і ще '+(v.length-8)+'</small>':'');
-  $('#scs').textContent=model?('Модель: '+(smodel==='mobilenet_v2'?'точна':'легка')+' · '+scanStat.fps.toFixed(1)+' кадр/с · у кадрі знайдено: '+scanStat.all+' (підтримуваних: '+scanStat.sup+')'):(scanMsg||'');
+  $('#scl').innerHTML=(v.length?'<small style="margin:0 0 4px">Рухомих: '+mv+' · нерухомих: '+(v.length-mv)+'</small>':'')+v.slice(0,8).map(rowHtml).join('')+(v.length>8?'<small>…і ще '+(v.length-8)+'</small>':'');
 }
 function drawOv(){
   const c=$('#ov'),r=stage.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
@@ -1141,7 +1075,7 @@ function drawOv(){
       x.moveTo(X+L,Y+Ht);x.lineTo(X,Y+Ht);x.lineTo(X,Y+Ht-L);
       x.stroke();
     }else{x.setLineDash([5,4]);x.strokeRect(X,Y,Wd,Ht);x.setLineDash([])}
-    const lab=k.name+' · '+dtxt(k),tw=x.measureText(lab).width+10,ly=Math.max(0,Y-20);
+    const lab=k.name+' · '+fs(k.d),tw=x.measureText(lab).width+10,ly=Math.max(0,Y-20);
     x.fillStyle=col;x.fillRect(X,ly,tw,18);
     x.fillStyle='#0c171b';x.fillText(lab,X+5,ly+9);
     if(k.moving){x.fillStyle=col;x.fillText(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год',X,Math.min(r.height-8,Y+Ht+11))}
@@ -1154,7 +1088,7 @@ function view(){
     const v=visTracks();
     if(!v.length)return{warn:scanMsg||(model?'Шукаю об\'єкти… наведи камеру на людей чи авто':'')};
     const n=v[0];
-    return{d:n.d,err:n.d*.2,sub:n.name+(!n.ready?' · аналізую':n.moving?' · '+n.dirTxt:' · нерухомий'),warn:shake?'Тримай телефон нерухомо — рух камери заважає':''};
+    return{d:n.d,err:n.d*.2,sub:n.name+(n.moving?' · '+n.dirTxt:' · нерухомий'),warn:shake?'Тримай телефон нерухомо — рух камери заважає':''};
   }
   if(mode==='pts'){
     const g=geo();lvl(tElev(g));
@@ -1257,7 +1191,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';say('');
   if(mode==='ground'||mode==='height'||mode==='pts')askSensor();
   if(mode==='pts')refreshPts();
-  if(mode==='scan'){trk=[];fpsT=[];ensureModel()}
+  if(mode==='scan'){trk=[];ensureModel()}
   layout();
 });
 document.querySelectorAll('.ori').forEach(b=>b.onclick=()=>{
@@ -1312,15 +1246,11 @@ $('#sb').onclick=()=>{
   spd=null;
 };
 $('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit);if(mode==='pts')refreshPts()};
-$('#scm').onchange=e=>{smodel=e.target.value;store.set('sm',smodel);trk=[];fpsT=[];if(mode==='scan')ensureModel()};
-$('#scr').onchange=e=>{srange=e.target.value;store.set('sr',srange);trk=[];regIdx=0;fpsT=[]};
-$('#scc').oninput=e=>{sconf=+e.target.value;store.set('sc',sconf);$('#scv').textContent=sconf+'%'};
 
 $('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;$('#pick').textContent='📚 '+objName;
-$('#scm').value=smodel;$('#scr').value=srange;$('#scc').value=sconf;$('#scv').textContent=sconf+'%';
 layout();startCam();listenOri();requestAnimationFrame(loop);
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 })();
 </script>
 </body>
-                                                                                                                                            </html>
+  </html>
