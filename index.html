@@ -19,21 +19,24 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 .h .mk{top:0;bottom:0;width:0;border-left:2px solid var(--amb)}
 .mk i{position:absolute;width:48px;height:48px;pointer-events:auto;touch-action:none;display:grid;place-items:center}
 .mk i::after{content:"";width:20px;height:20px;border-radius:50%;background:var(--amb);border:3px solid var(--bg)}
-.v .mk i{right:10px;top:-24px}.h .mk i{bottom:calc(230px + env(safe-area-inset-bottom,0px));left:-24px}
+.v .mk i{right:10px;top:-24px}
+.h .mk i{bottom:calc(var(--sh,230px) + 12px);left:-24px}
 .mk:nth-child(2){border-color:var(--red)}.mk:nth-child(2) i::after{background:var(--red)}
 #cross{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;pointer-events:none;display:none}
 #cross::before,#cross::after{content:"";position:absolute;background:var(--amb)}
-#cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
-#cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
+#cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
+#cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
 #cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
 #top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 0;display:flex;gap:8px}
 .tab{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-weight:600}
 .tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
 #sheet{position:absolute;left:0;right:0;bottom:0;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
+#sheet.min #ctl{display:none}
 #read{display:flex;align-items:baseline;gap:10px}
 #num{font:700 64px/1 "Barlow Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.5px}
 #unit{font:500 26px "Barlow Condensed",system-ui,sans-serif;color:var(--amb)}
 #sub{margin-left:auto;text-align:right;color:var(--mute);font-size:13px}
+#col{align-self:center;padding:6px 12px;font-size:18px;line-height:1}
 #warn{color:var(--amb);font-size:13px;min-height:18px}
 .row{display:flex;gap:8px;align-items:center;margin-top:8px}
 .row label{color:var(--mute);font-size:13px;flex:0 0 auto}
@@ -60,51 +63,79 @@ small{color:var(--mute);font-size:12px}
   <button class="tab" data-m="ground">По землі</button>
 </div>
 <div id="sheet">
-  <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div></div>
+  <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div><button id="col" aria-label="Згорнути панель">⌄</button></div>
   <div id="warn"></div>
-
-  <div id="p-size">
-    <div class="row"><label>Об'єкт</label>
-      <select id="obj">
-        <option value="1.75">Людина, зріст — 1,75 м</option>
-        <option value="2.03">Двері — 2,03 м</option>
-        <option value="1.8">Легкове авто, ширина — 1,8 м</option>
-        <option value="1.5">Легкове авто, висота — 1,5 м</option>
-        <option value="0.297">Аркуш A4, довга сторона — 0,297 м</option>
-        <option value="custom">Свій розмір…</option>
-      </select>
-      <input id="sz" type="number" step="0.01" min="0.01" inputmode="decimal" aria-label="Розмір, м">
+  <div id="ctl">
+    <div id="p-size">
+      <div class="row"><label>Об'єкт</label>
+        <select id="obj">
+          <option value="1.75">Людина, зріст — 1,75 м</option>
+          <option value="2.03">Двері — 2,03 м</option>
+          <option value="1.8">Легкове авто, ширина — 1,8 м</option>
+          <option value="1.5">Легкове авто, висота — 1,5 м</option>
+          <option value="0.297">Аркуш A4, довга сторона — 0,297 м</option>
+          <option value="custom">Свій розмір…</option>
+        </select>
+        <input id="sz" type="number" step="0.01" min="0.01" inputmode="decimal" aria-label="Розмір, м">
+      </div>
+      <div class="row">
+        <button id="ori">Міряю висоту ↕</button>
+        <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1;width:auto">
+        <button id="cal">Калібрувати</button>
+      </div>
+      <small>Постав маркери на краї об'єкта. Для точності відкалібруй один раз на об'єкті з відомою відстанню.</small>
     </div>
+
+    <div id="p-ground" class="hide">
+      <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"></div>
+      <small>Тримай телефон вертикально. Торкнись екрана там, де ціль стоїть на землі, — хрестик покаже точку. Працює для цілей на рівній поверхні.</small>
+      <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчик нахилу</button>
+    </div>
+
     <div class="row">
-      <button id="ori">Міряю висоту ↕</button>
-      <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1;width:auto">
-      <button id="cal">Калібрувати</button>
+      <button id="frz" style="flex:1">Стоп-кадр</button>
+      <span id="zwrap" class="row hide" style="margin:0;flex:2"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></span>
     </div>
-    <small>Постав маркери на краї об'єкта. Для точності відкалібруй один раз на об'єкті з відомою відстанню.</small>
-  </div>
-
-  <div id="p-ground" class="hide">
-    <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"></div>
-    <small>Тримай телефон вертикально. Торкнись екрана там, де ціль стоїть на землі, — хрестик покаже точку. Працює для цілей на рівній поверхні.</small>
-    <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчик нахилу</button>
-  </div>
-
-  <div class="row">
-    <button id="frz" style="flex:1">Стоп-кадр</button>
-    <span id="zwrap" class="row hide" style="margin:0;flex:2"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></span>
   </div>
 </div>
 
 <script>
 (function(){
 const $=s=>document.querySelector(s);
-const V=$('#vid'),stage=$('#stage'),cross=$('#cross');
+const V=$('#vid'),stage=$('#stage'),cross=$('#cross'),sheet=$('#sheet');
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
 let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,track=null,elev=null,ema=null;
-let p=[.3,.7],tgt={x:.5,y:.5},buf=[];
+let p=[.25,.5],tgt={x:.5,y:.4},buf=[],inited=false;
 let K=store.get('K',0.75);           // фокус у частках довшої сторони кадру
 let camH=store.get('h',1.5),objSize=store.get('sz',1.75);
+
+/* ---------- видима зона для маркерів ---------- */
+function zone(){
+  const r=stage.getBoundingClientRect();
+  if(vert){
+    const a=($('#top').getBoundingClientRect().bottom-r.top+8)/r.height;
+    const b=(sheet.getBoundingClientRect().top-r.top-8)/r.height;
+    return b>a+.05?{min:a,max:b}:{min:.1,max:.5};
+  }
+  return {min:.03,max:.97};
+}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function resetMarkers(){
+  const z=zone(),w=z.max-z.min;
+  p=[z.min+w*.2,z.min+w*.8];
+}
+function fitMarkers(){
+  const z=zone();
+  p=p.map(v=>clamp(v,z.min,z.max));
+}
+function layout(){
+  stage.style.setProperty('--sh',sheet.getBoundingClientRect().height+'px');
+  if(!inited){inited=true;resetMarkers()}else fitMarkers();
+  render();
+}
+if(window.ResizeObserver)new ResizeObserver(layout).observe(sheet);
+window.addEventListener('resize',layout);
 
 /* ---------- камера ---------- */
 async function startCam(){
@@ -194,8 +225,8 @@ document.querySelectorAll('.mk i').forEach((h,i)=>{
   h.addEventListener('pointerdown',e=>{h.setPointerCapture(e.pointerId);e.preventDefault()});
   h.addEventListener('pointermove',e=>{
     if(!h.hasPointerCapture(e.pointerId))return;
-    const r=stage.getBoundingClientRect();
-    p[i]=Math.max(0,Math.min(1,vert?(e.clientY-r.top)/r.height:(e.clientX-r.left)/r.width));render();
+    const r=stage.getBoundingClientRect(),z=zone();
+    p[i]=clamp(vert?(e.clientY-r.top)/r.height:(e.clientX-r.left)/r.width,z.min,z.max);render();
   });
 });
 stage.addEventListener('pointerdown',e=>{
@@ -203,6 +234,11 @@ stage.addEventListener('pointerdown',e=>{
   const r=stage.getBoundingClientRect();
   tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];render();
 });
+$('#col').onclick=()=>{
+  const m=sheet.classList.toggle('min');
+  $('#col').textContent=m?'⌃':'⌄';
+  $('#col').setAttribute('aria-label',m?'Розгорнути панель':'Згорнути панель');
+};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
@@ -210,9 +246,9 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   $('#p-ground').classList.toggle('hide',mode!=='ground');
   ema=null;buf=[];frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';
   if(mode==='ground')askSensor();
-  render();
+  layout();
 });
-$('#ori').onclick=()=>{vert=!vert;$('#ori').textContent=vert?'Міряю висоту ↕':'Міряю ширину ↔';p=[.3,.7];render()};
+$('#ori').onclick=()=>{vert=!vert;$('#ori').textContent=vert?'Міряю висоту ↕':'Міряю ширину ↔';resetMarkers();render()};
 $('#obj').onchange=e=>{
   if(e.target.value!=='custom'){objSize=+e.target.value;$('#sz').value=objSize;store.set('sz',objSize)}
   else $('#sz').focus();
@@ -240,7 +276,7 @@ $('#frz').onclick=()=>{
 
 $('#sz').value=objSize;$('#hh').value=camH;
 if(![1.75,2.03,1.8,1.5,0.297].includes(objSize))$('#obj').value='custom';
-render();startCam();listenOri();loop();
+layout();startCam();listenOri();loop();
 })();
 </script>
 </body>
