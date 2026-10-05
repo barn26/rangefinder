@@ -59,6 +59,8 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
 #db{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
 .dbh{display:flex;gap:8px}
 #dbq{flex:1}
+.seg{display:flex;gap:6px;padding-top:10px}
+.seg .chip{flex:1;padding:9px 6px;border-radius:10px}
 #chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 8px;flex:0 0 auto}
 .chip{flex:0 0 auto;padding:7px 12px;border-radius:99px;font-size:13px;white-space:nowrap}
 .chip.on{background:var(--amb);color:var(--bg);border-color:var(--amb)}
@@ -143,10 +145,11 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
 
 <div id="db" class="hide">
   <div class="dbh"><input id="dbq" type="search" placeholder="Пошук: авто, двері, ворота…" aria-label="Пошук об'єкта"><button id="dbx" aria-label="Закрити">✕</button></div>
+  <div class="seg"><button id="sg" class="chip on">Загальна база</button><button id="sm" class="chip">🎖 Військова техніка</button></div>
   <div id="chips"></div>
   <div id="cnt"></div>
   <div id="dbl"></div>
-  <div class="dba"><input id="dbn" placeholder="Свій об'єкт: назва"><input id="dbv" type="number" step="0.001" min="0.001" inputmode="decimal" placeholder="м"><button id="dbadd" class="pri">＋</button></div>
+  <div class="dba" id="dba"><input id="dbn" placeholder="Свій об'єкт: назва"><input id="dbv" type="number" step="0.001" min="0.001" inputmode="decimal" placeholder="м"><button id="dbadd" class="pri">＋</button></div>
   <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
 </div>
 
@@ -160,7 +163,7 @@ const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
 
-/* ---------- БАЗА РОЗМІРІВ (м) ---------- */
+/* ---------- БАЗА РОЗМІРІВ: ЗАГАЛЬНА (м) ---------- */
 const RAW=`§Люди
 Дорослий чоловік, зріст|1.75
 Доросла жінка, зріст|1.62
@@ -419,12 +422,236 @@ CN Tower|553.3
 Кредитна картка, довжина|0.0856
 Компакт-диск, діаметр|0.12
 Банкнота 1 долар США, довжина|0.156`;
-const DB=[];(function(){let c='';RAW.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');DB.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}})})();
+
+/* ---------- БАЗА РОЗМІРІВ: ВІЙСЬКОВА ТЕХНІКА (м, відкриті довідники) ---------- */
+const RAWM=`§Танки
+Т-55, довжина з гарматою ≈|9.00
+Т-55, ширина ≈|3.27
+Т-55, висота ≈|2.35
+Т-64, довжина з гарматою ≈|9.20
+Т-64, ширина ≈|3.40
+Т-64, висота ≈|2.17
+Т-72, довжина з гарматою ≈|9.53
+Т-72, ширина ≈|3.59
+Т-72, висота ≈|2.23
+Т-80, довжина з гарматою ≈|9.90
+Т-80, ширина ≈|3.60
+Т-80, висота ≈|2.20
+Т-84 «Оплот», довжина з гарматою ≈|9.72
+Т-84 «Оплот», ширина ≈|3.56
+Т-84 «Оплот», висота ≈|2.20
+Т-90, довжина з гарматою ≈|9.53
+Т-90, ширина ≈|3.78
+Т-90, висота ≈|2.22
+Leopard 1A5, довжина з гарматою ≈|9.54
+Leopard 1A5, ширина ≈|3.37
+Leopard 1A5, висота ≈|2.39
+Leopard 2A4, довжина з гарматою|9.67
+Leopard 2A4, ширина|3.70
+Leopard 2A4, висота|2.79
+Leopard 2A6, довжина з гарматою ≈|10.97
+Leopard 2A6, ширина ≈|3.75
+Leopard 2A6, висота ≈|3.00
+M1 Abrams, довжина з гарматою|9.83
+M1 Abrams, ширина|3.66
+M1 Abrams, висота|2.44
+Challenger 2, довжина з гарматою ≈|11.55
+Challenger 2, ширина ≈|3.52
+Challenger 2, висота ≈|2.50
+Leclerc, довжина з гарматою ≈|9.87
+Leclerc, ширина ≈|3.71
+Leclerc, висота ≈|2.53
+§БМП, БТР і бронеавтомобілі
+БМП-1, довжина|6.74
+БМП-1, ширина|2.94
+БМП-1, висота ≈|2.15
+БМП-2, довжина|6.72
+БМП-2, ширина|3.15
+БМП-2, висота|2.45
+БМП-3, довжина|7.14
+БМП-3, ширина|3.20
+БМП-3, висота|2.30
+БТР-70, довжина|7.53
+БТР-70, ширина|2.80
+БТР-70, висота ≈|2.32
+БТР-80, довжина|7.65
+БТР-80, ширина|2.90
+БТР-80, висота ≈|2.46
+БРДМ-2, довжина|5.75
+БРДМ-2, ширина|2.35
+БРДМ-2, висота|2.31
+МТ-ЛБ, довжина ≈|6.45
+МТ-ЛБ, ширина ≈|2.86
+МТ-ЛБ, висота ≈|1.86
+M113, довжина ≈|4.86
+M113, ширина ≈|2.69
+M113, висота ≈|2.20
+M2 Bradley, довжина ≈|6.55
+M2 Bradley, ширина ≈|3.60
+M2 Bradley, висота ≈|3.00
+Marder 1A3, довжина ≈|6.88
+Marder 1A3, висота ≈|3.00
+Stryker, довжина|6.95
+Stryker, ширина|2.72
+Stryker, висота ≈|2.64
+HMMWV, довжина ≈|4.57
+HMMWV, ширина ≈|2.16
+HMMWV, висота ≈|1.83
+УАЗ-469, довжина|4.03
+УАЗ-469, ширина ≈|1.79
+УАЗ-469, висота ≈|2.05
+Урал-4320, довжина ≈|7.37
+Урал-4320, висота ≈|2.90
+§Артилерія, РСЗВ і ППО (самохідні платформи)
+2С1 «Гвоздика», довжина ≈|7.26
+2С1 «Гвоздика», ширина ≈|2.86
+2С1 «Гвоздика», висота ≈|2.40
+2С19 «Мста-С», довжина з гарматою ≈|11.90
+2С19 «Мста-С», ширина ≈|3.38
+2С19 «Мста-С», висота ≈|2.99
+PzH 2000, довжина з гарматою ≈|11.67
+PzH 2000, ширина ≈|3.48
+PzH 2000, висота ≈|3.40
+CAESAR 6×6, довжина ≈|10.00
+CAESAR 6×6, ширина ≈|2.55
+CAESAR 6×6, висота ≈|3.70
+БМ-21 «Град», довжина ≈|7.35
+БМ-21 «Град», ширина ≈|2.69
+БМ-21 «Град», висота ≈|3.09
+БМ-27 «Ураган», довжина ≈|9.63
+БМ-27 «Ураган», ширина ≈|2.80
+БМ-27 «Ураган», висота ≈|3.20
+HIMARS, довжина|7.00
+HIMARS, ширина|2.40
+HIMARS, висота|3.20
+M270 MLRS, довжина ≈|6.85
+M270 MLRS, ширина ≈|2.97
+M270 MLRS, висота ≈|2.57
+«Бук-М1» (пускова), довжина ≈|9.30
+«Бук-М1» (пускова), ширина ≈|3.25
+«Бук-М1» (пускова), висота ≈|3.80
+ЗСУ-23-4 «Шилка», довжина ≈|6.53
+ЗСУ-23-4 «Шилка», ширина ≈|3.10
+ЗСУ-23-4 «Шилка», висота ≈|3.80
+§Літаки: винищувачі й штурмовики
+Су-27, довжина|21.94
+Су-27, розмах крил|14.70
+Су-27, висота|5.93
+Су-25, довжина ≈|15.33
+Су-25, розмах крил|14.36
+Су-25, висота ≈|4.80
+Су-24М, довжина ≈|22.67
+Су-24М, розмах крил (розкриті) ≈|17.64
+Су-30СМ, довжина ≈|21.9
+Су-30СМ, розмах крил ≈|14.7
+Су-34, довжина ≈|23.34
+Су-34, розмах крил ≈|14.70
+Су-35С, довжина ≈|21.9
+Су-35С, розмах крил ≈|15.3
+МіГ-29, довжина|17.37
+МіГ-29, розмах крил|11.36
+МіГ-29, висота|4.73
+МіГ-31, довжина ≈|22.69
+МіГ-31, розмах крил ≈|13.46
+F-16C, довжина|15.06
+F-16C, розмах крил|9.96
+F-16C, висота ≈|4.88
+F-15C, довжина|19.43
+F-15C, розмах крил|13.05
+F-15C, висота|5.63
+F-22, довжина|18.90
+F-22, розмах крил|13.56
+F-35A, довжина|15.67
+F-35A, розмах крил|10.70
+F/A-18C, довжина|17.07
+F/A-18C, розмах крил ≈|11.43
+Eurofighter Typhoon, довжина|15.96
+Eurofighter Typhoon, розмах крил|10.95
+Rafale, довжина|15.27
+Rafale, розмах крил|10.80
+Gripen C, довжина|14.10
+Gripen C, розмах крил|8.40
+Mirage 2000, довжина|14.36
+Mirage 2000, розмах крил|9.13
+A-10C, довжина|16.26
+A-10C, розмах крил|17.42
+§Літаки: бомбардувальники й транспортні
+Ту-22М3, довжина ≈|41.46
+Ту-22М3, розмах крил (розкриті) ≈|34.28
+Ту-95МС, довжина|49.13
+Ту-95МС, розмах крил|50.04
+Ту-160, довжина|54.10
+Ту-160, розмах крил (розкриті)|55.70
+B-52H, довжина|48.50
+B-52H, розмах крил|56.40
+B-2 Spirit, довжина|21.00
+B-2 Spirit, розмах крил|52.40
+Іл-76МД, довжина|46.59
+Іл-76МД, розмах крил|50.50
+Ан-26, довжина ≈|23.80
+Ан-26, розмах крил ≈|29.20
+C-130H Hercules, довжина|29.79
+C-130H Hercules, розмах крил|40.40
+C-17 Globemaster III, довжина|53.04
+C-17 Globemaster III, розмах крил|51.75
+§Вертольоти
+Мі-8МТВ, довжина фюзеляжу ≈|18.17
+Мі-8МТВ, діаметр гвинта|21.29
+Мі-8МТВ, висота ≈|5.65
+Мі-24, довжина фюзеляжу ≈|17.51
+Мі-24, діаметр гвинта|17.30
+Мі-24, висота ≈|6.50
+Мі-28Н, довжина фюзеляжу ≈|17.01
+Мі-28Н, діаметр гвинта|17.20
+Ка-52, діаметр кожного гвинта|14.50
+Ка-52, висота ≈|4.93
+Мі-26, діаметр гвинта|32.00
+Мі-26, висота ≈|8.15
+AH-64 Apache, діаметр гвинта|14.63
+AH-64 Apache, висота ≈|4.95
+UH-60 Black Hawk, довжина фюзеляжу ≈|15.26
+UH-60 Black Hawk, діаметр гвинта ≈|16.36
+CH-47 Chinook, довжина фюзеляжу ≈|15.90
+CH-47 Chinook, діаметр гвинта ≈|18.30
+§Безпілотники
+Bayraktar TB2, довжина|6.50
+Bayraktar TB2, розмах крил|12.00
+Bayraktar Akinci, довжина ≈|12.20
+Bayraktar Akinci, розмах крил ≈|20.00
+MQ-9 Reaper, довжина|11.00
+MQ-9 Reaper, розмах крил|20.00
+RQ-4 Global Hawk, довжина ≈|14.50
+RQ-4 Global Hawk, розмах крил ≈|39.90
+Орлан-10, довжина ≈|1.80
+Орлан-10, розмах крил ≈|3.10
+Shahed-136 («Герань-2»), довжина ≈|3.50
+Shahed-136 («Герань-2»), розмах крил ≈|2.50
+DJI Mavic 3, довжина (розкладений)|0.347
+DJI Matrice 300 RTK, довжина (розкладений)|0.81
+DJI Matrice 300 RTK, ширина (розкладений)|0.67
+FPV-дрон 5″, діагональ рами ≈|0.22
+FPV-дрон 7″, діагональ рами ≈|0.30
+FPV-дрон 10″, діагональ рами ≈|0.43
+§Кораблі й катери
+Magura V5 (морський дрон), довжина ≈|5.50
+Катер «Айленд», довжина ≈|33.5
+Бронекатер «Гюрза-М», довжина ≈|23.0
+Ракетний корабель «Буян-М», довжина ≈|74.1
+Фрегат проєкту 11356, довжина ≈|124.8
+Великий десантний корабель «Ропуха», довжина ≈|112.5
+Ракетний крейсер проєкту 1164 «Слава», довжина|186.4
+Есмінець Arleigh Burke, довжина ≈|155.0
+Підводний човен Los Angeles, довжина ≈|110.3
+Авіаносець Nimitz, довжина ≈|332.8
+Авіаносець Gerald R. Ford, довжина ≈|337.0`;
+
+function parse(raw){const a=[];let c='';raw.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');a.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}});return a}
+const DB=parse(RAW),MIL=parse(RAWM);
 
 let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
 let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
 let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
-let my=store.get('my',[]),cat='Усі',cur=[];
+let my=store.get('my',[]),cat='Усі',cur=[],src='gen';
 
 function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
 const fs=m=>fmt(m).join(' ');
@@ -432,11 +659,13 @@ const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
 const say=t=>{$('#res').textContent=t};
 
 /* ---------- база: вікно вибору ---------- */
-const allItems=()=>DB.concat(my.map(x=>({c:'Мої',n:x.n,v:x.v,u:1})));
+const baseArr=()=>src==='mil'?MIL:DB;
+const allItems=()=>src==='mil'?MIL:DB.concat(my.map(x=>({c:'Мої',n:x.n,v:x.v,u:1})));
 function vfmt(v){const k=U[unit][0]*v;return Number(k.toFixed(k>=100?0:k>=10?1:k>=1?2:3))+' '+U[unit][1]}
 function renderChips(){
-  const cats=[];DB.forEach(x=>{if(!cats.includes(x.c))cats.push(x.c)});
-  const list=['Усі','Нещодавні'].concat(cats,['Мої']);
+  const cats=[];baseArr().forEach(x=>{if(!cats.includes(x.c))cats.push(x.c)});
+  const list=['Усі','Нещодавні'].concat(cats,src==='gen'?['Мої']:[]);
+  if(!list.includes(cat))cat='Усі';
   $('#chips').innerHTML=list.map(c=>'<button class="chip'+(c===cat?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>').join('');
 }
 function renderDB(){
@@ -446,10 +675,18 @@ function renderDB(){
   else if(cat!=='Усі')a=a.filter(x=>x.c===cat);
   if(q)a=a.filter(x=>x.n.toLowerCase().includes(q)||x.c.toLowerCase().includes(q));
   cur=a;
-  $('#cnt').textContent='Знайдено: '+a.length+' з '+(DB.length+my.length);
+  const tot=src==='mil'?MIL.length:DB.length+my.length;
+  $('#cnt').textContent='Знайдено: '+a.length+' з '+tot+(src==='mil'?' · типові значення з відкритих довідників (≈ — приблизно)':'');
   $('#dbl').innerHTML=a.map((x,i)=>'<button class="it" data-i="'+i+'"><span>'+esc(x.n)+'</span><span><b>'+vfmt(x.v)+'</b>'+(x.u?'<i data-d="'+i+'" aria-label="Видалити">✕</i>':'')+'</span></button>').join('')||'<small style="padding:14px">Нічого не знайдено</small>';
 }
-function openDB(){$('#db').classList.remove('hide');renderChips();renderDB()}
+function setSrc(s){
+  src=s;cat='Усі';
+  $('#sg').classList.toggle('on',s==='gen');$('#sm').classList.toggle('on',s==='mil');
+  $('#dba').classList.toggle('hide',s==='mil');
+  $('#dbq').placeholder=s==='mil'?'Пошук: Т-72, F-16, Bayraktar, Мі-8…':'Пошук: авто, двері, ворота…';
+  renderChips();renderDB();
+}
+function openDB(){$('#db').classList.remove('hide');setSrc(src)}
 function closeDB(){$('#db').classList.add('hide')}
 function choose(it){
   objSize=it.v;objName=it.n;$('#sz').value=it.v;$('#pick').textContent='📚 '+it.n;
@@ -460,6 +697,8 @@ function choose(it){
 $('#pick').onclick=openDB;
 $('#dbx').onclick=closeDB;
 $('#dbq').oninput=renderDB;
+$('#sg').onclick=()=>setSrc('gen');
+$('#sm').onclick=()=>setSrc('mil');
 $('#chips').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;cat=b.dataset.c;renderChips();renderDB()};
 $('#dbl').onclick=e=>{
   const d=e.target.closest('[data-d]');
