@@ -13,6 +13,7 @@
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 #stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
 video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--mute)}
 #msg button{margin-top:14px}
 .mk{position:absolute;pointer-events:none}
@@ -28,9 +29,12 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 #cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
 #cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
 #cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
-#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:6px}
-.tab{flex:1;padding:10px 2px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:13px;font-weight:600}
+#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:4px}
+.tab{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:12px;font-weight:600}
 .tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
+#cmp{position:absolute;left:10px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;pointer-events:none}
+#cmp b{font-weight:600;font-variant-numeric:tabular-nums}
+#cmp span{color:var(--amb)}
 #sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
 #sheet.min #ctl{display:none}
 #read{display:flex;align-items:baseline;gap:10px}
@@ -45,6 +49,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 .row label{color:var(--mute);font-size:13px;flex:0 0 auto}
 select,input,button{font:inherit;color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0}
 input[type=number]{width:84px}
+input[type=checkbox]{width:20px;height:20px;padding:0;accent-color:var(--amb)}
 select{flex:1}
 button{cursor:pointer;font-weight:600}
 .row>button{flex:1;padding:9px 4px;font-size:14px}
@@ -56,6 +61,11 @@ small{color:var(--mute);font-size:12px;display:block;margin-top:6px}
 summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
 .ft{text-align:center;color:var(--mute);font-size:10.5px;line-height:1.35;margin-top:10px;letter-spacing:.2px}
 #pick{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.sr .sn{flex:1;min-width:0}
+.sr .sn small{margin:0}
+.sr b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--amb);flex:0 0 auto}.dot.st{background:var(--mute)}
 #db{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
 .dbh{display:flex;gap:8px}
 #dbq{flex:1}
@@ -77,15 +87,22 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
 <body>
 <div id="stage" class="v">
   <video id="vid" playsinline muted autoplay></video>
+  <canvas id="ov"></canvas>
   <div id="m1" class="mk"><i></i></div><div id="m2" class="mk"><i></i></div>
   <div id="cross"><b></b></div>
   <div id="msg"><div><div id="msgt"></div><button id="retry" class="pri">Увімкнути камеру</button></div></div>
 </div>
 <div id="top">
-  <button class="tab on" data-m="size">За розміром</button>
-  <button class="tab" data-m="ground">По землі</button>
-  <button class="tab" data-m="height">Висота</button>
-  <button class="tab" data-m="dim">Розмір</button>
+  <button class="tab on" data-m="size" title="За розміром">Об'єкт</button>
+  <button class="tab" data-m="ground" title="По землі">Земля</button>
+  <button class="tab" data-m="height" title="Висота за кутами">Висота</button>
+  <button class="tab" data-m="dim" title="Розмір об'єкта">Розмір</button>
+  <button class="tab" data-m="pts" title="Точки й площа">Точки</button>
+  <button class="tab" data-m="scan" title="Сканер">Сканер</button>
+</div>
+<div id="cmp" aria-label="Компас">
+  <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#8fa3a0" stroke-width="1.5"/><g id="rose"><path d="M13 3 L16 12 L10 12 Z" fill="#ff5a3c"/><path d="M13 23 L16 14 L10 14 Z" fill="#8fa3a0"/></g></svg>
+  <b id="az">—</b><span id="card"></span>
 </div>
 <div id="sheet">
   <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div><button id="col" aria-label="Згорнути панель">⌄</button></div>
@@ -103,15 +120,15 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
     </div>
 
     <div id="p-dim" class="pn hide">
-      <div class="row"><label>Відстань до об'єкта, м</label><input id="dd" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="fromG">З «По землі»</button></div>
+      <div class="row"><label>Відстань до об'єкта, м</label><input id="dd" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="fromG">З «Земля»</button></div>
       <div class="row"><button class="ori">Міряю висоту ↕</button></div>
-      <small>Спочатку виміряй відстань у режимі «По землі», потім постав маркери на краї об'єкта.</small>
+      <small>Спочатку виміряй відстань у режимі «Земля», потім постав маркери на краї об'єкта.</small>
     </div>
 
     <div id="p-tilt" class="pn hide">
       <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="zero">Обнулити нахил</button></div>
       <small>Обнулення: поклади телефон екраном вгору на рівну поверхню і натисни кнопку. Роби це раз після встановлення.</small>
-      <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчик нахилу</button>
+      <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчики</button>
     </div>
 
     <div id="p-ground" class="pn hide">
@@ -124,12 +141,26 @@ summary{margin-top:10px;color:var(--mute);font-size:13px;cursor:pointer}
       <small>Наведи хрестик на низ споруди і натисни «Низ», потім на верх і «Верх». Якщо низ видно на землі, відстань порахується сама, інакше впиши її.</small>
     </div>
 
-    <div class="row">
-      <button id="frz">Стоп-кадр</button>
-      <button id="ser">Серія ×10</button>
-      <button id="sa">Швидкість A</button>
-      <button id="sb">B</button>
+    <div id="p-pts" class="pn hide">
+      <div class="row"><button id="addP" class="pri">＋ Точка</button><button id="delP">Видалити останню</button><button id="clrP">Очистити</button></div>
+      <div id="plan"></div>
+      <small>Стій на місці й лише повертайся. Наведи хрестик на землю в першій точці й натисни «＋ Точка», потім у наступній. Торкнись екрана, щоб перемістити хрестик. Щоб площа порахувалась правильно, точки мають іти по колу. Земля має бути рівною.</small>
     </div>
+
+    <div id="p-scan" class="pn hide">
+      <div id="scl"></div>
+      <div class="row"><label>Показувати</label>
+        <select id="scf"><option value="all">Усі об'єкти</option><option value="mov">Лише рухомі</option></select>
+      </div>
+      <div class="row">
+        <label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="alOn">Сигнал, якщо ближче</label>
+        <input id="alD" type="number" value="30" min="1" step="1" inputmode="decimal" aria-label="Відстань сигналу, м"><span style="color:var(--mute)">м</span>
+      </div>
+      <small>Поставте телефон нерухомо: рух камери заважає визначати рух об'єктів. Відстань і розмір приблизні (типові розміри класів), швидкість орієнтовна.</small>
+    </div>
+
+    <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
+    <div class="row" id="bt2"><button id="ser">Серія ×10</button><button id="sa">Швидкість A</button><button id="sb">B</button></div>
     <div class="row hide" id="zwrap"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></div>
 
     <details>
@@ -162,6 +193,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
+const CARD=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
 
 /* ---------- БАЗА РОЗМІРІВ: ЗАГАЛЬНА (м) ---------- */
 const RAW=`§Люди
@@ -648,14 +680,25 @@ Magura V5 (морський дрон), довжина ≈|5.50
 function parse(raw){const a=[];let c='';raw.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');a.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}});return a}
 const DB=parse(RAW),MIL=parse(RAWM);
 
-let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
+/* ---------- цивільні класи для сканера: [назва, типова висота, м] ---------- */
+const CLS={person:['Людина',1.70],bicycle:['Велосипед',1.05],car:['Авто',1.50],motorcycle:['Мотоцикл',1.20],bus:['Автобус',3.00],truck:['Вантажівка',3.30],dog:['Собака',0.55],cat:['Кіт',0.30],horse:['Кінь',1.70],cow:['Корова',1.40],sheep:['Вівця',0.80],bench:['Лавка',0.85],chair:['Стілець',0.90],'fire hydrant':['Гідрант',0.75],'stop sign':['Знак «Стоп»',0.75]};
+
+let mode='size',vert=true,frozen=false,frozenVal=null,frozenT=0,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
+let hrel=null,headAbs=null,absSeen=false,oBuf=[];
 let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
 let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
 let my=store.get('my',[]),cat='Усі',cur=[],src='gen';
+let pts=[],model=null,loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null;
 
 function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
 const fs=m=>fmt(m).join(' ');
 const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
+function fa(a){
+  const k=unit==='ft'?10.7639:unit==='yd'?1.19599:1,l=unit==='ft'?'фт²':unit==='yd'?'ярд²':'м²';
+  let s=(a*k).toFixed(a*k>=100?0:1)+' '+l;
+  if(unit==='m')s+=' ('+(a>=10000?(a/10000).toFixed(2)+' га':(a/100).toFixed(2)+' сот.')+')';
+  return s;
+}
 const say=t=>{$('#res').textContent=t};
 
 /* ---------- база: вікно вибору ---------- */
@@ -713,9 +756,9 @@ $('#dbadd').onclick=()=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDB()});
 
 /* ---------- калібрування (по камері) ---------- */
-const pts=()=>(store.get('Kp',{})[camKey]||[]);
-const getK=()=>{const a=pts();return a.length?med(a):0.75};
-function kinfo(){const n=pts().length;$('#kinfo').textContent='Камера: '+camKey+' · '+(n?'точок калібрування: '+n:'стандартне калібрування')+' · K='+getK().toFixed(3)}
+const kpts=()=>(store.get('Kp',{})[camKey]||[]);
+const getK=()=>{const a=kpts();return a.length?med(a):0.75};
+function kinfo(){const n=kpts().length;$('#kinfo').textContent='Камера: '+camKey+' · '+(n?'точок калібрування: '+n:'стандартне калібрування')+' · K='+getK().toFixed(3)}
 
 /* ---------- видима зона маркерів ---------- */
 function zone(){
@@ -760,17 +803,30 @@ async function startCam(id){
   }
 }
 $('#retry').onclick=()=>startCam();
-$('#cam').onchange=e=>{ema=null;buf=[];startCam(e.target.value)};
-$('#zoom').oninput=e=>{zoom=+e.target.value;$('#zv').textContent=zoom.toFixed(1)+'×';ema=null;try{track.applyConstraints({advanced:[{zoom}]})}catch(_){}};
+$('#cam').onchange=e=>{ema=null;buf=[];trk=[];startCam(e.target.value)};
+$('#zoom').oninput=e=>{zoom=+e.target.value;$('#zv').textContent=zoom.toFixed(1)+'×';ema=null;trk=[];try{track.applyConstraints({advanced:[{zoom}]})}catch(_){}};
 
-/* ---------- датчик нахилу ---------- */
+/* ---------- датчики: нахил, напрямок, компас ---------- */
+function bearing(a,b,g){
+  const E=-(Math.cos(g)*Math.sin(a)*Math.sin(b)+Math.cos(a)*Math.sin(g));
+  const N=-(Math.sin(a)*Math.sin(g)-Math.cos(a)*Math.cos(g)*Math.sin(b));
+  return (Math.atan2(E,N)/R+360)%360;
+}
+function setHead(v){if(headAbs==null)headAbs=v;else{const d=((v-headAbs+540)%360)-180;headAbs=(headAbs+d*.2+360)%360}}
 function onOri(e){
   if(e.beta==null)return;
-  const b=e.beta*R,g=(e.gamma||0)*R;
+  const a=(e.alpha||0)*R,b=e.beta*R,g=(e.gamma||0)*R;
   eRaw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))/R;
   roll=e.gamma||0;
+  if(e.alpha!=null)hrel=bearing(a,b,g);
+  if(typeof e.webkitCompassHeading==='number'&&!absSeen)setHead(e.webkitCompassHeading);
+  oBuf.push({t:performance.now(),e:eRaw,h:hrel});if(oBuf.length>60)oBuf.shift();
 }
-function listenOri(){window.addEventListener('deviceorientation',onOri,true)}
+function onAbs(e){
+  if(e.alpha==null||e.beta==null)return;
+  absSeen=true;setHead(bearing(e.alpha*R,e.beta*R,(e.gamma||0)*R));
+}
+function listenOri(){window.addEventListener('deviceorientation',onOri,true);window.addEventListener('deviceorientationabsolute',onAbs,true)}
 async function askSensor(){
   try{
     if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){
@@ -781,6 +837,7 @@ async function askSensor(){
   }catch(e){$('#sens').classList.remove('hide')}
 }
 $('#sens').onclick=askSensor;
+document.addEventListener('click',()=>askSensor(),{once:true});
 $('#zero').onclick=()=>{
   if(eRaw==null)return say('Немає даних датчика нахилу');
   if(Math.abs(eRaw+90)>8)return say('Поклади телефон екраном вгору на рівну поверхню');
@@ -790,6 +847,26 @@ function lvl(t){
   const el=$('#lvl'),bad=Math.abs(roll)>3;
   el.className=bad?'bad':'';
   el.textContent='Крен '+roll.toFixed(1)+'°'+(t!=null?' · кут '+t.toFixed(1)+'° · ухил '+(Math.tan(t*R)*100).toFixed(0)+'%':'')+(bad?' — випрями телефон':'');
+}
+function compass(){
+  const h=headAbs;
+  $('#az').textContent=h==null?'—':Math.round(h)+'°';
+  $('#card').textContent=h==null?'':CARD[Math.round(h/45)%8];
+  $('#rose').setAttribute('transform','rotate('+(h==null?0:-h)+' 13 13)');
+}
+function oRange(ms){
+  const t=performance.now(),a=oBuf.filter(o=>t-o.t<ms);
+  if(a.length<3)return 0;
+  const es=a.map(o=>o.e);let r=Math.max(...es)-Math.min(...es);
+  if(a[0].h!=null){const h0=a[0].h,ds=a.map(o=>((o.h-h0+540)%360)-180);r=Math.max(r,Math.max(...ds)-Math.min(...ds))}
+  return r;
+}
+function oStats(){
+  const t=performance.now(),a=oBuf.filter(o=>t-o.t<600&&o.h!=null);
+  if(a.length<6)return null;
+  const e=med(a.map(o=>o.e));
+  const sx=a.reduce((s,o)=>s+Math.sin(o.h*R),0),cy=a.reduce((s,o)=>s+Math.cos(o.h*R),0);
+  return{e,h:(Math.atan2(sx,cy)/R+360)%360};
 }
 
 /* ---------- геометрія ---------- */
@@ -802,6 +879,17 @@ function tElev(g){
   if(eRaw==null)return null;
   const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
   return eRaw-bias-off;
+}
+function groundPt(ex,hd,g){
+  const e=ex*R,h=hd*R;
+  const u=((tgt.x-.5)*g.r.width/g.s)/g.f,v=((tgt.y-.5)*g.r.height/g.s)/g.f;
+  const F=[Math.cos(e)*Math.sin(h),Math.cos(e)*Math.cos(h),Math.sin(e)];
+  const Rt=[Math.cos(h),-Math.sin(h),0];
+  const D=[Math.sin(e)*Math.sin(h),Math.sin(e)*Math.cos(h),-Math.cos(e)];
+  const r=[F[0]+u*Rt[0]+v*D[0],F[1]+u*Rt[1]+v*D[1],F[2]+u*Rt[2]+v*D[2]];
+  if(r[2]>=-0.02)return null;
+  const t=camH/-r[2];
+  return{x:r[0]*t,y:r[1]*t};
 }
 function compute(){
   const g=geo();
@@ -820,7 +908,197 @@ function compute(){
   const r=-t*R;
   return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
 }
+
+/* ---------- точки на землі й площа ---------- */
+function ptsInfo(){
+  const n=pts.length,o={n};
+  if(n>=2){const a=pts[n-2],b=pts[n-1];o.seg=Math.hypot(b.x-a.x,b.y-a.y);o.err=Math.hypot(a.err,b.err)}
+  let L=0;for(let i=1;i<n;i++)L+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);o.len=L;
+  if(n>=3){let A=0,P=0;for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n];A+=a.x*b.y-b.x*a.y;P+=Math.hypot(b.x-a.x,b.y-a.y)}o.area=Math.abs(A)/2;o.per=P}
+  return o;
+}
+function planSvg(){
+  if(!pts.length)return'';
+  const W=300,H=150,m=24;
+  const xs=pts.map(q=>q.x).concat(0),ys=pts.map(q=>q.y).concat(0);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const sc=Math.min((W-2*m)/Math.max(x1-x0,.01),(H-2*m)/Math.max(y1-y0,.01));
+  const tx=x=>m+(x-x0)*sc+((W-2*m)-(x1-x0)*sc)/2,ty=y=>H-m-(y-y0)*sc-((H-2*m)-(y1-y0)*sc)/2;
+  const P=pts.map(q=>[tx(q.x),ty(q.y)]);
+  let s='<svg viewBox="0 0 300 150" width="100%" style="display:block;margin-top:8px;background:rgba(255,255,255,.04);border-radius:10px" role="img" aria-label="План точок">';
+  if(P.length>=3)s+='<polygon points="'+P.map(q=>q.join(',')).join(' ')+'" style="fill:#ffb21e;fill-opacity:.15;stroke:#ffb21e;stroke-width:1.5"/>';
+  else if(P.length===2)s+='<polyline points="'+P.map(q=>q.join(',')).join(' ')+'" style="fill:none;stroke:#ffb21e;stroke-width:1.5"/>';
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1],b=pts[i],mx=(P[i-1][0]+P[i][0])/2,my_=(P[i-1][1]+P[i][1])/2;
+    s+='<text x="'+mx+'" y="'+(my_-4)+'" text-anchor="middle" style="fill:#e9efe6;font-size:11px;font-family:system-ui,sans-serif">'+esc(fs(Math.hypot(b.x-a.x,b.y-a.y)))+'</text>';
+  }
+  if(P.length>=3){const a=pts[pts.length-1],b=pts[0],mx=(P[P.length-1][0]+P[0][0])/2,my_=(P[P.length-1][1]+P[0][1])/2;
+    s+='<text x="'+mx+'" y="'+(my_-4)+'" text-anchor="middle" style="fill:#8fa3a0;font-size:11px;font-family:system-ui,sans-serif">'+esc(fs(Math.hypot(b.x-a.x,b.y-a.y)))+'</text>'}
+  s+='<path d="M'+(tx(0)-5)+' '+(ty(0)+5)+' L'+tx(0)+' '+(ty(0)-6)+' L'+(tx(0)+5)+' '+(ty(0)+5)+' Z" style="fill:#8fa3a0"/>';
+  P.forEach((q,i)=>{s+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="4" style="fill:#ffb21e"/><text x="'+(q[0]+7)+'" y="'+(q[1]+4)+'" style="fill:#e9efe6;font-size:11px;font-family:system-ui,sans-serif">'+(i+1)+'</text>'});
+  return s+'</svg>';
+}
+function refreshPts(){
+  const o=ptsInfo();
+  let t='';
+  if(o.n>=2)t='Остання: '+fs(o.seg)+' ± '+ef(o.err)+' · довжина ламаної: '+fs(o.len);
+  if(o.area!=null)t+=' · площа: '+fa(o.area)+' · периметр: '+fs(o.per);
+  say(t||(o.n?'Точок: '+o.n:''));
+  $('#plan').innerHTML=planSvg();
+}
+function addPoint(){
+  if(eRaw==null||hrel==null)return say('Немає даних датчиків (нахил і напрямок)');
+  const st=oStats();
+  if(!st)return say('Зачекай мить — збираю дані датчика');
+  const P=groundPt(st.e-bias,st.h,geo());
+  if(!P)return say('Хрестик має бути нижче горизонту — опусти його на землю');
+  const d=Math.hypot(P.x,P.y),dep=Math.atan2(camH,d);
+  const err=Math.hypot(camH*.0087/Math.pow(Math.sin(dep),2),.01*d);
+  pts.push({x:P.x,y:P.y,d,err});
+  refreshPts();
+}
+$('#addP').onclick=addPoint;
+$('#delP').onclick=()=>{pts.pop();refreshPts()};
+$('#clrP').onclick=()=>{pts=[];refreshPts()};
+
+/* ---------- сканер ---------- */
+function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error(u));document.head.appendChild(s)})}
+async function ensureModel(){
+  if(model||loading)return;
+  loading=true;scanMsg='Завантажую модель розпізнавання…';
+  try{
+    if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+    if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+    model=await cocoSsd.load({base:'lite_mobilenet_v2'});
+    scanMsg='';
+  }catch(e){scanMsg='Не вдалося завантажити модель. Відкрий вкладку з інтернетом (потрібно один раз).'}
+  loading=false;
+}
+function iou(a,b){
+  const x1=Math.max(a[0],b[0]),y1=Math.max(a[1],b[1]),x2=Math.min(a[0]+a[2],b[0]+b[2]),y2=Math.min(a[1]+a[3],b[1]+b[3]);
+  const i=Math.max(0,x2-x1)*Math.max(0,y2-y1);
+  return i/(a[2]*a[3]+b[2]*b[3]-i||1);
+}
+function motion(k,g,shk){
+  const h=k.hist;if(h.length<4)return;
+  const a=h[0],b=h[h.length-1],dt=(b.t-a.t)/1000;if(dt<.7)return;
+  const dm=(a.d+b.d)/2,vr=(b.d-a.d)/dt,vl=((b.cx-a.cx)*dm/g.f)/dt,sp=Math.hypot(vr,vl);
+  k.v=sp;
+  if(shk)return;
+  const jit=Math.abs(b.cx-a.cx)<.05*k.box[3]&&Math.abs(b.d-a.d)<.05*dm;
+  if(!k.moving&&sp>1.0&&!jit)k.moving=true;
+  else if(k.moving&&(sp<.6||jit))k.moving=false;
+  k.dirTxt=Math.abs(vr)>.7*Math.abs(vl)&&Math.abs(vr)>.8?(vr<0?'до вас':'від вас'):'вбік';
+}
+function updateTracks(out,t){
+  const g=geo();
+  shake=oRange(1200)>1.2;
+  const used=new Set();
+  out.filter(o=>CLS[o.class]).forEach(o=>{
+    let best=null,bi=.25;
+    trk.forEach(k=>{if(k.cls!==o.class||used.has(k.id))return;const v=iou(k.box,o.bbox);if(v>bi){bi=v;best=k}});
+    if(!best){best={id:nid++,cls:o.class,hist:[],moving:false,v:0,dirTxt:'',alerted:false,d:null};trk.push(best)}
+    used.add(best.id);best.box=o.bbox;best.seen=t;
+    const nm=CLS[o.class][0],H=CLS[o.class][1];
+    best.name=nm;best.H=H;
+    const raw=H*g.f/o.bbox[3];
+    best.d=best.d==null?raw:best.d+(raw-best.d)*.35;
+    best.hist.push({t,cx:o.bbox[0]+o.bbox[2]/2,d:best.d});
+    while(best.hist.length&&t-best.hist[0].t>1800)best.hist.shift();
+    motion(best,g,shake);
+  });
+  trk=trk.filter(k=>t-k.seen<1500);
+  if($('#alOn').checked){
+    const lim=parseFloat($('#alD').value)||30;
+    visTracks().forEach(k=>{
+      if(k.d<lim&&!k.alerted){k.alerted=true;beep();say('Сигнал: '+k.name+' ближче '+fs(lim)+' ('+fs(k.d)+')')}
+      else if(k.d>lim*1.25)k.alerted=false;
+    });
+  }
+}
+async function detectStep(){
+  if(det||!model||mode!=='scan'||frozen||V.readyState<2||!V.videoWidth)return;
+  det=true;
+  try{const out=await model.detect(V,20,0.45);updateTracks(out,performance.now())}catch(e){}
+  det=false;
+}
+function visTracks(){
+  const t=(frozen&&mode==='scan')?frozenT:performance.now(),f=$('#scf').value;
+  return trk.filter(k=>t-k.seen<800&&k.hist.length>=2&&(f==='all'||k.moving)).sort((a,b)=>a.d-b.d);
+}
+function beep(){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.frequency.value=880;o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(.2,actx.currentTime);o.start();o.stop(actx.currentTime+.18);
+  }catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}
+}
+$('#alOn').onchange=e=>{if(e.target.checked){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(_){}}};
+function brg(k){
+  const f=geo().f;
+  return (headAbs+Math.atan(((k.box[0]+k.box[2]/2)-(V.videoWidth||1280)/2)/f)/R+360)%360;
+}
+function rowHtml(k){
+  const wm=k.H*k.box[2]/k.box[3];
+  const state=k.moving?(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год'):'нерухомий';
+  const az=headAbs!=null?' · аз. '+Math.round(brg(k))+'°':'';
+  return '<div class="sr"><span class="dot'+(k.moving?'':' st')+'"></span><span class="sn">'+esc(k.name)+'<small>≈ в '+ef(k.H)+' × ш '+ef(wm)+' · '+state+az+'</small></span><b>'+fs(k.d)+'</b></div>';
+}
+function renderList(now){
+  if(now-lastList<250)return;
+  lastList=now;
+  const v=visTracks(),mv=v.filter(k=>k.moving).length;
+  $('#scl').innerHTML=(v.length?'<small style="margin:0 0 4px">Рухомих: '+mv+' · нерухомих: '+(v.length-mv)+'</small>':'')+v.slice(0,8).map(rowHtml).join('')+(v.length>8?'<small>…і ще '+(v.length-8)+'</small>':'');
+}
+function drawOv(){
+  const c=$('#ov'),r=stage.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  const W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
+  if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+  const x=c.getContext('2d');
+  x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);
+  if(mode!=='scan')return;
+  const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720;
+  const ox=(r.width-vw*g.s)/2,oy=(r.height-vh*g.s)/2;
+  x.font='600 13px system-ui,sans-serif';x.textBaseline='middle';
+  visTracks().forEach(k=>{
+    const X=k.box[0]*g.s+ox,Y=k.box[1]*g.s+oy,Wd=k.box[2]*g.s,Ht=k.box[3]*g.s;
+    const col=k.moving?'#ffb21e':'#8fa3a0',L=Math.max(4,Math.min(14,Wd/3,Ht/3));
+    x.strokeStyle=col;x.lineWidth=k.moving?2:1.5;
+    if(k.moving){
+      x.beginPath();
+      x.moveTo(X,Y+L);x.lineTo(X,Y);x.lineTo(X+L,Y);
+      x.moveTo(X+Wd-L,Y);x.lineTo(X+Wd,Y);x.lineTo(X+Wd,Y+L);
+      x.moveTo(X+Wd,Y+Ht-L);x.lineTo(X+Wd,Y+Ht);x.lineTo(X+Wd-L,Y+Ht);
+      x.moveTo(X+L,Y+Ht);x.lineTo(X,Y+Ht);x.lineTo(X,Y+Ht-L);
+      x.stroke();
+    }else{x.setLineDash([5,4]);x.strokeRect(X,Y,Wd,Ht);x.setLineDash([])}
+    const lab=k.name+' · '+fs(k.d),tw=x.measureText(lab).width+10,ly=Math.max(0,Y-20);
+    x.fillStyle=col;x.fillRect(X,ly,tw,18);
+    x.fillStyle='#0c171b';x.fillText(lab,X+5,ly+9);
+    if(k.moving){x.fillStyle=col;x.fillText(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год',X,Math.min(r.height-8,Y+Ht+11))}
+  });
+}
+
+/* ---------- відображення ---------- */
 function view(){
+  if(mode==='scan'){
+    const v=visTracks();
+    if(!v.length)return{warn:scanMsg||(model?'Шукаю об\'єкти… наведи камеру на людей чи авто':'')};
+    const n=v[0];
+    return{d:n.d,err:n.d*.2,sub:n.name+(n.moving?' · '+n.dirTxt:' · нерухомий'),warn:shake?'Тримай телефон нерухомо — рух камери заважає':''};
+  }
+  if(mode==='pts'){
+    const g=geo();lvl(tElev(g));
+    if(eRaw==null)return{warn:'Чекаю дані датчиків…'};
+    const P=groundPt(eRaw-bias,hrel||0,g);
+    if(!P)return{warn:'Опусти хрестик на землю (нижче горизонту)'};
+    const o=ptsInfo();
+    if(o.seg!=null)return{d:o.seg,err:o.err,sub:'P'+(o.n-1)+'→P'+o.n};
+    return{d:Math.hypot(P.x,P.y),sub:'до цілі',warn:o.n?'Додай ще точку':''};
+  }
   const raw=compute();
   if(mode==='height'){
     lvl(raw.t);
@@ -847,13 +1125,11 @@ function view(){
   if(mode==='size')lastDist=raw.d;
   return{d:raw.d,err:raw.err,sub:raw.sub,raw:raw.d};
 }
-
-/* ---------- цикл ---------- */
 function loop(now){
   const o=view();lastO=o;
   if(o.d!=null&&isFinite(o.d)){
     const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
-    $('#sub').textContent=(o.err!=null?'±'+ef(o.err):'')+(o.sub?' · '+o.sub:'');
+    $('#sub').textContent=[o.err!=null?'±'+ef(o.err):'',o.sub||''].filter(Boolean).join(' · ');
   }else{$('#num').textContent='—';$('#sub').textContent=''}
   $('#warn').textContent=o.warn||'';
   if(o.res!==undefined)say(o.res);
@@ -861,6 +1137,8 @@ function loop(now){
     ser.a.push(o.raw);ser.t=now;$('#ser').textContent='Серія '+ser.a.length+'/10';
     if(ser.a.length>=10)endSeries();
   }
+  detectStep();drawOv();compass();
+  if(mode==='scan')renderList(now);
   requestAnimationFrame(loop);
 }
 function endSeries(){
@@ -873,14 +1151,13 @@ function endSeries(){
 }
 $('#ser').onclick=()=>{
   if(ser){ser=null;$('#ser').textContent='Серія ×10';return}
-  if(mode==='height')return say('Серія працює в режимах «За розміром», «По землі», «Розмір»');
   ser={a:[],t:0};say('Тримай телефон нерухомо…');
 };
 
 /* ---------- інтерфейс ---------- */
 function render(){
   stage.className=vert?'v':'h';
-  const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height';
+  const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height'||mode==='pts';
   [$('#m1'),$('#m2')].forEach((m,i)=>{m.style[vert?'top':'left']=p[i]*100+'%';m.style[vert?'left':'top']='';m.style.display=mk?'block':'none'});
   cross.style.display=cr?'block':'none';
   cross.style.left=tgt.x*100+'%';cross.style.top=tgt.y*100+'%';
@@ -894,7 +1171,7 @@ document.querySelectorAll('.mk i').forEach((h,i)=>{
   });
 });
 stage.addEventListener('pointerdown',e=>{
-  if(mode!=='ground'&&mode!=='height')return;
+  if(mode!=='ground'&&mode!=='height'&&mode!=='pts')return;
   const r=stage.getBoundingClientRect();
   tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];eBuf=[];render();
 });
@@ -903,15 +1180,18 @@ $('#col').onclick=()=>{
   $('#col').textContent=m?'⌃':'⌄';
   $('#col').setAttribute('aria-label',m?'Розгорнути панель':'Згорнути панель');
 };
-const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height']};
+const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],scan:['p-scan']};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
   document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!PN[mode].includes(x.id)));
-  $('#lvl').classList.toggle('hide',mode!=='ground'&&mode!=='height');
+  $('#lvl').classList.toggle('hide',mode!=='ground'&&mode!=='height'&&mode!=='pts');
+  $('#bt2').classList.toggle('hide',mode!=='size'&&mode!=='ground'&&mode!=='dim');
   ema=null;buf=[];eBuf=[];ser=null;$('#ser').textContent='Серія ×10';
   frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';say('');
-  if(mode==='ground'||mode==='height')askSensor();
+  if(mode==='ground'||mode==='height'||mode==='pts')askSensor();
+  if(mode==='pts')refreshPts();
+  if(mode==='scan'){trk=[];ensureModel()}
   layout();
 });
 document.querySelectorAll('.ori').forEach(b=>b.onclick=()=>{
@@ -925,7 +1205,7 @@ $('#sz').oninput=e=>{
 };
 $('#hh').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){camH=v;store.set('h',v);ema=null;buf=[]}};
 $('#fromG').onclick=()=>{
-  if(lastDist==null)return say('Спочатку виміряй відстань у режимі «По землі» або «За розміром»');
+  if(lastDist==null)return say('Спочатку виміряй відстань у режимі «Земля» або «Об\'єкт»');
   $('#dd').value=lastDist.toFixed(2);say('Відстань взято: '+fs(lastDist));
 };
 $('#cal').onclick=()=>{
@@ -942,7 +1222,7 @@ $('#cal').onclick=()=>{
 $('#kreset').onclick=()=>{const all=store.get('Kp',{});delete all[camKey];store.set('Kp',all);kinfo();say('Калібрування цієї камери скинуто')};
 $('#frz').onclick=()=>{
   frozen=!frozen;
-  if(frozen){if(mode==='ground'&&lastO&&lastO.d!=null)frozenVal=lastO;V.pause()}
+  if(frozen){frozenT=performance.now();if(mode==='ground'&&lastO&&lastO.d!=null)frozenVal=lastO;V.pause()}
   else{frozenVal=null;ema=null;buf=[];V.play()}
   $('#frz').textContent=frozen?'Продовжити':'Стоп-кадр';
 };
@@ -954,7 +1234,7 @@ $('#hi').onclick=()=>{
 };
 $('#hr').onclick=()=>{hs={e1:null,e2:null};say('')};
 $('#sa').onclick=()=>{
-  if(lastDist==null||(mode!=='ground'&&mode!=='size'))return say('Швидкість міряється в режимах «За розміром» і «По землі»');
+  if(lastDist==null||(mode!=='ground'&&mode!=='size'))return say('Швидкість міряється в режимах «Об\'єкт» і «Земля»');
   spd={d:lastDist,t:performance.now()};say('A: '+fs(lastDist)+'. Через кілька секунд натисни B');
 };
 $('#sb').onclick=()=>{
@@ -965,7 +1245,7 @@ $('#sb').onclick=()=>{
   say('Швидкість (радіальна): '+(v*3.6).toFixed(1)+' км/год · '+v.toFixed(1)+' м/с'+(unit!=='m'?' · '+(v*2.23694).toFixed(1)+' миль/год':'')+' · Δ '+fs(dd)+' за '+dt.toFixed(1)+' с');
   spd=null;
 };
-$('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit)};
+$('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit);if(mode==='pts')refreshPts()};
 
 $('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;$('#pick').textContent='📚 '+objName;
 layout();startCam();listenOri();requestAnimationFrame(loop);
@@ -973,4 +1253,4 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 })();
 </script>
 </body>
-  </html>
+                     </html>
