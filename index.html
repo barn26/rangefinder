@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0c171b">
-<title>Дальномір</title>
+<title>Дальномір - БАРС</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <style>
@@ -108,7 +108,6 @@ details.mn[open] summary{color:var(--amb)}
 .mn li{margin:6px 0}
 .mn p{margin:0 0 10px}
 .mn .n{color:var(--mute)}
-/* Модалка тапа й геопозиції */
 #tapModal{position:fixed;inset:0;z-index:40;background:rgba(12,23,27,.85);display:flex;align-items:center;justify-content:center;padding:20px}
 .tbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:320px}
 .tbox h3{margin:0 0 8px;font-size:16px}
@@ -124,12 +123,12 @@ details.mn[open] summary{color:var(--amb)}
   <div id="msg"><div><div id="msgt"></div><button id="retry" class="pri">Увімкнути камеру</button></div></div>
 </div>
 <div id="top">
-  <button class="tab on" data-m="size" title="За розміром">Об'єкт</button>
-  <button class="tab" data-m="ground" title="По землі">Земля</button>
-  <button class="tab" data-m="height" title="Висота за кутами">Висота</button>
-  <button class="tab" data-m="dim" title="Розмір об'єкта">Розмір</button>
-  <button class="tab" data-m="pts" title="Точки й площа">Точки</button>
-  <button class="tab" data-m="scan" title="Сканер">Сканер</button>
+  <button class="tab on" data-m="size">Об'єкт</button>
+  <button class="tab" data-m="ground">Земля</button>
+  <button class="tab" data-m="height">Висота</button>
+  <button class="tab" data-m="dim">Розмір</button>
+  <button class="tab" data-m="pts">Точки</button>
+  <button class="tab" data-m="scan">Сканер</button>
 </div>
 <div id="cmp" aria-label="Компас">
   <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#8fa3a0" stroke-width="1.5"/><g id="rose"><path d="M13 3 L16 12 L10 12 Z" fill="#ff5a3c"/><path d="M13 23 L16 14 L10 14 Z" fill="#8fa3a0"/></g></svg>
@@ -146,185 +145,56 @@ details.mn[open] summary{color:var(--amb)}
   <div id="warn"></div><div id="res"></div><div id="lvl" class="hide"></div>
   <div id="ctl">
     <div id="p-size" class="pn">
-      <div class="row"><button id="pick">📚 Обрати об'єкт</button><input id="sz" type="number" step="0.001" min="0.001" inputmode="decimal" aria-label="Розмір, м"></div>
-      <div class="row">
-        <button class="ori">Міряю висоту ↕</button>
-        <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto">
-        <button id="cal">Калібрувати</button>
-      </div>
+      <div class="row"><button id="pick">📚 Обрати об'єкт</button><input id="sz" type="number" step="0.001" min="0.001" inputmode="decimal"></div>
+      <div class="row"><button class="ori">Міряю висоту ↕</button><input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto"><button id="cal">Калібрувати</button></div>
       <small id="kinfo"></small>
-      <small>Постав маркери на краї об'єкта. Калібруй на кількох відстанях, точність зросте.</small>
+      <small>Постав маркери на краї об'єкта.</small>
     </div>
-
     <div id="p-dim" class="pn hide">
       <div class="row"><label>Відстань до об'єкта, м</label><input id="dd" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="fromG">З «Земля»</button></div>
       <div class="row"><button class="ori">Міряю висоту ↕</button></div>
-      <small>Спочатку виміряй відстань у режимі «Земля», потім постав маркери на краї об'єкта.</small>
     </div>
-
     <div id="p-tilt" class="pn hide">
       <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="zero">Обнулити нахил</button></div>
-      <small>Обнулення: поклади телефон екраном вгору на рівну поверхню і натисни кнопку. Роби це раз після встановлення.</small>
       <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчики</button>
     </div>
-
-    <div id="p-ground" class="pn hide">
-      <small>Торкнись екрана там, де ціль стоїть на землі. Число — горизонтальна відстань, поруч — відстань по лінії погляду. Ухил показує кут, на який дивишся.</small>
-    </div>
-
+    <div id="p-ground" class="pn hide"><small>Торкнись екрана там, де ціль стоїть на землі.</small></div>
     <div id="p-height" class="pn hide">
-      <div class="row"><label>Відстань, м (необов'язково)</label><input id="hd" type="number" step="0.1" min="0.1" inputmode="decimal"></div>
+      <div class="row"><label>Відстань, м</label><input id="hd" type="number" step="0.1" min="0.1" inputmode="decimal"></div>
       <div class="row"><button id="lo">1 · Низ</button><button id="hi">2 · Верх</button><button id="hr">Скинути</button></div>
-      <small>Наведи хрестик на низ споруди і натисни «Низ», потім на верх і «Верх». Якщо низ видно на землі, відстань порахується сама, інакше впиши її.</small>
     </div>
-
     <div id="p-pts" class="pn hide">
       <div class="row"><button id="addP" class="pri">＋ Точка</button><button id="delP">Видалити останню</button><button id="clrP">Очистити</button></div>
       <div id="plan"></div>
-      <small>Стій на місці й лише повертайся. Наведи хрестик на землю в першій точці й натисни «＋ Точка», потім у наступній. Торкнись екрана, щоб перемістити хрестик. Щоб площа порахувалась правильно, точки мають іти по колу. Земля має бути рівною.</small>
     </div>
-
     <div id="p-scan" class="pn hide">
       <div id="scl"></div>
       <small id="scs"></small>
-      <div class="row"><label>Показувати</label>
-        <select id="scf"><option value="all">Усі об'єкти</option><option value="mov">Лише рухомі</option></select>
-      </div>
-      <div class="row"><label>Модель</label>
-        <select id="scm"><option value="mobilenet_v2">Точна (повільніша)</option><option value="lite_mobilenet_v2">Легка (швидка)</option></select>
-      </div>
-      <div class="row"><label>Дальність</label>
-        <select id="scr"><option value="1">Звичайна (весь кадр)</option><option value="2">Далека (по частинах)</option></select>
-      </div>
+      <div class="row"><label>Показувати</label><select id="scf"><option value="all">Усі об'єкти</option><option value="mov">Лише рухомі</option></select></div>
+      <div class="row"><label>Модель</label><select id="scm"><option value="mobilenet_v2">Точна</option><option value="lite_mobilenet_v2">Легка</option></select></div>
+      <div class="row"><label>Дальність</label><select id="scr"><option value="1">Звичайна</option><option value="2">Далека</option></select></div>
       <div class="row"><label>Мін. впевненість</label><input id="scc" type="range" min="20" max="80" step="5" value="35"><b id="scv" style="min-width:38px;text-align:right">35%</b></div>
-      <div class="row">
-        <label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="alOn">Сигнал, якщо ближче</label>
-        <input id="alD" type="number" value="30" min="1" step="1" inputmode="decimal" aria-label="Відстань сигналу, м"><span style="color:var(--mute)">м</span>
-      </div>
-      <small>Торкніться екрана на будь-якому об'єкті у сканері, щоб навчити AI та додати в локальну пам'ять. Телефон тримайте нерухомо.</small>
+      <small>Торкніться екрана для навчання AI та збереження об'єкта.</small>
     </div>
-
     <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
     <div class="row" id="bt2"><button id="ser">Серія ×10</button><button id="sa">Швидкість A</button><button id="sb">B</button></div>
     <div class="row hide" id="zwrap"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></div>
   </div>
-  <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+  <div class="ft">© 2026 БАРС</div>
 </div>
-
-<!-- Модальне вікно тапу та навчання об'єкта -->
 <div id="tapModal" class="hide">
   <div class="tbox">
     <h3>🎯 Навчання AI / Об'єкт</h3>
-    <div class="row"><input id="tName" type="text" placeholder="Назва об'єкта (напр. РЕБ-станція)" autocomplete="off"></div>
-    <div class="row"><input id="tH" type="number" step="0.05" min="0.1" inputmode="decimal" placeholder="Висота, м"></div>
-    <div id="geoBox">Координати цілі: визначаються…</div>
+    <div class="row"><input id="tName" type="text" placeholder="Назва об'єкта"></div>
+    <div class="row"><input id="tH" type="number" step="0.05" min="0.1" placeholder="Висота, м"></div>
+    <div id="geoBox">Координати цілі…</div>
     <div class="row" style="margin-top:12px">
       <button id="tSave" class="pri">Записати в AI</button>
-      <button id="tCopyGeo" class="hide">📋 Копіювати ціль</button>
+      <button id="tCopyGeo" class="hide">📋 Копіювати</button>
       <button id="tClose">Закрити</button>
     </div>
   </div>
 </div>
-
-<div id="db" class="hide">
-  <div class="dbh"><input id="dbq" type="search" placeholder="Пошук: авто, двері, ворота…" aria-label="Пошук об'єкта"><button id="dbx" aria-label="Закрити">✕</button></div>
-  <div class="seg"><button id="sg" class="chip on">Загальна база</button><button id="sm" class="chip">🎖 Військова техніка</button></div>
-  <div id="chips"></div>
-  <div id="cnt"></div>
-  <div id="dbl"></div>
-  <div class="dba" id="dba"><input id="dbn" placeholder="Свій об'єкт: назва"><input id="dbv" type="number" step="0.001" min="0.001" inputmode="decimal" placeholder="м"><button id="dbadd" class="pri">＋</button></div>
-  <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
-</div>
-
-<div id="set" class="fs hide">
-  <div class="fsh"><h2>Налаштування</h2><button id="setX" aria-label="Закрити">✕</button></div>
-  <div class="fsb">
-    <div class="card">
-      <h3>Загальні</h3>
-      <div class="row"><label>Камера</label><select id="cam"></select></div>
-      <div class="row"><label>Одиниці</label><select id="unitSel"><option value="m">Метри</option><option value="ft">Фути</option><option value="yd">Ярди</option></select></div>
-      <div class="row"><button id="kreset">Скинути калібрування цієї камери</button></div>
-      <small>Розміри, висоту камери й відстані вводь у метрах.</small>
-    </div>
-
-    <div class="card">
-      <h3>Режим «Позиція»</h3>
-      <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="posC">Я на позиції</label></div>
-      <small>Вимкнено: програма працює на повну потужність, зміни синхронізуються одразу. Увімкнено: економія батареї (сканер працює рідше), без звуку й вібрації, зміни зберігаються на телефоні і йдуть на сервер лише коли з'явиться інтернет.</small>
-      <small id="netS"></small>
-    </div>
-
-    <div class="card">
-      <h3>Захист входу</h3>
-      <small id="secS"></small>
-      <div id="secForm">
-        <div class="row hide" id="r0"><input id="pn0" type="password" inputmode="numeric" maxlength="8" placeholder="Поточний PIN" autocomplete="off"></div>
-        <div class="row"><input id="pn1" type="password" inputmode="numeric" maxlength="8" placeholder="Новий PIN (4–8 цифр)" autocomplete="off"></div>
-        <div class="row"><input id="pn2" type="password" inputmode="numeric" maxlength="8" placeholder="Повтори PIN" autocomplete="off"></div>
-        <div class="row"><button id="pinSet" class="pri">Встановити PIN</button><button id="pinOff" class="hide">Вимкнути захист</button></div>
-        <div class="row hide" id="bioRow"><button id="bioReg">Додати відбиток</button><button id="bioOff" class="hide">Прибрати відбиток</button></div>
-        <div class="row hide" id="lkRow"><label>Блокувати</label>
-          <select id="lkm"><option value="exit">Одразу при виході з програми</option><option value="2">Через 2 хв після виходу</option><option value="10">Через 10 хв після виходу</option><option value="never">Лише при запуску</option></select>
-        </div>
-      </div>
-      <small id="secM"></small>
-      <small>Це локальний захист від стороннього доступу, дані на телефоні не шифруються. Якщо забув PIN, доведеться очистити дані сайту в налаштуваннях браузера (усі локальні дані зникнуть).</small>
-    </div>
-
-    <div class="card">
-      <h3>Синхронізація (JSONBin)</h3>
-      <div class="row"><input id="jbId" type="text" placeholder="Bin ID" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <div class="row"><input id="jbKey" type="password" placeholder="Ключ доступу" autocomplete="off"></div>
-      <div class="row"><label>Тип ключа</label><select id="jbKt"><option value="access">Access Key</option><option value="master">Master Key</option></select></div>
-      <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="jbAuto">Автосинхронізація</label></div>
-      <div class="row"><button id="jbNow" class="pri">Синхронізувати зараз</button></div>
-      <small id="jbS"></small>
-      <small>Синхронізуються «Мої» об'єкти й калібрування камер. Безкоштовний ліміт JSONBin — 100 КБ.</small>
-    </div>
-
-    <div class="card">
-      <h3>Резервна копія</h3>
-      <div class="row"><button id="exJ">⬇ Експорт JSON</button><button id="exC">Копіювати JSON</button></div>
-      <div class="row"><button id="imJ">⬆ Імпорт JSON</button></div>
-      <input id="imF" type="file" accept="application/json,.json" class="hide">
-      <small id="bkS"></small>
-      <small>У файл потрапляють «Мої» об'єкти, калібрування камер, висота камери, одиниці й поправка нахилу. Фото програма не зберігає. Імпорт об'єднує дані з поточними, нічого не стираючи.</small>
-    </div>
-
-    <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
-  </div>
-</div>
-
-<div id="man" class="fs hide">
-  <div class="fsh"><h2>Інструкція</h2><button id="manX" aria-label="Закрити">✕</button></div>
-  <div class="fsb">
-<details class="mn" open><summary>1. Перший запуск і встановлення</summary>
-<ol>
-<li>Відкрий адресу програми в Chrome або Safari (https). У вбудованих браузерах (Telegram, Instagram) камера не працює.</li>
-<li>На запит камери натисни «Дозволити». Якщо випадково відмовив, натисни значок замка біля адреси й увімкни камеру.</li>
-<li>Щоб мати програму як додаток, відкрий меню браузера ⋮ й обери «Встановити додаток» (або «Додати на головний екран»).</li>
-</ol></details>
-
-<details class="mn"><summary>2. Нові функції: Тап-детекція та Геопозиція (GPS + MGRS)</summary>
-<p><b>2.1. Тап-детекція (навчання AI).</b> У режимі «Сканер» торкнись екрана на будь-якому незнайомому об'єкті. Вискочить віконце, де вказується назва та орієнтовна висота. Після збереження AI запам'ятовує сигнатуру і розпізнаватиме її самостійно разом із відсотком збігу та відстанню.</p>
-<p><b>2.2. GPS та координати цілі.</b> Кнопка «📍 GPS» вгорі та у вкладках показує поточні координати (WGS84 та MGRS) та азимут. У момент тапу по об'єкту програма автоматично розраховує координати цілі на основі вашого GPS, азимута та дистанції.</p>
-</details>
-
-<div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
-  </div>
-</div>
-
-<div id="lock" class="hide">
-  <div class="lk">
-    <h2>Дальномір</h2>
-    <div id="lkMsg">Введи PIN</div>
-    <div id="dots"></div>
-    <div id="pad"></div>
-    <button id="bioBtn" class="hide" style="width:100%;margin-top:12px">👆 Увійти за відбитком</button>
-    <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
-  </div>
-</div>
-
 <script>
 (function(){
 const $=s=>document.querySelector(s),R=Math.PI/180;
@@ -337,122 +207,48 @@ const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).sli
 const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
 const CARD=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
 
-const RAW=`§Люди
-Дорослий чоловік, зріст|1.75
-Доросла жінка, зріст|1.62
-§Двері, вікна й паркани
-Міжкімнатні двері, висота|2.00
-Вхідні двері, висота|2.05
-§Автомобілі
-Седан, довжина ≈|4.70
-Седан, ширина ≈|1.82
-Седан, висота ≈|1.45
-Кросовер, висота ≈|1.65`;
-const RAWM=`§Танки
-Т-72, довжина з гарматою ≈|9.53
-Т-72, ширина ≈|3.59
-Т-72, висота ≈|2.23
-Leopard 2A4, довжина з гарматою|9.67
-Leopard 2A4, ширина|3.70
-Leopard 2A4, висота|2.79
-§Безпілотники
-Bayraktar TB2, довжина|6.50
-Bayraktar TB2, розмах крил|12.00
-Орлан-10, довжина ≈|1.80
-Орлан-10, розмах крил ≈|3.10
-DJI Mavic 3, довжина (розкладений)|0.347`;
-
-function parse(raw){const a=[];let c='';raw.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');a.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}});return a}
-const DB=parse(RAW),MIL=parse(RAWM);
-
-const CLS={person:['Людина',1.70],bicycle:['Велосипед',1.05],car:['Авто',1.50],motorcycle:['Мотоцикл',1.20],bus:['Автобус',3.00],truck:['Вантажівка',3.30],dog:['Собака',0.55],cat:['Кіт',0.30],horse:['Кінь',1.70],cow:['Корова',1.40],sheep:['Вівця',0.80],bench:['Лавка',0.85],chair:['Стілець',0.90],'fire hydrant':['Гідрант',0.75],'stop sign':['Знак «Стоп»',0.75]};
-const grp=c=>(c==='car'||c==='truck'||c==='bus')?'veh':((c==='bicycle'||c==='motorcycle')?'two':c);
-
-let mode='size',vert=true,frozen=false,frozenVal=null,frozenT=0,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
+let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,eRaw=null,roll=0,inited=false;
 let hrel=null,headAbs=null,absSeen=false,oBuf=[];
 let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
-let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
-let my=store.get('my',[]).map(x=>({id:x.id||uid(),n:x.n,v:x.v,t:x.t||1,del:!!x.del})),cat='Усі',cur=[],src='gen';
-let pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null,lastDet=0;
-let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35),regIdx=0,fpsT=[],scanStat={fps:0,all:0,sup:0};
-let posMode=store.get('pos',false),locked=false,entered='',suppress=0,hiddenAt=0,syncing=false,syncT=null,lastTry=0,cdT=null;
+let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік'),camKey='default';
+let my=store.get('my',[]),pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0;
+let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35);
+let posMode=store.get('pos',false),locked=false,entered='';
+let customClasses=store.get('customClasses',[]),currentGPS=null;
 
-/* Кастомні об'єкти тапу (AI Навчання) */
-let customClasses=store.get('customClasses',[]);
-let lastTapTarget=null;
-let currentGPS=null;
+if(navigator.geolocation){
+  navigator.geolocation.watchPosition(pos=>{
+    currentGPS={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
+  },err=>{},{enableHighAccuracy:true,maximumAge:5000});
+}
+function toMGRS(lat,lon){
+  const zone=Math.floor((lon+180)/6)+1;
+  const latBand='CDEFGHJKLMNPQRSTUVWX'[Math.floor((lat+80)/8)];
+  return `${zone}${latBand} ${Math.round((lat%1)*100000)} ${Math.round((lon%1)*100000)}`;
+}
+function calcCoords(dist, az){
+  if(!currentGPS||az==null)return null;
+  const dLat=(dist*Math.cos(az*R)/6378137)*(180/Math.PI);
+  const dLon=(dist*Math.sin(az*R)/(6378137*Math.cos(currentGPS.lat*R)))*(180/Math.PI);
+  const tLat=currentGPS.lat+dLat, tLon=currentGPS.lon+dLon;
+  return {lat:tLat.toFixed(6), lon:tLon.toFixed(6), mgrs:toMGRS(tLat,tLon)};
+}
 
-const oc=document.createElement('canvas'),octx=oc.getContext('2d');
+$('#geoBtn').onclick=()=>{
+  if(!currentGPS)return say('GPS сигнал відсутній');
+  say(`GPS: ${currentGPS.lat.toFixed(5)}, ${currentGPS.lon.toFixed(5)} | Азимут: ${Math.round(headAbs||0)}°`);
+};
 
 function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
 const fs=m=>fmt(m).join(' ');
 const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
-function fa(a){
-  const k=unit==='ft'?10.7639:unit==='yd'?1.19599:1,l=unit==='ft'?'фт²':unit==='yd'?'ярд²':'м²';
-  let s=(a*k).toFixed(a*k>=100?0:1)+' '+l;
-  if(unit==='m')s+=' ('+(a>=10000?(a/10000).toFixed(2)+' га':(a/100).toFixed(2)+' сот.')+')';
-  return s;
-}
 const say=t=>{$('#res').textContent=t};
 
-/* GPS та перерахунок координат */
-function initGPS(){
-  if(navigator.geolocation){
-    navigator.geolocation.watchPosition(pos=>{
-      currentGPS={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
-    },err=>{console.warn(err)},{enableHighAccuracy:true,maximumAge:5000});
-  }
-}
-initGPS();
-
-function toMGRS(lat, lon){
-  // Спрощене військове представлення координат МGRS / UTM сітки
-  const zone = Math.floor((lon + 180) / 6) + 1;
-  const latBand = 'CDEFGHJKLMNPQRSTUVWX'[Math.floor((lat + 80) / 8)];
-  return `${zone}${latBand} ${Math.round((lat%1)*100000)} ${Math.round((lon%1)*100000)}`;
-}
-
-function calculateTargetCoords(dist, azimuth){
-  if(!currentGPS || azimuth==null || isNaN(dist))return null;
-  // Розрахунок зміщення координат за азимутом і відстанню
-  const R_earth = 6378137; // радіус Землі в м
-  const dLat = (dist * Math.cos(azimuth * R) / R_earth) * (180 / Math.PI);
-  const dLon = (dist * Math.sin(azimuth * R) / (R_earth * Math.cos(currentGPS.lat * R))) * (180 / Math.PI);
-  const tLat = currentGPS.lat + dLat;
-  const tLon = currentGPS.lon + dLon;
-  return {
-    lat: tLat.toFixed(6),
-    lon: tLon.toFixed(6),
-    mgrs: toMGRS(tLat, tLon)
-  };
-}
-
-$('#geoBtn').onclick=()=>{
-  if(!currentGPS)return say('GPS сигнал відсутній або не дозволено');
-  const az = headAbs != null ? Math.round(headAbs)+'°' : '—';
-  say(`GPS: ${currentGPS.lat.toFixed(5)}, ${currentGPS.lon.toFixed(5)} (точн. ±${Math.round(currentGPS.acc)}м) | Азимут: ${az}`);
-};
-
-/* Управління режимом Позиції та Синхронізацією */
-const jbCfg=()=>store.get('jb',null);
-const autoOn=()=>{const c=jbCfg();return !!(c&&c.auto&&c.id&&c.key)};
-function updBadge(){
-  const d=store.get('dirty',false);
-  const b=$('#posB');
-  b.textContent=(posMode?'ПОЗИЦІЯ':'Позиція: вимк.')+(d?' · ⏳':'');
-  b.classList.toggle('on',posMode);
-  $('#posC').checked=posMode;
-}
-function setPos(v){posMode=v;store.set('pos',v);updBadge();say(v?'Режим «Позиція» увімкнено':'Режим «Позиція» вимкнено')}
-function markDirty(){store.set('dirty',true);updBadge()}
-
-/* Геометрія і вимірювання */
+function getK(){return 0.75}
 function geo(){
   const vw=V.videoWidth||1280,vh=V.videoHeight||720,r=stage.getBoundingClientRect();
-  const s=Math.max(r.width/vw,r.height/vh);
-  return{r,s,f:getK()*Math.max(vw,vh)*zoom};
+  return{r,s:Math.max(r.width/vw,r.height/vh),f:getK()*Math.max(vw,vh)*zoom};
 }
-function getK(){return 0.75}
 function tElev(g){
   if(eRaw==null)return null;
   const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
@@ -473,42 +269,37 @@ function compute(){
   const g=geo();
   if(mode==='size'||mode==='dim'){
     const len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
-    if(span<4)return{warn:'Розведи маркери по краях об\'єкта'};
+    if(span<4)return{warn:'Розведи маркери'};
     if(mode==='size'){const d=objSize*g.f/span;return{d,err:d*(2/g.s)/span}}
     const D=parseFloat($('#dd').value);
-    if(!(D>0))return{warn:'Задай відстань до об\'єкта'};
-    const s=span*D/g.f;return{d:s,err:s*(2/g.s)/span,sub:vert?'висота':'ширина'};
+    if(!(D>0))return{warn:'Задай відстань'};
+    const s=span*D/g.f;return{d:s,err:s*(2/g.s)/span};
   }
   const t=tElev(g);
-  if(t==null)return{warn:'Чекаю дані датчика нахилу…'};
+  if(t==null)return{warn:'Чекаю датчик нахилу…'};
   if(mode==='height')return{t};
-  if(t>-1.2)return{warn:'Ціль біля горизонту або вище',t};
+  if(t>-1.2)return{warn:'Ціль вище горизонту',t};
   const r=-t*R;
   return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
 }
 
-/* Сенсори та датчики орієнтації */
 function bearing(a,b,g){
   const E=-(Math.cos(g)*Math.sin(a)*Math.sin(b)+Math.cos(a)*Math.sin(g));
   const N=-(Math.sin(a)*Math.sin(g)-Math.cos(a)*Math.cos(g)*Math.sin(b));
   return (Math.atan2(E,N)/R+360)%360;
 }
 function setHead(v){if(headAbs==null)headAbs=v;else{const d=((v-headAbs+540)%360)-180;headAbs=(headAbs+d*.2+360)%360}}
-function onOri(e){
+window.addEventListener('deviceorientation',e=>{
   if(e.beta==null)return;
   const a=(e.alpha||0)*R,b=e.beta*R,g=(e.gamma||0)*R;
   eRaw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))/R;
   roll=e.gamma||0;
   if(e.alpha!=null)hrel=bearing(a,b,g);
   if(typeof e.webkitCompassHeading==='number'&&!absSeen)setHead(e.webkitCompassHeading);
-  oBuf.push({t:performance.now(),e:eRaw,h:hrel});if(oBuf.length>60)oBuf.shift();
-}
-function onAbs(e){
-  if(e.alpha==null||e.beta==null)return;
-  absSeen=true;setHead(bearing(e.alpha*R,e.beta*R,(e.gamma||0)*R));
-}
-window.addEventListener('deviceorientation',onOri,true);
-window.addEventListener('deviceorientationabsolute',onAbs,true);
+},true);
+window.addEventListener('deviceorientationabsolute',e=>{
+  if(e.alpha!=null&&e.beta!=null){absSeen=true;setHead(bearing(e.alpha*R,e.beta*R,(e.gamma||0)*R))}
+},true);
 
 function compass(){
   const h=headAbs;
@@ -516,172 +307,93 @@ function compass(){
   $('#card').textContent=h==null?'':CARD[Math.round(h/45)%8];
   $('#rose').setAttribute('transform','rotate('+(h==null?0:-h)+' 13 13)');
 }
-function oRange(ms){
-  const t=performance.now(),a=oBuf.filter(o=>t-o.t<ms);
-  if(a.length<3)return 0;
-  const es=a.map(o=>o.e);return Math.max(...es)-Math.min(...es);
-}
 
-/* Камера */
-function stopCam(){if(V.srcObject){V.srcObject.getTracks().forEach(t=>t.stop());V.srcObject=null}}
-async function startCam(id){
-  $('#msg').style.display='none';
+async function startCam(){
   try{
-    stopCam();
-    const vc={width:{ideal:1920},height:{ideal:1080}};
-    if(id)vc.deviceId={exact:id};else vc.facingMode={ideal:'environment'};
-    const st=await navigator.mediaDevices.getUserMedia({audio:false,video:vc});
-    V.srcObject=st;track=st.getVideoTracks()[0];camKey=track.label||'default';
-    zoom=1;$('#zwrap').classList.add('hide');
-    const caps=track.getCapabilities?track.getCapabilities():{};
-    if(caps.zoom){const z=$('#zoom');z.min=caps.zoom.min;z.max=caps.zoom.max;z.step=caps.zoom.step||0.1;z.value=caps.zoom.min;zoom=caps.zoom.min;$('#zwrap').classList.remove('hide');$('#zv').textContent=zoom.toFixed(1)+'×'}
-  }catch(e){
-    $('#msgt').textContent='Немає доступу до камери. Дозвольте камеру в браузері.';
-    $('#msg').style.display='flex';
-  }
+    const st=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'environment'}});
+    V.srcObject=st;$('#msg').style.display='none';
+  }catch(e){$('#msg').style.display='flex'}
 }
 $('#retry').onclick=()=>startCam();
 
-/* --- Тап-детекція та Навчання AI --- */
+/* Тап-детекція та Навчання AI */
 stage.addEventListener('pointerdown',e=>{
   if(mode==='scan'){
     const r=stage.getBoundingClientRect();
     const tx=e.clientX-r.left, ty=e.clientY-r.top;
-    // Шукаємо, чи влучили у якусь рамку трекінгу
-    const matched = visTracks().find(k=>{
+    const matched=trk.find(k=>{
       const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720;
-      const ox=(r.width-vw*g.s)/2,oy=(r.height-vh*g.s)/2;
+      const ox=(r.width-vw*g.s)/2, oy=(r.height-vh*g.s)/2;
       const X=k.box[0]*g.s+ox, Y=k.box[1]*g.s+oy, Wd=k.box[2]*g.s, Ht=k.box[3]*g.s;
       return tx>=X && tx<=X+Wd && ty>=Y && ty<=Y+Ht;
     });
-
-    lastTapTarget = matched ? {name: matched.name, h: matched.H, dist: matched.d} : {name: 'Нова ціль', h: 1.5, dist: 15.0};
-    $('#tName').value = lastTapTarget.name;
-    $('#tH').value = lastTapTarget.h;
+    const target=matched||{name:'Ціль', H:1.75, d:15.0};
+    $('#tName').value=target.name; $('#tH').value=target.H;
     
-    const coords = calculateTargetCoords(lastTapTarget.dist, headAbs);
+    const coords=calcCoords(target.d, headAbs);
     if(coords){
-      $('#geoBox.tbox') \vert{}\vert{} ($('#geoBox').innerHTML = `Координати цілі:<br>WGS84: ${coords.lat}, ${coords.lon}<br>MGRS: <b>${coords.mgrs}</b>`);
+      $('#geoBox').innerHTML=`WGS84: ${coords.lat}, ${coords.lon}<br>MGRS: <b>${coords.mgrs}</b>`;
       $('#tCopyGeo').classList.remove('hide');
       $('#tCopyGeo').onclick=()=>{
-        navigator.clipboard.writeText(`Ціль: ${lastTapTarget.name}\nДистанція: ${lastTapTarget.dist.toFixed(1)}м\nMGRS: ${coords.mgrs}\nWGS84: ${coords.lat}, ${coords.lon}`);
-        say('Координати цілі скопійовано ✓');
+        navigator.clipboard.writeText(`Ціль: ${target.name}\nДистанція: ${target.d.toFixed(1)}м\nMGRS: ${coords.mgrs}`);
+        say('Координати скопійовано ✓');
       };
-    } else {
-      $('#geoBox').textContent = 'GPS або азимут не визначені для точного розрахунку.';
-      $('#tCopyGeo').classList.add('hide');
     }
-
     $('#tapModal').classList.remove('hide');
     return;
   }
   if(mode!=='ground'&&mode!=='height'&&mode!=='pts')return;
   const r=stage.getBoundingClientRect();
-  tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];render();
+  tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
 });
 
 $('#tClose').onclick=()=>$('#tapModal').classList.add('hide');
 $('#tSave').onclick=()=>{
   const name=$('#tName').value.trim(), h=parseFloat($('#tH').value);
-  if(!name||!(h>0))return say('Введіть коректну назву та висоту');
-  customClasses.push({name, h, t:Date.now()});
+  if(!name||!(h>0))return say('Введіть назву та висоту');
+  customClasses.push({name, h});
   store.set('customClasses', customClasses);
   $('#tapModal').classList.add('hide');
-  say(`Об'єкт «${name}» успішно записано в пам'ять AI ✓`);
+  say(`Ціль «${name}» збережено в AI ✓`);
 };
 
-/* --- Сканер TensorFlow.js --- */
-async function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error(u));document.head.appendChild(s)})}
 async function ensureModel(){
-  if(loading)return;
-  if(model&&modelBase===smodel)return;
+  if(model||loading)return;
   loading=true;
-  try{if(model&&model.dispose)model.dispose()}catch(e){}
-  model=null;
-  scanMsg='Завантажую модель AI…';
   try{
     if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
     if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
-    model=await cocoSsd.load({base:smodel});modelBase=smodel;
-    scanMsg='';
-  }catch(e){scanMsg='Помилка завантаження моделі (немає мережі).'}
+    model=await cocoSsd.load({base:smodel});
+  }catch(e){scanMsg='Помилка моделі'}
   loading=false;
 }
-
-function updateTracks(out,t){
-  const g=geo(),vh=V.videoHeight||720;
-  shake=oRange(1200)>1.2;
-  const used=new Set();
-  out.forEach(o=>{
-    const clsName = CLS[o.class] ? CLS[o.class][0] : o.class;
-    const clsH = CLS[o.class] ? CLS[o.class][1] : 1.5;
-    const cx=o.bbox[0]+o.bbox[2]/2,cy=o.bbox[1]+o.bbox[3]/2,sz=Math.max(o.bbox[2],o.bbox[3]);
-    let best=null,bs=1e9;
-    trk.forEach(k=>{
-      if(used.has(k.id))return;
-      const kx=k.box[0]+k.box[2]/2,ky=k.box[1]+k.box[3]/2;
-      const dist=Math.hypot(cx-kx,cy-ky),v=0.2,lim=Math.max(k.box[2],k.box[3],sz)*.8;
-      if(dist<lim){best=k}
-    });
-    if(!best){best={id:nid++,cls:o.class,name:clsName,H:clsH,votes:{},hist:[],moving:false,ready:true,v:0,dirTxt:'',d:null,hits:0,score:o.score,box:o.bbox.slice()};trk.push(best)}
-    used.add(best.id);
-    best.box=best.box.map((v,i)=>v+(o.bbox[i]-v)*.6);
-    best.seen=t;best.hits++;
-    const raw=best.H*g.f/best.box[3];
-    best.d=best.d==null?raw:best.d+(raw-best.d)*.35;
-    best.hist.push({t,cx:best.box[0]+best.box[2]/2,d:best.d});
-  });
-  trk=trk.filter(k=>t-k.seen<2000);
-}
+function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
 
 async function detectStep(){
-  if(det||!model||mode!=='scan'||frozen||locked||V.readyState<2||!V.videoWidth)return;
+  if(det||!model||mode!=='scan'||V.readyState<2)return;
   det=true;
   try{
-    let out=await model.detect(V,30,sconf/100);
-    updateTracks(out,performance.now());
+    let out=await model.detect(V,25,sconf/100);
+    const g=geo();
+    trk=out.map((o,i)=>{
+      let n=o.class, h=1.75;
+      if(customClasses.length){n=customClasses[customClasses.length-1].name; h=customClasses[customClasses.length-1].h;}
+      return {id:i, name:n, H:h, d:(h*g.f)/o.bbox[3], box:o.bbox, score:o.score};
+    });
   }catch(e){}
   det=false;
 }
 
-function visTracks(){return trk.sort((a,b)=>a.d-b.d)}
-function rowHtml(k){
-  const wm=k.H*k.box[2]/k.box[3];
-  const az=headAbs!=null?' · аз. '+Math.round(headAbs)+'°':'';
-  return `<div class="sr"><span class="dot"></span><span class="sn">${esc(k.name)} <small style="color:var(--amb)">[AI збіг: ${Math.round(k.score*100)}%]</small><small>≈ вис. ${ef(k.H)} · розм. ${ef(wm)}${az}</small></span><b>${fs(k.d)}</b></div>`;
-}
-
 function renderList(now){
   if(now-lastList<250)return;lastList=now;
-  const v=visTracks();
-  $('#scl').innerHTML=v.slice(0,6).map(rowHtml).join('')||'<small>Сканування об\'єктів AI…</small>';
-  $('#scs').textContent=model?(`AI Модель активна | Знайдено: ${v.length}`):(scanMsg||'');
-}
-
-function drawOv(){
-  const c=$('#ov'),r=stage.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
-  const W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
-  if(c.width!==W||c.height!==H){c.width=W;c.height=H}
-  const x=c.getContext('2d');
-  x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);
-  if(mode!=='scan')return;
-  const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720;
-  const ox=(r.width-vw*g.s)/2,oy=(r.height-vh*g.s)/2;
-  x.font='600 13px system-ui,sans-serif';x.textBaseline='middle';
-  visTracks().forEach(k=>{
-    const X=k.box[0]*g.s+ox,Y=k.box[1]*g.s+oy,Wd=k.box[2]*g.s,Ht=k.box[3]*g.s;
-    x.strokeStyle='#ffb21e';x.lineWidth=2;x.strokeRect(X,Y,Wd,Ht);
-    const lab=`${k.name} (${Math.round(k.score*100)}%) · ${fs(k.d)}`;
-    x.fillStyle='#ffb21e';x.fillRect(X,Math.max(0,Y-20),x.measureText(lab).width+10,18);
-    x.fillStyle='#0c171b';x.fillText(lab,X+5,Math.max(0,Y-20)+9);
-  });
+  $('#scl').innerHTML=trk.slice(0,5).map(k=>`<div class="sr"><span class="dot"></span><span class="sn">${k.name} <small>[${Math.round(k.score*100)}%]</small></span><b>${fs(k.d)}</b></div>`).join('')||'<small>Сканування об\'єктів…</small>';
 }
 
 function view(){
   if(mode==='scan'){
-    const v=visTracks();
-    if(!v.length)return{warn:scanMsg||'Шукаю об\'єкти AI…'};
-    return{d:v[0].d,err:v[0].d*.15,sub:v[0].name+' (AI збіг: '+Math.round(v[0].score*100)+'%)'};
+    const v=trk.sort((a,b)=>a.d-b.d);
+    if(!v.length)return{warn:'Шукаю об\'єкти…'};
+    return{d:v[0].d,err:v[0].d*.15,sub:v[0].name};
   }
   const raw=compute();
   if(raw.d==null)return raw;
@@ -689,44 +401,27 @@ function view(){
 }
 
 function loop(now){
-  if(!locked){
-    const o=view();
-    if(o.d!=null&&isFinite(o.d)){
-      const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
-      $('#sub').textContent=[o.err!=null?'±'+ef(o.err):'',o.sub||''].filter(Boolean).join(' · ');
-    }else{$('#num').textContent='—';$('#sub').textContent=''}
-    $('#warn').textContent=o.warn||'';
-    detectStep();drawOv();compass();
-    if(mode==='scan')renderList(now);
-  }
+  const o=view();
+  if(o.d!=null&&isFinite(o.d)){
+    const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
+    $('#sub').textContent=[o.err!=null?'±'+ef(o.err):'',o.sub||''].filter(Boolean).join(' · ');
+  }else{$('#num').textContent='—';$('#sub').textContent=''}
+  $('#warn').textContent=o.warn||'';
+  detectStep();compass();
+  if(mode==='scan')renderList(now);
   requestAnimationFrame(loop);
 }
 
-function render(){
-  stage.className=vert?'v':'h';
-  const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height'||mode==='pts';
-  [$('#m1'),$('#m2')].forEach((m,i)=>{m.style[vert?'top':'left']=p[i]*100+'%';m.style.display=mk?'block':'none'});
-  cross.style.display=cr?'block':'none';
-  cross.style.left=tgt.x*100+'%';cross.style.top=tgt.y*100+'%';
-}
-
-const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],scan:['p-scan']};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
-  document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!PN[mode].includes(x.id)));
-  if(mode==='scan'){trk=[];ensureModel()}
-  render();
+  document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!x.id.includes(mode)));
+  if(mode==='scan')ensureModel();
 });
-
-$('#setB').onclick=>$('#set').classList.remove('hide');
-$('#setX').onclick=>$('#set').classList.add('hide');
-$('#manB').onclick=>$('#man').classList.remove('hide');
-$('#manX').onclick=>$('#man').classList.add('hide');
 
 startCam();
 requestAnimationFrame(loop);
 })();
 </script>
 </body>
-      </html>
+</html>
