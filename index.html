@@ -1,427 +1,597 @@
-<!doctype html>
-<html lang="uk">
+here```html
+<!DOCTYPE html>
+<html lang="uk" class="h-full">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0c171b">
-<title>Дальномір - БАРС</title>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<style>
-:root{--bg:#0c171b;--panel:rgba(12,23,27,.9);--ink:#e9efe6;--mute:#8fa3a0;--amb:#ffb21e;--red:#ff5a3c;--line:rgba(233,239,230,.16)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
-#stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
-#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--mute)}
-#msg button{margin-top:14px}
-.mk{position:absolute;pointer-events:none}
-.v .mk{left:0;right:0;height:0;border-top:2px solid var(--amb)}
-.h .mk{top:0;bottom:0;width:0;border-left:2px solid var(--amb)}
-.mk i{position:absolute;width:48px;height:48px;pointer-events:auto;touch-action:none;display:grid;place-items:center}
-.mk i::after{content:"";width:20px;height:20px;border-radius:50%;background:var(--amb);border:3px solid var(--bg)}
-.v .mk i{right:10px;top:-24px}
-.h .mk i{bottom:calc(var(--sh,230px) + 12px);left:-24px}
-.mk:nth-child(2){border-color:var(--red)}.mk:nth-child(2) i::after{background:var(--red)}
-#cross{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;pointer-events:none;display:none}
-#cross::before,#cross::after{content:"";position:absolute;background:var(--amb)}
-#cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
-#cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
-#cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
-#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:4px}
-.tab{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:12px;font-weight:600}
-.tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
-#cmp{position:absolute;left:10px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;pointer-events:none}
-#cmp b{font-weight:600;font-variant-numeric:tabular-nums}
-#cmp span{color:var(--amb)}
-#tr{position:absolute;right:8px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;gap:6px}
-.tb{padding:5px 10px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;line-height:1.3}
-.tb.on{border-color:var(--red);color:var(--red)}
-#sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
-#sheet.min #ctl{display:none}
-#read{display:flex;align-items:baseline;gap:10px}
-#num{font:700 60px/1 "Arial Narrow","Roboto Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
-#unit{font:600 24px system-ui,sans-serif;color:var(--amb)}
-#sub{margin-left:auto;text-align:right;color:var(--mute);font-size:13px}
-#col{align-self:center;padding:6px 12px;font-size:18px;line-height:1}
-#warn{color:var(--amb);font-size:13px;min-height:18px}
-#res{font-size:13px}
-#lvl{font-size:13px;color:var(--mute);margin-top:4px}#lvl.bad{color:var(--red)}
-.row{display:flex;gap:8px;align-items:center;margin-top:8px}
-.row label{color:var(--mute);font-size:13px;flex:0 0 auto}
-select,input,button{font:inherit;color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0}
-input[type=number]{width:84px}
-input[type=checkbox]{width:20px;height:20px;padding:0;accent-color:var(--amb)}
-select{flex:1}
-button{cursor:pointer;font-weight:600}
-.row>button{flex:1;padding:9px 4px;font-size:14px}
-button.pri{background:var(--amb);color:var(--bg);border-color:var(--amb)}
-button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
-input[type=range]{flex:1;padding:0;accent-color:var(--amb)}
-.hide{display:none!important}
-small{color:var(--mute);font-size:12px;display:block;margin-top:6px}
-.ft{text-align:center;color:var(--mute);font-size:10.5px;line-height:1.35;margin-top:10px;letter-spacing:.2px}
-#pick{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sr{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
-.sr .sn{flex:1;min-width:0}
-.sr .sn small{margin:0}
-.sr b{white-space:nowrap;font-variant-numeric:tabular-nums}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--amb);flex:0 0 auto}.dot.st{background:var(--mute)}
-#db{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
-.dbh{display:flex;gap:8px}
-#dbq{flex:1}
-.seg{display:flex;gap:6px;padding-top:10px}
-.seg .chip{flex:1;padding:9px 6px;border-radius:10px}
-#chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 8px;flex:0 0 auto}
-.chip{flex:0 0 auto;padding:7px 12px;border-radius:99px;font-size:13px;white-space:nowrap}
-.chip.on{background:var(--amb);color:var(--bg);border-color:var(--amb)}
-#cnt{color:var(--mute);font-size:12px;padding-bottom:6px}
-#dbl{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
-.it{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:12px 4px;font-weight:500}
-.it b{color:var(--amb);white-space:nowrap;font-variant-numeric:tabular-nums}
-.it i{font-style:normal;color:var(--mute);padding:4px 8px;margin-left:6px}
-.dba{display:flex;gap:6px;margin-top:8px}
-.dba input:first-child{flex:1}
-.dba input[type=number]{width:90px}
-.fs{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
-.fsh{display:flex;align-items:center;gap:8px}
-.fsh h2{margin:0;font-size:18px;flex:1}
-.fsb{flex:1;overflow-y:auto;margin-top:10px;padding-bottom:10px}
-.card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.03)}
-.card h3{margin:0 0 4px;font-size:15px}
-.card input[type=text],.card input[type=password],.card input[type=number]{width:100%}
-.card .row>input{flex:1;width:auto}
-#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
-.lk{width:100%;max-width:320px;text-align:center}
-.lk h2{margin:0 0 4px}
-#lkMsg{color:var(--mute);min-height:20px}
-#dots{display:flex;gap:12px;justify-content:center;margin:16px 0}
-#dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--amb)}
-#dots i.f{background:var(--amb)}
-#pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-#pad button{padding:16px 0;font-size:22px;border-radius:14px}
-details.mn{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:0 12px;background:rgba(255,255,255,.03)}
-details.mn summary{padding:12px 0;font-weight:600;color:var(--ink);margin:0;font-size:15px;cursor:pointer}
-details.mn[open] summary{color:var(--amb)}
-.mn ol,.mn ul{padding-left:20px;margin:0 0 12px}
-.mn li{margin:6px 0}
-.mn p{margin:0 0 10px}
-.mn .n{color:var(--mute)}
-#tapModal{position:fixed;inset:0;z-index:40;background:rgba(12,23,27,.85);display:flex;align-items:center;justify-content:center;padding:20px}
-.tbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;width:100%;max-width:320px}
-.tbox h3{margin:0 0 8px;font-size:16px}
-#geoBox{font-size:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:8px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Object Scanner & Trainer</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- OpenCV.js for Computer Vision & ORB feature matching -->
+    <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady()" type="text/javascript"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
+        /* Smooth transitions for UI overlays */
+        .fade-in { animation: fadeIn 0.25s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
 </head>
-<body>
-<div id="stage" class="v">
-  <video id="vid" playsinline muted autoplay></video>
-  <canvas id="ov"></canvas>
-  <div id="m1" class="mk"><i></i></div><div id="m2" class="mk"><i></i></div>
-  <div id="cross"><b></b></div>
-  <div id="msg"><div><div id="msgt"></div><button id="retry" class="pri">Увімкнути камеру</button></div></div>
-</div>
-<div id="top">
-  <button class="tab on" data-m="size">Об'єкт</button>
-  <button class="tab" data-m="ground">Земля</button>
-  <button class="tab" data-m="height">Висота</button>
-  <button class="tab" data-m="dim">Розмір</button>
-  <button class="tab" data-m="pts">Точки</button>
-  <button class="tab" data-m="scan">Сканер</button>
-</div>
-<div id="cmp" aria-label="Компас">
-  <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#8fa3a0" stroke-width="1.5"/><g id="rose"><path d="M13 3 L16 12 L10 12 Z" fill="#ff5a3c"/><path d="M13 23 L16 14 L10 14 Z" fill="#8fa3a0"/></g></svg>
-  <b id="az">—</b><span id="card"></span>
-</div>
-<div id="tr">
-  <button id="posB" class="tb">Позиція: вимк.</button>
-  <button id="geoBtn" class="tb" title="GPS координати">📍 GPS</button>
-  <button id="setB" class="tb" aria-label="Налаштування">⚙</button>
-  <button id="manB" class="tb" aria-label="Інструкція">📖</button>
-</div>
-<div id="sheet">
-  <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div><button id="col" aria-label="Згорнути панель">⌄</button></div>
-  <div id="warn"></div><div id="res"></div><div id="lvl" class="hide"></div>
-  <div id="ctl">
-    <div id="p-size" class="pn">
-      <div class="row"><button id="pick">📚 Обрати об'єкт</button><input id="sz" type="number" step="0.001" min="0.001" inputmode="decimal"></div>
-      <div class="row"><button class="ori">Міряю висоту ↕</button><input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto"><button id="cal">Калібрувати</button></div>
-      <small id="kinfo"></small>
-      <small>Постав маркери на краї об'єкта.</small>
+<body class="h-full bg-slate-950 text-slate-100 overflow-hidden flex flex-col">
+
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between z-20 shrink-0">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-camera-retro text-sm"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm tracking-tight text-white">AR Object Scanner</h1>
+                <p id="cv-status" class="text-[10px] text-amber-400 font-medium">Завантаження OpenCV.js...</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="btn-library" onclick="toggleLibraryModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center space-x-1.5 shadow-sm">
+                <i class="fa-solid fa-database text-indigo-400"></i>
+                <span id="lib-count">База (0)</span>
+            </button>
+            <button onclick="toggleHelpModal()" class="w-8 h-8 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 flex items-center justify-center text-slate-300 transition">
+                <i class="fa-solid fa-question text-xs"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="relative flex-1 w-full bg-black overflow-hidden flex items-center justify-center">
+        <!-- Hidden video element capturing camera feed -->
+        <video id="videoElement" autoplay playsinline muted class="absolute opacity-0 pointer-events-none"></video>
+        
+        <!-- Interactive Canvas Overlay for video display, bounding boxes & taps -->
+        <canvas id="cameraCanvas" class="absolute inset-0 w-full h-full object-cover cursor-crosshair"></canvas>
+
+        <!-- Scanning reticle / guide hint -->
+        <div id="scan-hint" class="absolute pointer-events-none inset-0 flex items-center justify-center z-10 opacity-70">
+            <div class="w-48 h-48 border border-white/30 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
+                <i class="fa-solid fa-crosshairs text-white/50 text-2xl mb-2 animate-pulse"></i>
+                <span class="text-xs text-white/70 font-medium drop-shadow">Наведіть камеру на об'єкт або тапніть для навчання</span>
+            </div>
+        </div>
+
+        <!-- Real-time live status badge -->
+        <div class="absolute top-4 left-4 z-10 pointer-events-none">
+            <div class="bg-slate-900/70 backdrop-blur-md px-3 py-1 rounded-full border border-slate-700/50 flex items-center space-x-2 shadow-lg">
+                <span id="fps-badge" class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span id="scan-status" class="text-[11px] font-medium text-slate-300">Готово до сканування</span>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900/80 backdrop-blur-md border-t border-slate-800 px-4 py-3 flex items-center justify-between z-20 shrink-0">
+        <div class="text-xs text-slate-400">
+            <span class="font-semibold text-slate-200">Підказка:</span> Тапніть по об'єкту на екрані, щоб додати новий.
+        </div>
+        <button onclick="triggerManualTap()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+            <i class="fa-solid fa-plus"></i>
+            <span>Додати з центру</span>
+        </button>
+    </footer>
+
+    <div id="trainModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl fade-in space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-white">Навчити новий об'єкт</h3>
+                </div>
+                <button onclick="closeTrainModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-400">Введіть параметри об'єкта для розрахунку відстані та збереження у пам'яті пристрою.</p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Назва об'єкта</label>
+                    <input type="text" id="inputName" placeholder="Наприклад: Чашка, Ноутбук, Стілець" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Реальна Висота (см)</label>
+                        <input type="number" id="inputHeight" placeholder="15" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Реальна Ширина (см)</label>
+                        <input type="number" id="inputWidth" placeholder="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeTrainModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">Скасувати</button>
+                <button onclick="saveTrainedObject()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">Зберегти та навчити</button>
+            </div>
+        </div>
     </div>
-    <div id="p-dim" class="pn hide">
-      <div class="row"><label>Відстань до об'єкта, м</label><input id="dd" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="fromG">З «Земля»</button></div>
-      <div class="row"><button class="ori">Міряю висоту ↕</button></div>
+
+    <div id="libraryModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl fade-in space-y-4 max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                        <i class="fa-solid fa-database text-xs"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-white">База навчених об'єктів</h3>
+                </div>
+                <button onclick="toggleLibraryModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="libraryList" class="flex-1 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-800/50">
+                <!-- Dynamically populated list -->
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+                <button onclick="clearLibrary()" class="text-rose-400 hover:text-rose-300 text-xs font-medium flex items-center space-x-1">
+                    <i class="fa-solid fa-trash-can text-[10px]"></i>
+                    <span>Очистити все</span>
+                </button>
+                <button onclick="toggleLibraryModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Закрити</button>
+            </div>
+        </div>
     </div>
-    <div id="p-tilt" class="pn hide">
-      <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="zero">Обнулити нахил</button></div>
-      <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчики</button>
+
+    <div id="helpModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl fade-in space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                        <i class="fa-solid fa-circle-info text-xs"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-white">Як користуватися</h3>
+                </div>
+                <button onclick="toggleHelpModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <div class="flex items-start space-x-2.5">
+                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">1</span>
+                    <p>Наведіть тильну камеру смартфона або пристрою на об'єкт, який хочете розпізнавати.</p>
+                </div>
+                <div class="flex items-start space-x-2.5">
+                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">2</span>
+                    <p>Тапніть у будь-якій точці на об'єкті на екрані. Відкриється вікно налаштування.</p>
+                </div>
+                <div class="flex items-start space-x-2.5">
+                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">3</span>
+                    <p>Введіть назву та реальні розміри у сантиметрах. Програма збереже візуальні дескриптори ORB.</p>
+                </div>
+                <div class="flex items-start space-x-2.5">
+                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center stere shrink-0 text-[10px]">4</span>
+                    <p>Наступного разу при наведенні камери система автоматично знайде об'єкт, визначить його розміри та відстань.</p>
+                </div>
+            </div>
+
+            <button onclick="toggleHelpModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">Зрозуміло</button>
+        </div>
     </div>
-    <div id="p-ground" class="pn hide"><small>Торкнись екрана там, де ціль стоїть на землі.</small></div>
-    <div id="p-height" class="pn hide">
-      <div class="row"><label>Відстань, м</label><input id="hd" type="number" step="0.1" min="0.1" inputmode="decimal"></div>
-      <div class="row"><button id="lo">1 · Низ</button><button id="hi">2 · Верх</button><button id="hr">Скинути</button></div>
-    </div>
-    <div id="p-pts" class="pn hide">
-      <div class="row"><button id="addP" class="pri">＋ Точка</button><button id="delP">Видалити останню</button><button id="clrP">Очистити</button></div>
-      <div id="plan"></div>
-    </div>
-    <div id="p-scan" class="pn hide">
-      <div id="scl"></div>
-      <small id="scs"></small>
-      <div class="row"><label>Показувати</label><select id="scf"><option value="all">Усі об'єкти</option><option value="mov">Лише рухомі</option></select></div>
-      <div class="row"><label>Модель</label><select id="scm"><option value="mobilenet_v2">Точна</option><option value="lite_mobilenet_v2">Легка</option></select></div>
-      <div class="row"><label>Дальність</label><select id="scr"><option value="1">Звичайна</option><option value="2">Далека</option></select></div>
-      <div class="row"><label>Мін. впевненість</label><input id="scc" type="range" min="20" max="80" step="5" value="35"><b id="scv" style="min-width:38px;text-align:right">35%</b></div>
-      <small>Торкніться екрана для навчання AI та збереження об'єкта.</small>
-    </div>
-    <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
-    <div class="row" id="bt2"><button id="ser">Серія ×10</button><button id="sa">Швидкість A</button><button id="sb">B</button></div>
-    <div class="row hide" id="zwrap"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></div>
-  </div>
-  <div class="ft">© 2026 БАРС</div>
-</div>
-<div id="tapModal" class="hide">
-  <div class="tbox">
-    <h3>🎯 Навчання AI / Об'єкт</h3>
-    <div class="row"><input id="tName" type="text" placeholder="Назва об'єкта"></div>
-    <div class="row"><input id="tH" type="number" step="0.05" min="0.1" placeholder="Висота, м"></div>
-    <div id="geoBox">Координати цілі…</div>
-    <div class="row" style="margin-top:12px">
-      <button id="tSave" class="pri">Записати в AI</button>
-      <button id="tCopyGeo" class="hide">📋 Копіювати</button>
-      <button id="tClose">Закрити</button>
-    </div>
-  </div>
-</div>
-<script>
-(function(){
-const $=s=>document.querySelector(s),R=Math.PI/180;
-const V=$('#vid'),stage=$('#stage'),cross=$('#cross'),sheet=$('#sheet');
-const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
-const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
-const CARD=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
 
-let mode='size',vert=true,frozen=false,frozenVal=null,zoom=1,eRaw=null,roll=0,inited=false;
-let hrel=null,headAbs=null,absSeen=false,oBuf=[];
-let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
-let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік'),camKey='default';
-let my=store.get('my',[]),pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0;
-let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35);
-let posMode=store.get('pos',false),locked=false,entered='';
-let customClasses=store.get('customClasses',[]),currentGPS=null;
+    <script>
+        let cvReady = false;
+        let video = document.getElementById('videoElement');
+        let canvas = document.getElementById('cameraCanvas');
+        let ctx = canvas.getContext('2d');
+        
+        let streaming = false;
+        let trainedObjects = [];
+        let pendingTapCoords = null;
+        let focalLength = 800; // Estimated camera focal length in pixels
 
-if(navigator.geolocation){
-  navigator.geolocation.watchPosition(pos=>{
-    currentGPS={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
-  },err=>{},{enableHighAccuracy:true,maximumAge:5000});
-}
-function toMGRS(lat,lon){
-  const zone=Math.floor((lon+180)/6)+1;
-  const latBand='CDEFGHJKLMNPQRSTUVWX'[Math.floor((lat+80)/8)];
-  return `${zone}${latBand} ${Math.round((lat%1)*100000)} ${Math.round((lon%1)*100000)}`;
-}
-function calcCoords(dist, az){
-  if(!currentGPS||az==null)return null;
-  const dLat=(dist*Math.cos(az*R)/6378137)*(180/Math.PI);
-  const dLon=(dist*Math.sin(az*R)/(6378137*Math.cos(currentGPS.lat*R)))*(180/Math.PI);
-  const tLat=currentGPS.lat+dLat, tLon=currentGPS.lon+dLon;
-  return {lat:tLat.toFixed(6), lon:tLon.toFixed(6), mgrs:toMGRS(tLat,tLon)};
-}
+        // Load trained objects from LocalStorage on startup
+        function loadStorage() {
+            try {
+                const stored = localStorage.getItem('ar_trained_objects');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    // Reconstruct OpenCV Mats for descriptors if stored as arrays
+                    trainedObjects = parsed.map(item => {
+                        let mat = null;
+                        if (item.descArray && item.descRows && item.descCols && item.descType) {
+                            mat = cv.matFromArray(item.descRows, item.descCols, item.descType, item.descArray);
+                        }
+                        return {
+                            id: item.id,
+                            name: item.name,
+                            height: item.height,
+                            width: item.width,
+                            descriptors: mat,
+                            keypointsCount: item.keypointsCount || 0
+                        };
+                    });
+                }
+            } catch (e) {
+                console.error("Error loading local storage:", e);
+                trainedObjects = [];
+            }
+            updateLibraryCount();
+        }
 
-$('#geoBtn').onclick=()=>{
-  if(!currentGPS)return say('GPS сигнал відсутній');
-  say(`GPS: ${currentGPS.lat.toFixed(5)}, ${currentGPS.lon.toFixed(5)} | Азимут: ${Math.round(headAbs||0)}°`);
-};
+        // Save trained objects to LocalStorage
+        function saveStorage() {
+            try {
+                const serializable = trainedObjects.map(item => {
+                    let descArray = [];
+                    let rows = 0, cols = 0, type = 0;
+                    if (item.descriptors && !item.descriptors.empty()) {
+                        rows = item.descriptors.rows;
+                        cols = item.descriptors.cols;
+                        type = item.descriptors.type();
+                        descArray = Array.from(item.descriptors.dataString ? new Uint8Array(item.descriptors.data) : []);
+                    }
+                    return {
+                        id: item.id,
+                        name: item.name,
+                        height: item.height,
+                        width: item.width,
+                        descRows: rows,
+                        descCols: cols,
+                        descType: type,
+                        descArray: descArray,
+                        keypointsCount: item.keypointsCount
+                    };
+                });
+                localStorage.setItem('ar_trained_objects', JSON.stringify(serializable));
+            } catch (e) {
+                console.error("Error saving local storage:", e);
+            }
+            updateLibraryCount();
+        }
 
-function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
-const fs=m=>fmt(m).join(' ');
-const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
-const say=t=>{$('#res').textContent=t};
+        function updateLibraryCount() {
+            document.getElementById('lib-count').innerText = `База (${trainedObjects.length})`;
+        }
 
-function getK(){return 0.75}
-function geo(){
-  const vw=V.videoWidth||1280,vh=V.videoHeight||720,r=stage.getBoundingClientRect();
-  return{r,s:Math.max(r.width/vw,r.height/vh),f:getK()*Math.max(vw,vh)*zoom};
-}
-function tElev(g){
-  if(eRaw==null)return null;
-  const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
-  return eRaw-bias-off;
-}
-function groundPt(ex,hd,g){
-  const e=ex*R,h=hd*R;
-  const u=((tgt.x-.5)*g.r.width/g.s)/g.f,v=((tgt.y-.5)*g.r.height/g.s)/g.f;
-  const F=[Math.cos(e)*Math.sin(h),Math.cos(e)*Math.cos(h),Math.sin(e)];
-  const Rt=[Math.cos(h),-Math.sin(h),0];
-  const D=[Math.sin(e)*Math.sin(h),Math.sin(e)*Math.cos(h),-Math.cos(e)];
-  const r=[F[0]+u*Rt[0]+v*D[0],F[1]+u*Rt[1]+v*D[1],F[2]+u*Rt[2]+v*D[2]];
-  if(r[2]>=-0.02)return null;
-  const t=camH/-r[2];
-  return{x:r[0]*t,y:r[1]*t};
-}
-function compute(){
-  const g=geo();
-  if(mode==='size'||mode==='dim'){
-    const len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
-    if(span<4)return{warn:'Розведи маркери'};
-    if(mode==='size'){const d=objSize*g.f/span;return{d,err:d*(2/g.s)/span}}
-    const D=parseFloat($('#dd').value);
-    if(!(D>0))return{warn:'Задай відстань'};
-    const s=span*D/g.f;return{d:s,err:s*(2/g.s)/span};
-  }
-  const t=tElev(g);
-  if(t==null)return{warn:'Чекаю датчик нахилу…'};
-  if(mode==='height')return{t};
-  if(t>-1.2)return{warn:'Ціль вище горизонту',t};
-  const r=-t*R;
-  return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
-}
+        // OpenCV Ready callback
+        function onOpenCvReady() {
+            cvReady = true;
+            document.getElementById('cv-status').innerText = 'OpenCV.js готовий';
+            document.getElementById('cv-status').classList.remove('text-amber-400');
+            document.getElementById('cv-status').classList.add('text-emerald-400');
+            loadStorage();
+            initCamera();
+        }
 
-function bearing(a,b,g){
-  const E=-(Math.cos(g)*Math.sin(a)*Math.sin(b)+Math.cos(a)*Math.sin(g));
-  const N=-(Math.sin(a)*Math.sin(g)-Math.cos(a)*Math.cos(g)*Math.sin(b));
-  return (Math.atan2(E,N)/R+360)%360;
-}
-function setHead(v){if(headAbs==null)headAbs=v;else{const d=((v-headAbs+540)%360)-180;headAbs=(headAbs+d*.2+360)%360}}
-window.addEventListener('deviceorientation',e=>{
-  if(e.beta==null)return;
-  const a=(e.alpha||0)*R,b=e.beta*R,g=(e.gamma||0)*R;
-  eRaw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))/R;
-  roll=e.gamma||0;
-  if(e.alpha!=null)hrel=bearing(a,b,g);
-  if(typeof e.webkitCompassHeading==='number'&&!absSeen)setHead(e.webkitCompassHeading);
-},true);
-window.addEventListener('deviceorientationabsolute',e=>{
-  if(e.alpha!=null&&e.beta!=null){absSeen=true;setHead(bearing(e.alpha*R,e.beta*R,(e.gamma||0)*R))}
-},true);
+        // Initialize back-facing camera
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+                video.srcObject = stream;
+                video.play();
+                
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth || 1280;
+                    canvas.height = video.videoHeight || 720;
+                    focalLength = canvas.width * 0.8; // Approximate focal length estimate
+                    streaming = true;
+                    requestAnimationFrame(processVideoFrame);
+                });
+            } catch (err) {
+                console.error("Camera access error:", err);
+                document.getElementById('cv-status').innerText = 'Помилка камери';
+                document.getElementById('cv-status').classList.remove('text-emerald-400');
+                document.getElementById('cv-status').classList.add('text-rose-400');
+            }
+        }
 
-function compass(){
-  const h=headAbs;
-  $('#az').textContent=h==null?'—':Math.round(h)+'°';
-  $('#card').textContent=h==null?'':CARD[Math.round(h/45)%8];
-  $('#rose').setAttribute('transform','rotate('+(h==null?0:-h)+' 13 13)');
-}
+        // Main video processing and AR overlay loop
+        let cap = null;
+        let srcMat = null;
+        let grayMat = null;
+        let orb = null;
 
-async function startCam(){
-  try{
-    const st=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:'environment'}});
-    V.srcObject=st;$('#msg').style.display='none';
-  }catch(e){$('#msg').style.display='flex'}
-}
-$('#retry').onclick=()=>startCam();
+        function processVideoFrame() {
+            if (!streaming) return;
 
-/* Тап-детекція та Навчання AI */
-stage.addEventListener('pointerdown',e=>{
-  if(mode==='scan'){
-    const r=stage.getBoundingClientRect();
-    const tx=e.clientX-r.left, ty=e.clientY-r.top;
-    const matched=trk.find(k=>{
-      const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720;
-      const ox=(r.width-vw*g.s)/2, oy=(r.height-vh*g.s)/2;
-      const X=k.box[0]*g.s+ox, Y=k.box[1]*g.s+oy, Wd=k.box[2]*g.s, Ht=k.box[3]*g.s;
-      return tx>=X && tx<=X+Wd && ty>=Y && ty<=Y+Ht;
-    });
-    const target=matched||{name:'Ціль', H:1.75, d:15.0};
-    $('#tName').value=target.name; $('#tH').value=target.H;
-    
-    const coords=calcCoords(target.d, headAbs);
-    if(coords){
-      $('#geoBox').innerHTML=`WGS84: ${coords.lat}, ${coords.lon}<br>MGRS: <b>${coords.mgrs}</b>`;
-      $('#tCopyGeo').classList.remove('hide');
-      $('#tCopyGeo').onclick=()=>{
-        navigator.clipboard.writeText(`Ціль: ${target.name}\nДистанція: ${target.d.toFixed(1)}м\nMGRS: ${coords.mgrs}`);
-        say('Координати скопійовано ✓');
-      };
-    }
-    $('#tapModal').classList.remove('hide');
-    return;
-  }
-  if(mode!=='ground'&&mode!=='height'&&mode!=='pts')return;
-  const r=stage.getBoundingClientRect();
-  tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};
-});
+            if (!cap && cvReady) {
+                cap = new cv.VideoCapture(video);
+                srcMat = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
+                grayMat = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC1);
+                orb = new cv.ORB(500, 1.2f, 8, 31, 0, 2, cv.ORB_HARRIS_SCORE, 31, 20);
+            }
 
-$('#tClose').onclick=()=>$('#tapModal').classList.add('hide');
-$('#tSave').onclick=()=>{
-  const name=$('#tName').value.trim(), h=parseFloat($('#tH').value);
-  if(!name||!(h>0))return say('Введіть назву та висоту');
-  customClasses.push({name, h});
-  store.set('customClasses', customClasses);
-  $('#tapModal').classList.add('hide');
-  say(`Ціль «${name}» збережено в AI ✓`);
-};
+            if (cap && srcMat && grayMat) {
+                try {
+                    cap.read(srcMat);
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-async function ensureModel(){
-  if(model||loading)return;
-  loading=true;
-  try{
-    if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
-    if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
-    model=await cocoSsd.load({base:smodel});
-  }catch(e){scanMsg='Помилка моделі'}
-  loading=false;
-}
-function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+                    // Convert frame to grayscale for ORB matching
+                    cv.cvtColor(srcMat, grayMat, cv.COLOR.RGBA2GRAY);
 
-async function detectStep(){
-  if(det||!model||mode!=='scan'||V.readyState<2)return;
-  det=true;
-  try{
-    let out=await model.detect(V,25,sconf/100);
-    const g=geo();
-    trk=out.map((o,i)=>{
-      let n=o.class, h=1.75;
-      if(customClasses.length){n=customClasses[customClasses.length-1].name; h=customClasses[customClasses.length-1].h;}
-      return {id:i, name:n, H:h, d:(h*g.f)/o.bbox[3], box:o.bbox, score:o.score};
-    });
-  }catch(e){}
-  det=false;
-}
+                    // If we have trained objects, match them in real-time
+                    if (trainedObjects.length > 0 && orb) {
+                        detectObjects();
+                    }
+                } catch (e) {
+                    console.error("Frame processing error:", e);
+                }
+            }
 
-function renderList(now){
-  if(now-lastList<250)return;lastList=now;
-  $('#scl').innerHTML=trk.slice(0,5).map(k=>`<div class="sr"><span class="dot"></span><span class="sn">${k.name} <small>[${Math.round(k.score*100)}%]</small></span><b>${fs(k.d)}</b></div>`).join('')||'<small>Сканування об\'єктів…</small>';
-}
+            requestAnimationFrame(processVideoFrame);
+        }
 
-function view(){
-  if(mode==='scan'){
-    const v=trk.sort((a,b)=>a.d-b.d);
-    if(!v.length)return{warn:'Шукаю об\'єкти…'};
-    return{d:v[0].d,err:v[0].d*.15,sub:v[0].name};
-  }
-  const raw=compute();
-  if(raw.d==null)return raw;
-  return{d:raw.d,err:raw.err,sub:raw.sub,raw:raw.d};
-}
+        // Feature matching against trained database
+        let matcher = null;
+        function detectObjects() {
+            if (!matcher) {
+                matcher = cv.BFMatcher.create(cv.NORM_HAMMING, true);
+            }
 
-function loop(now){
-  const o=view();
-  if(o.d!=null&&isFinite(o.d)){
-    const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
-    $('#sub').textContent=[o.err!=null?'±'+ef(o.err):'',o.sub||''].filter(Boolean).join(' · ');
-  }else{$('#num').textContent='—';$('#sub').textContent=''}
-  $('#warn').textContent=o.warn||'';
-  detectStep();compass();
-  if(mode==='scan')renderList(now);
-  requestAnimationFrame(loop);
-}
+            let frameKeypoints = new cv.KeyPointVector();
+            let frameDescriptors = new cv.Mat();
+            orb.detectAndCompute(grayMat, new cv.Mat(), frameKeypoints, frameDescriptors);
 
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
-  mode=b.dataset.m;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
-  document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!x.id.includes(mode)));
-  if(mode==='scan')ensureModel();
-});
+            if (!frameDescriptors.empty() && frameDescriptors.rows > 0) {
+                for (let obj of trainedObjects) {
+                    if (!obj.descriptors || obj.descriptors.empty()) continue;
 
-startCam();
-requestAnimationFrame(loop);
-})();
-</script>
+                    let matches = new cv.DMatchVector();
+                    try {
+                        matcher.match(obj.descriptors, frameDescriptors, matches);
+
+                        // Filter good matches
+                        let goodMatches = [];
+                        let minDist = 100;
+                        for (let i = 0; i < matches.size(); i++) {
+                            let dist = matches.get(i).distance;
+                            if (dist < minDist) minDist = dist;
+                        }
+
+                        let matchThreshold = Math.max(25, minDist * 1.8);
+                        let matchedPoints = [];
+
+                        for (let i = 0; i < matches.size(); i++) {
+                            let m = matches.get(i);
+                            if (m.distance < matchThreshold) {
+                                let kp = frameKeypoints.get(m.trainIdx);
+                                matchedPoints.push({ x: kp.pt.x, y: kp.pt.y });
+                            }
+                        }
+
+                        if (matchedPoints.length >= 8) {
+                            // Compute bounding box from matched points
+                            let minX = Math.min(...matchedPoints.map(p => p.x));
+                            let maxX = Math.max(...matchedPoints.map(p => p.x));
+                            let minY = Math.min(...matchedPoints.map(p => p.y));
+                            let maxY = Math.max(...matchedPoints.map(p => p.y));
+
+                            let boxWidth = Math.max(40, maxX - minX);
+                            let boxHeight = Math.max(40, maxY - minY);
+                            let centerX = minX + boxWidth / 2;
+                            let centerY = minY + boxHeight / 2;
+
+                            // Estimate distance based on real height and pixel height
+                            let pixelHeight = boxHeight;
+                            let distanceMeters = (obj.height * focalLength) / (pixelHeight * 100);
+                            distanceMeters = Math.max(0.1, distanceMeters).toFixed(2);
+
+                            // Draw AR Bounding Box & Info
+                            drawARBox(centerX, centerY, boxWidth, boxHeight, obj.name, distanceMeters, obj.height, obj.width);
+                            document.getElementById('scan-status').innerText = `Знайдено: ${obj.name} (${distanceMeters}м)`;
+                        }
+                    } catch (err) {
+                        console.error("Matching error:", err);
+                    }
+                    matches.delete();
+                }
+            }
+            frameKeypoints.delete();
+            frameDescriptors.delete();
+        }
+
+        // Render AR Bounding Box on Canvas
+        function drawARBox(cx, cy, w, h, name, distance, realH, realW) {
+            let x = cx - w / 2;
+            let y = cy - h / 2;
+
+            ctx.save();
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = 'rgba(99, 102, 241, 0.6)';
+            ctx.shadowBlur = 12;
+
+            // Draw rounded or cornered bounding box
+            ctx.strokeRect(x, y, w, h);
+
+            // Draw corner markers
+            let cornerLen = Math.min(20, w / 4);
+            ctx.strokeStyle = '#a5b4fc';
+            ctx.lineWidth = 4;
+            // Top-left
+            ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
+            // Top-right
+            ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cornerLen); ctx.stroke();
+            // Bottom-left
+            ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
+            // Bottom-right
+            ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - cornerLen); ctx.stroke();
+
+            // Label background
+            let labelText = `${name} | ${distance} м`;
+            let subText = `Висота: ${realH}см | Шл: ${realW}см`;
+            ctx.font = 'bold 13px Inter, sans-serif';
+            let textWidth = ctx.measureText(labelText).width;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillRect(x, y - 36, Math.max(textWidth + 20, w), 32);
+            ctx.strokeStyle = '#4338ca';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y - 36, Math.max(textWidth + 20, w), 32);
+
+            // Label text
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(labelText, x + 10, y - 16);
+
+            ctx.font = '10px Inter, sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(subText, x + 10, y - 5);
+
+            ctx.restore();
+        }
+
+        // Handle canvas tap for training new object
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const tapX = (e.clientX - rect.left) * scaleX;
+            const tapY = (e.clientY - rect.top) * scaleY;
+
+            pendingTapCoords = { x: tapX, y: tapY };
+            openTrainModal();
+        });
+
+        function triggerManualTap() {
+            pendingTapCoords = { x: canvas.width / 2, y: canvas.height / 2 };
+            openTrainModal();
+        }
+
+        // Modal Controllers
+        function openTrainModal() {
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputHeight').value = '';
+            document.getElementById('inputWidth').value = '';
+            document.getElementById('trainModal').classList.remove('hidden');
+        }
+
+        function closeTrainModal() {
+            document.getElementById('trainModal').classList.add('hidden');
+            pendingTapCoords = null;
+        }
+
+        function toggleLibraryModal() {
+            const modal = document.getElementById('libraryModal');
+            if (modal.classList.contains('hidden')) {
+                renderLibraryList();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Save trained object logic with ORB descriptors extraction
+        function saveTrainedObject() {
+            const name = document.getElementById('inputName').value.trim();
+            const height = parseFloat(document.getElementById('inputHeight').value);
+            const width = parseFloat(document.getElementById('inputWidth').value);
+
+            if (!name || isNaN(height) || isNaN(width)) {
+                alert('Будь ласка, заповніть усі поля коректно.');
+                return;
+            }
+
+            if (!cvReady || !grayMat || !orb) {
+                alert('OpenCV.js ще не завантажено або камера не готова.');
+                return;
+            }
+
+            // Extract region of interest around tap coords (or center)
+            let tx = pendingTapCoords ? pendingTapCoords.x : canvas.width / 2;
+            let ty = pendingTapCoords ? pendingTapCoords.y : canvas.height / 2;
+            
+            let roiSize = 150;
+            let rx = Math.max(0, Math.min(grayMat.cols - roiSize, tx - roiSize / 2));
+            let ry = Math.max(0, Math.min(grayMat.rows - roiSize, ty - roiSize / 2));
+            let roiRect = new cv.Rect(rx, ry, Math.min(roiSize, grayMat.cols - rx), Math.min(roiSize, grayMat.rows - ry));
+            
+            let roi = grayMat.roi(roiRect);
+            let keypoints = new cv.KeyPointVector();
+            let descriptors = new cv.Mat();
+
+            orb.detectAndCompute(roi, new cv.Mat(), keypoints, descriptors);
+
+            const newObj = {
+                id: 'obj_' + Date.now(),
+                name: name,
+                height: height,
+                width: width,
+                descriptors: descriptors.clone(),
+                keypointsCount: keypoints.size()
+            };
+
+            trainedObjects.push(newObj);
+            saveStorage();
+
+            roi.delete();
+            keypoints.delete();
+            descriptors.delete();
+
+            closeTrainModal();
+            document.getElementById('scan-status').innerText = `Успішно навчено: ${name}`;
+        }
+
+        // Render library list in modal
+        function renderLibraryList() {
+            const listEl = document.getElementById('libraryList');
+            if (trainedObjects.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">База навчених об'єктів порожня.<br>Тапніть по об'єкту на камері, щоб додати перший.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = trainedObjects.map((obj, index) => `
+                py-3 flex items-center justify-between text-xs
+                <div class="py-2.5 flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-white">${obj.name}</h4>
+                        <p class="text-[11px] text-slate-400">Висота: ${obj.height}см | Ширина: ${obj.width}см | Точок: ${obj.keypointsCount}</p>
+                    </div>
+                    <button onclick="deleteTrainedObject('${obj.id}')" class="text-rose-400 hover:text-rose-300 p-2">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function deleteTrainedObject(id) {
+            const index = trainedObjects.findIndex(o => o.id === id);
+            if (index !== -1) {
+                if (trainedObjects[index].descriptors) {
+                    trainedObjects[index].descriptors.delete();
+                }
+                trainedObjects.splice(index, 1);
+                saveStorage();
+                renderLibraryList();
+            }
+        }
+
+        function clearLibrary() {
+            if (confirm('Ви впевнені, що хочете очистити всю базу об\'єктів?')) {
+                trainedObjects.forEach(obj => {
+                    if (obj.descriptors) obj.descriptors.delete();
+                });
+                trainedObjects = [];
+                saveStorage();
+                renderLibraryList();
+            }
+        }
+    </script>
 </body>
 </html>
+```
