@@ -1,597 +1,1888 @@
-here```html
-<!DOCTYPE html>
-<html lang="uk" class="h-full">
+<!doctype html>
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Object Scanner & Trainer</title>
-    <!-- Tailwind CSS for modern responsive styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- OpenCV.js for Computer Vision & ORB feature matching -->
-    <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady()" type="text/javascript"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
-        /* Smooth transitions for UI overlays */
-        .fade-in { animation: fadeIn 0.25s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c171b">
+<title>Дальномір</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#0c171b;--panel:rgba(12,23,27,.9);--ink:#e9efe6;--mute:#8fa3a0;--amb:#ffb21e;--red:#ff5a3c;--line:rgba(233,239,230,.16)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:32px;color:var(--mute)}
+#msg button{margin-top:14px}
+.mk{position:absolute;pointer-events:none}
+.v .mk{left:0;right:0;height:0;border-top:2px solid var(--amb)}
+.h .mk{top:0;bottom:0;width:0;border-left:2px solid var(--amb)}
+.mk i{position:absolute;width:48px;height:48px;pointer-events:auto;touch-action:none;display:grid;place-items:center}
+.mk i::after{content:"";width:20px;height:20px;border-radius:50%;background:var(--amb);border:3px solid var(--bg)}
+.v .mk i{right:10px;top:-24px}
+.h .mk i{bottom:calc(var(--sh,230px) + 12px);left:-24px}
+.mk:nth-child(2){border-color:var(--red)}.mk:nth-child(2) i::after{background:var(--red)}
+#cross{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;pointer-events:none;display:none}
+#cross::before,#cross::after{content:"";position:absolute;background:var(--amb)}
+#cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
+#cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
+#cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
+#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:4px}
+.tab{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:12px;font-weight:600}
+.tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
+#cmp{position:absolute;left:10px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;pointer-events:none}
+#cmp b{font-weight:600;font-variant-numeric:tabular-nums}
+#cmp span{color:var(--amb)}
+#tr{position:absolute;right:8px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;gap:6px}
+.tb{padding:5px 10px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;line-height:1.3}
+.tb.on{border-color:var(--red);color:var(--red)}
+#sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
+#sheet.min #ctl{display:none}
+#read{display:flex;align-items:baseline;gap:10px}
+#num{font:700 60px/1 "Arial Narrow","Roboto Condensed",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+#unit{font:600 24px system-ui,sans-serif;color:var(--amb)}
+#sub{margin-left:auto;text-align:right;color:var(--mute);font-size:13px}
+#col{align-self:center;padding:6px 12px;font-size:18px;line-height:1}
+#warn{color:var(--amb);font-size:13px;min-height:18px}
+#res{font-size:13px}
+#lvl{font-size:13px;color:var(--mute);margin-top:4px}#lvl.bad{color:var(--red)}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.row label{color:var(--mute);font-size:13px;flex:0 0 auto}
+select,input,button{font:inherit;color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0}
+input[type=number]{width:84px}
+input[type=checkbox]{width:20px;height:20px;padding:0;accent-color:var(--amb)}
+select{flex:1}
+button{cursor:pointer;font-weight:600}
+.row>button{flex:1;padding:9px 4px;font-size:14px}
+button.pri{background:var(--amb);color:var(--bg);border-color:var(--amb)}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+input[type=range]{flex:1;padding:0;accent-color:var(--amb)}
+.hide{display:none!important}
+small{color:var(--mute);font-size:12px;display:block;margin-top:6px}
+.ft{text-align:center;color:var(--mute);font-size:10.5px;line-height:1.35;margin-top:10px;letter-spacing:.2px}
+#pick{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.sr .sn{flex:1;min-width:0}
+.sr .sn small{margin:0}
+.sr b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--amb);flex:0 0 auto}.dot.st{background:var(--mute)}
+#db{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
+.dbh{display:flex;gap:8px}
+#dbq{flex:1}
+.seg{display:flex;gap:6px;padding-top:10px}
+.seg .chip{flex:1;padding:9px 6px;border-radius:10px}
+#chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 8px;flex:0 0 auto}
+.chip{flex:0 0 auto;padding:7px 12px;border-radius:99px;font-size:13px;white-space:nowrap}
+.chip.on{background:var(--amb);color:var(--bg);border-color:var(--amb)}
+#cnt{color:var(--mute);font-size:12px;padding-bottom:6px}
+#dbl{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
+.it{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:12px 4px;font-weight:500}
+.it b{color:var(--amb);white-space:nowrap;font-variant-numeric:tabular-nums}
+.it i{font-style:normal;color:var(--mute);padding:4px 8px;margin-left:6px}
+.dba{display:flex;gap:6px;margin-top:8px}
+.dba input:first-child{flex:1}
+.dba input[type=number]{width:90px}
+.fs{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px))}
+.fsh{display:flex;align-items:center;gap:8px}
+.fsh h2{margin:0;font-size:18px;flex:1}
+.fsb{flex:1;overflow-y:auto;margin-top:10px;padding-bottom:10px}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.03)}
+.card h3{margin:0 0 4px;font-size:15px}
+.card input[type=text],.card input[type=password],.card input[type=number]{width:100%}
+.card .row>input{flex:1;width:auto}
+#lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.lk{width:100%;max-width:320px;text-align:center}
+.lk h2{margin:0 0 4px}
+#lkMsg{color:var(--mute);min-height:20px}
+#dots{display:flex;gap:12px;justify-content:center;margin:16px 0}
+#dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--amb)}
+#dots i.f{background:var(--amb)}
+#pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#pad button{padding:16px 0;font-size:22px;border-radius:14px}
+details.mn{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;padding:0 12px;background:rgba(255,255,255,.03)}
+details.mn summary{padding:12px 0;font-weight:600;color:var(--ink);margin:0;font-size:15px;cursor:pointer}
+details.mn[open] summary{color:var(--amb)}
+.mn ol,.mn ul{padding-left:20px;margin:0 0 12px}
+.mn li{margin:6px 0}
+.mn p{margin:0 0 10px}
+.mn .n{color:var(--mute)}
+</style>
 </head>
-<body class="h-full bg-slate-950 text-slate-100 overflow-hidden flex flex-col">
-
-    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between z-20 shrink-0">
-        <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-                <i class="fa-solid fa-camera-retro text-sm"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-sm tracking-tight text-white">AR Object Scanner</h1>
-                <p id="cv-status" class="text-[10px] text-amber-400 font-medium">Завантаження OpenCV.js...</p>
-            </div>
-        </div>
-        <div class="flex items-center space-x-2">
-            <button id="btn-library" onclick="toggleLibraryModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-database text-indigo-400"></i>
-                <span id="lib-count">База (0)</span>
-            </button>
-            <button onclick="toggleHelpModal()" class="w-8 h-8 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 flex items-center justify-center text-slate-300 transition">
-                <i class="fa-solid fa-question text-xs"></i>
-            </button>
-        </div>
-    </header>
-
-    <main class="relative flex-1 w-full bg-black overflow-hidden flex items-center justify-center">
-        <!-- Hidden video element capturing camera feed -->
-        <video id="videoElement" autoplay playsinline muted class="absolute opacity-0 pointer-events-none"></video>
-        
-        <!-- Interactive Canvas Overlay for video display, bounding boxes & taps -->
-        <canvas id="cameraCanvas" class="absolute inset-0 w-full h-full object-cover cursor-crosshair"></canvas>
-
-        <!-- Scanning reticle / guide hint -->
-        <div id="scan-hint" class="absolute pointer-events-none inset-0 flex items-center justify-center z-10 opacity-70">
-            <div class="w-48 h-48 border border-white/30 rounded-2xl flex flex-col items-center justify-center p-4 text-center">
-                <i class="fa-solid fa-crosshairs text-white/50 text-2xl mb-2 animate-pulse"></i>
-                <span class="text-xs text-white/70 font-medium drop-shadow">Наведіть камеру на об'єкт або тапніть для навчання</span>
-            </div>
-        </div>
-
-        <!-- Real-time live status badge -->
-        <div class="absolute top-4 left-4 z-10 pointer-events-none">
-            <div class="bg-slate-900/70 backdrop-blur-md px-3 py-1 rounded-full border border-slate-700/50 flex items-center space-x-2 shadow-lg">
-                <span id="fps-badge" class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                <span id="scan-status" class="text-[11px] font-medium text-slate-300">Готово до сканування</span>
-            </div>
-        </div>
-    </main>
-
-    <footer class="bg-slate-900/80 backdrop-blur-md border-t border-slate-800 px-4 py-3 flex items-center justify-between z-20 shrink-0">
-        <div class="text-xs text-slate-400">
-            <span class="font-semibold text-slate-200">Підказка:</span> Тапніть по об'єкту на екрані, щоб додати новий.
-        </div>
-        <button onclick="triggerManualTap()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
-            <i class="fa-solid fa-plus"></i>
-            <span>Додати з центру</span>
-        </button>
-    </footer>
-
-    <div id="trainModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl fade-in space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2">
-                    <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
-                        <i class="fa-solid fa-brain text-xs"></i>
-                    </div>
-                    <h3 class="font-bold text-sm text-white">Навчити новий об'єкт</h3>
-                </div>
-                <button onclick="closeTrainModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <p class="text-xs text-slate-400">Введіть параметри об'єкта для розрахунку відстані та збереження у пам'яті пристрою.</p>
-
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">Назва об'єкта</label>
-                    <input type="text" id="inputName" placeholder="Наприклад: Чашка, Ноутбук, Стілець" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Реальна Висота (см)</label>
-                        <input type="number" id="inputHeight" placeholder="15" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-300 mb-1">Реальна Ширина (см)</label>
-                        <input type="number" id="inputWidth" placeholder="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex space-x-2 pt-2">
-                <button onclick="closeTrainModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2.5 rounded-xl transition">Скасувати</button>
-                <button onclick="saveTrainedObject()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">Зберегти та навчити</button>
-            </div>
-        </div>
+<body>
+<div id="stage" class="v">
+  <video id="vid" playsinline muted autoplay></video>
+  <canvas id="ov"></canvas>
+  <div id="m1" class="mk"><i></i></div><div id="m2" class="mk"><i></i></div>
+  <div id="cross"><b></b></div>
+  <div id="msg"><div><div id="msgt"></div><button id="retry" class="pri">Увімкнути камеру</button></div></div>
+</div>
+<div id="top">
+  <button class="tab on" data-m="size" title="За розміром">Об'єкт</button>
+  <button class="tab" data-m="ground" title="По землі">Земля</button>
+  <button class="tab" data-m="height" title="Висота за кутами">Висота</button>
+  <button class="tab" data-m="dim" title="Розмір об'єкта">Розмір</button>
+  <button class="tab" data-m="pts" title="Точки й площа">Точки</button>
+  <button class="tab" data-m="scan" title="Сканер">Сканер</button>
+</div>
+<div id="cmp" aria-label="Компас">
+  <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#8fa3a0" stroke-width="1.5"/><g id="rose"><path d="M13 3 L16 12 L10 12 Z" fill="#ff5a3c"/><path d="M13 23 L16 14 L10 14 Z" fill="#8fa3a0"/></g></svg>
+  <b id="az">—</b><span id="card"></span>
+</div>
+<div id="tr">
+  <button id="posB" class="tb">Позиція: вимк.</button>
+  <button id="setB" class="tb" aria-label="Налаштування">⚙</button>
+  <button id="manB" class="tb" aria-label="Інструкція">📖</button>
+</div>
+<div id="sheet">
+  <div id="read"><span id="num">—</span><span id="unit">м</span><div id="sub"></div><button id="col" aria-label="Згорнути панель">⌄</button></div>
+  <div id="warn"></div><div id="res"></div><div id="lvl" class="hide"></div>
+  <div id="ctl">
+    <div id="p-size" class="pn">
+      <div class="row"><button id="pick">📚 Обрати об'єкт</button><input id="sz" type="number" step="0.001" min="0.001" inputmode="decimal" aria-label="Розмір, м"></div>
+      <div class="row">
+        <button class="ori">Міряю висоту ↕</button>
+        <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto">
+        <button id="cal">Калібрувати</button>
+      </div>
+      <small id="kinfo"></small>
+      <small>Постав маркери на краї об'єкта. Калібруй на кількох відстанях, точність зросте.</small>
     </div>
 
-    <div id="libraryModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl fade-in space-y-4 max-h-[80vh] flex flex-col">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2">
-                    <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
-                        <i class="fa-solid fa-database text-xs"></i>
-                    </div>
-                    <h3 class="font-bold text-sm text-white">База навчених об'єктів</h3>
-                </div>
-                <button onclick="toggleLibraryModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div id="libraryList" class="flex-1 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-800/50">
-                <!-- Dynamically populated list -->
-            </div>
-
-            <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
-                <button onclick="clearLibrary()" class="text-rose-400 hover:text-rose-300 text-xs font-medium flex items-center space-x-1">
-                    <i class="fa-solid fa-trash-can text-[10px]"></i>
-                    <span>Очистити все</span>
-                </button>
-                <button onclick="toggleLibraryModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-xl transition">Закрити</button>
-            </div>
-        </div>
+    <div id="p-dim" class="pn hide">
+      <div class="row"><label>Відстань до об'єкта, м</label><input id="dd" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="fromG">З «Земля»</button></div>
+      <div class="row"><button class="ori">Міряю висоту ↕</button></div>
+      <small>Спочатку виміряй відстань у режимі «Земля», потім постав маркери на краї об'єкта.</small>
     </div>
 
-    <div id="helpModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl fade-in space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center space-x-2">
-                    <div class="w-7 h-7 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
-                        <i class="fa-solid fa-circle-info text-xs"></i>
-                    </div>
-                    <h3 class="font-bold text-sm text-white">Як користуватися</h3>
-                </div>
-                <button onclick="toggleHelpModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="space-y-3 text-xs text-slate-300">
-                <div class="flex items-start space-x-2.5">
-                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">1</span>
-                    <p>Наведіть тильну камеру смартфона або пристрою на об'єкт, який хочете розпізнавати.</p>
-                </div>
-                <div class="flex items-start space-x-2.5">
-                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">2</span>
-                    <p>Тапніть у будь-якій точці на об'єкті на екрані. Відкриється вікно налаштування.</p>
-                </div>
-                <div class="flex items-start space-x-2.5">
-                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">3</span>
-                    <p>Введіть назву та реальні розміри у сантиметрах. Програма збереже візуальні дескриптори ORB.</p>
-                </div>
-                <div class="flex items-start space-x-2.5">
-                    <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center stere shrink-0 text-[10px]">4</span>
-                    <p>Наступного разу при наведенні камери система автоматично знайде об'єкт, визначить його розміри та відстань.</p>
-                </div>
-            </div>
-
-            <button onclick="toggleHelpModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">Зрозуміло</button>
-        </div>
+    <div id="p-tilt" class="pn hide">
+      <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="zero">Обнулити нахил</button></div>
+      <small>Обнулення: поклади телефон екраном вгору на рівну поверхню і натисни кнопку. Роби це раз після встановлення.</small>
+      <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчики</button>
     </div>
 
-    <script>
-        let cvReady = false;
-        let video = document.getElementById('videoElement');
-        let canvas = document.getElementById('cameraCanvas');
-        let ctx = canvas.getContext('2d');
-        
-        let streaming = false;
-        let trainedObjects = [];
-        let pendingTapCoords = null;
-        let focalLength = 800; // Estimated camera focal length in pixels
+    <div id="p-ground" class="pn hide">
+      <div class="row"><label>Висота цілі над землею, м</label><input id="th" type="number" step="0.1" min="-500" max="2000" inputmode="decimal" value="0"></div>
+      <small>Для цілі на землі лиши 0 і торкнись екрана там, де вона стоїть на землі. Якщо ціль вище (вікно, дах, опора), впиши її висоту над землею й торкнись самої цілі: так можна міряти й вище горизонту. Висота цілі має відрізнятися від висоти камери щонайменше на 0,3 м. Значення скидається на 0 при запуску. Число — горизонтальна відстань, поруч — відстань по лінії погляду.</small>
+    </div>
 
-        // Load trained objects from LocalStorage on startup
-        function loadStorage() {
-            try {
-                const stored = localStorage.getItem('ar_trained_objects');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    // Reconstruct OpenCV Mats for descriptors if stored as arrays
-                    trainedObjects = parsed.map(item => {
-                        let mat = null;
-                        if (item.descArray && item.descRows && item.descCols && item.descType) {
-                            mat = cv.matFromArray(item.descRows, item.descCols, item.descType, item.descArray);
-                        }
-                        return {
-                            id: item.id,
-                            name: item.name,
-                            height: item.height,
-                            width: item.width,
-                            descriptors: mat,
-                            keypointsCount: item.keypointsCount || 0
-                        };
-                    });
-                }
-            } catch (e) {
-                console.error("Error loading local storage:", e);
-                trainedObjects = [];
-            }
-            updateLibraryCount();
-        }
+    <div id="p-height" class="pn hide">
+      <div class="row"><label>Відстань, м (необов'язково)</label><input id="hd" type="number" step="0.1" min="0.1" inputmode="decimal"></div>
+      <div class="row"><button id="lo">1 · Низ</button><button id="hi">2 · Верх</button><button id="hr">Скинути</button></div>
+      <small>Наведи хрестик на низ споруди і натисни «Низ», потім на верх і «Верх». Якщо низ видно на землі, відстань порахується сама, інакше впиши її.</small>
+    </div>
 
-        // Save trained objects to LocalStorage
-        function saveStorage() {
-            try {
-                const serializable = trainedObjects.map(item => {
-                    let descArray = [];
-                    let rows = 0, cols = 0, type = 0;
-                    if (item.descriptors && !item.descriptors.empty()) {
-                        rows = item.descriptors.rows;
-                        cols = item.descriptors.cols;
-                        type = item.descriptors.type();
-                        descArray = Array.from(item.descriptors.dataString ? new Uint8Array(item.descriptors.data) : []);
-                    }
-                    return {
-                        id: item.id,
-                        name: item.name,
-                        height: item.height,
-                        width: item.width,
-                        descRows: rows,
-                        descCols: cols,
-                        descType: type,
-                        descArray: descArray,
-                        keypointsCount: item.keypointsCount
-                    };
-                });
-                localStorage.setItem('ar_trained_objects', JSON.stringify(serializable));
-            } catch (e) {
-                console.error("Error saving local storage:", e);
-            }
-            updateLibraryCount();
-        }
+    <div id="p-pts" class="pn hide">
+      <div class="row"><button id="addP" class="pri">＋ Точка</button><button id="delP">Видалити останню</button><button id="clrP">Очистити</button></div>
+      <div id="plan"></div>
+      <small>Стій на місці й лише повертайся. Наведи хрестик на землю в першій точці й натисни «＋ Точка», потім у наступній. Торкнись екрана, щоб перемістити хрестик. Щоб площа порахувалась правильно, точки мають іти по колу. Земля має бути рівною.</small>
+    </div>
 
-        function updateLibraryCount() {
-            document.getElementById('lib-count').innerText = `База (${trainedObjects.length})`;
-        }
+    <div id="p-scan" class="pn hide">
+      <div id="scl"></div>
+      <small id="scs"></small>
+      <div class="row"><label>Показувати</label>
+        <select id="scf"><option value="all">Усі об'єкти</option><option value="mov">Лише рухомі</option></select>
+      </div>
+      <div class="row"><label>Модель</label>
+        <select id="scm"><option value="mobilenet_v2">Точна (повільніша)</option><option value="lite_mobilenet_v2">Легка (швидка)</option></select>
+      </div>
+      <div class="row"><label>Дальність</label>
+        <select id="scr"><option value="1">Звичайна (весь кадр)</option><option value="2">Далека (по частинах)</option></select>
+      </div>
+      <div class="row"><label>Мін. впевненість</label><input id="scc" type="range" min="20" max="80" step="5" value="35"><b id="scv" style="min-width:38px;text-align:right">35%</b></div>
+      <div class="row">
+        <label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="alOn">Сигнал, якщо ближче</label>
+        <input id="alD" type="number" value="30" min="1" step="1" inputmode="decimal" aria-label="Відстань сигналу, м"><span style="color:var(--mute)">м</span>
+      </div>
+      <small>Поставте телефон нерухомо: рух камери заважає визначати рух об'єктів. Для далеких і дрібних об'єктів вмикай «Далека» й збільшуй зум. Відстань і розмір приблизні (типові розміри класів), швидкість орієнтовна. У режимі «Позиція» звук і вібрація вимкнені.</small>
+    </div>
 
-        // OpenCV Ready callback
-        function onOpenCvReady() {
-            cvReady = true;
-            document.getElementById('cv-status').innerText = 'OpenCV.js готовий';
-            document.getElementById('cv-status').classList.remove('text-amber-400');
-            document.getElementById('cv-status').classList.add('text-emerald-400');
-            loadStorage();
-            initCamera();
-        }
+    <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
+    <div class="row" id="bt2"><button id="ser">Серія ×10</button><button id="sa">Швидкість A</button><button id="sb">B</button></div>
+    <div class="row hide" id="zwrap"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></div>
+  </div>
+  <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+</div>
 
-        // Initialize back-facing camera
-        async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: { ideal: 'environment' },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                });
-                video.srcObject = stream;
-                video.play();
-                
-                video.addEventListener('loadedmetadata', () => {
-                    canvas.width = video.videoWidth || 1280;
-                    canvas.height = video.videoHeight || 720;
-                    focalLength = canvas.width * 0.8; // Approximate focal length estimate
-                    streaming = true;
-                    requestAnimationFrame(processVideoFrame);
-                });
-            } catch (err) {
-                console.error("Camera access error:", err);
-                document.getElementById('cv-status').innerText = 'Помилка камери';
-                document.getElementById('cv-status').classList.remove('text-emerald-400');
-                document.getElementById('cv-status').classList.add('text-rose-400');
-            }
-        }
+<div id="db" class="hide">
+  <div class="dbh"><input id="dbq" type="search" placeholder="Пошук: авто, двері, ворота…" aria-label="Пошук об'єкта"><button id="dbx" aria-label="Закрити">✕</button></div>
+  <div class="seg"><button id="sg" class="chip on">Загальна база</button><button id="sm" class="chip">🎖 Військова техніка</button></div>
+  <div id="chips"></div>
+  <div id="cnt"></div>
+  <div id="dbl"></div>
+  <div class="dba" id="dba"><input id="dbn" placeholder="Свій об'єкт: назва"><input id="dbv" type="number" step="0.001" min="0.001" inputmode="decimal" placeholder="м"><button id="dbadd" class="pri">＋</button></div>
+  <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+</div>
 
-        // Main video processing and AR overlay loop
-        let cap = null;
-        let srcMat = null;
-        let grayMat = null;
-        let orb = null;
+<div id="set" class="fs hide">
+  <div class="fsh"><h2>Налаштування</h2><button id="setX" aria-label="Закрити">✕</button></div>
+  <div class="fsb">
+    <div class="card">
+      <h3>Загальні</h3>
+      <div class="row"><label>Камера</label><select id="cam"></select></div>
+      <div class="row"><label>Одиниці</label><select id="unitSel"><option value="m">Метри</option><option value="ft">Фути</option><option value="yd">Ярди</option></select></div>
+      <div class="row"><button id="kreset">Скинути калібрування цієї камери</button></div>
+      <small>Розміри, висоту камери й відстані вводь у метрах.</small>
+    </div>
 
-        function processVideoFrame() {
-            if (!streaming) return;
+    <div class="card">
+      <h3>Режим «Позиція»</h3>
+      <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="posC">Я на позиції</label></div>
+      <small>Вимкнено: програма працює на повну потужність, зміни синхронізуються одразу. Увімкнено: економія батареї (сканер працює рідше), без звуку й вібрації, зміни зберігаються на телефоні і йдуть на сервер лише коли з'явиться інтернет.</small>
+      <small id="netS"></small>
+    </div>
 
-            if (!cap && cvReady) {
-                cap = new cv.VideoCapture(video);
-                srcMat = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-                grayMat = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC1);
-                orb = new cv.ORB(500, 1.2f, 8, 31, 0, 2, cv.ORB_HARRIS_SCORE, 31, 20);
-            }
+    <div class="card">
+      <h3>Захист входу</h3>
+      <small id="secS"></small>
+      <div id="secForm">
+        <div class="row hide" id="r0"><input id="pn0" type="password" inputmode="numeric" maxlength="8" placeholder="Поточний PIN" autocomplete="off"></div>
+        <div class="row"><input id="pn1" type="password" inputmode="numeric" maxlength="8" placeholder="Новий PIN (4–8 цифр)" autocomplete="off"></div>
+        <div class="row"><input id="pn2" type="password" inputmode="numeric" maxlength="8" placeholder="Повтори PIN" autocomplete="off"></div>
+        <div class="row"><button id="pinSet" class="pri">Встановити PIN</button><button id="pinOff" class="hide">Вимкнути захист</button></div>
+        <div class="row hide" id="bioRow"><button id="bioReg">Додати відбиток</button><button id="bioOff" class="hide">Прибрати відбиток</button></div>
+        <div class="row hide" id="lkRow"><label>Блокувати</label>
+          <select id="lkm"><option value="exit">Одразу при виході з програми</option><option value="2">Через 2 хв після виходу</option><option value="10">Через 10 хв після виходу</option><option value="never">Лише при запуску</option></select>
+        </div>
+      </div>
+      <small id="secM"></small>
+      <small>Це локальний захист від стороннього доступу, дані на телефоні не шифруються. Якщо забув PIN, доведеться очистити дані сайту в налаштуваннях браузера (усі локальні дані зникнуть).</small>
+    </div>
 
-            if (cap && srcMat && grayMat) {
-                try {
-                    cap.read(srcMat);
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    <div class="card">
+      <h3>Синхронізація (JSONBin)</h3>
+      <div class="row"><input id="jbId" type="text" placeholder="Bin ID" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="row"><input id="jbKey" type="password" placeholder="Ключ доступу" autocomplete="off"></div>
+      <div class="row"><label>Тип ключа</label><select id="jbKt"><option value="access">Access Key</option><option value="master">Master Key</option></select></div>
+      <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="jbAuto">Автосинхронізація</label></div>
+      <div class="row"><button id="jbNow" class="pri">Синхронізувати зараз</button></div>
+      <small id="jbS"></small>
+      <small>Синхронізуються «Мої» об'єкти й калібрування камер. Безкоштовний ліміт JSONBin — 100 КБ.</small>
+    </div>
 
-                    // Convert frame to grayscale for ORB matching
-                    cv.cvtColor(srcMat, grayMat, cv.COLOR.RGBA2GRAY);
+    <div class="card">
+      <h3>Резервна копія</h3>
+      <div class="row"><button id="exJ">⬇ Експорт JSON</button><button id="exC">Копіювати JSON</button></div>
+      <div class="row"><button id="imJ">⬆ Імпорт JSON</button></div>
+      <input id="imF" type="file" accept="application/json,.json" class="hide">
+      <small id="bkS"></small>
+      <small>У файл потрапляють «Мої» об'єкти, калібрування камер, висота камери, одиниці й поправка нахилу. Фото програма не зберігає. Імпорт об'єднує дані з поточними, нічого не стираючи.</small>
+    </div>
 
-                    // If we have trained objects, match them in real-time
-                    if (trainedObjects.length > 0 && orb) {
-                        detectObjects();
-                    }
-                } catch (e) {
-                    console.error("Frame processing error:", e);
-                }
-            }
+    <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+  </div>
+</div>
 
-            requestAnimationFrame(processVideoFrame);
-        }
+<div id="man" class="fs hide">
+  <div class="fsh"><h2>Інструкція</h2><button id="manX" aria-label="Закрити">✕</button></div>
+  <div class="fsb">
+<details class="mn" open><summary>1. Перший запуск і встановлення</summary>
+<ol>
+<li>Відкрий адресу програми в Chrome або Safari (https). У вбудованих браузерах (Telegram, Instagram) камера не працює.</li>
+<li>На запит камери натисни «Дозволити». Якщо випадково відмовив, натисни значок замка біля адреси й увімкни камеру.</li>
+<li>Щоб мати програму як додаток, відкрий меню браузера ⋮ й обери «Встановити додаток» (або «Додати на головний екран»).</li>
+<li>Оновлення: у репозиторії GitHub заміни вміст <b>index.html</b> (і <b>sw.js</b>, якщо просить), зачекай 1–2 хв, відкрий програму з інтернетом і оновлюй сторінку. Якщо змін не видно, закрий програму повністю й відкрий знову.</li>
+</ol></details>
 
-        // Feature matching against trained database
-        let matcher = null;
-        function detectObjects() {
-            if (!matcher) {
-                matcher = cv.BFMatcher.create(cv.NORM_HAMMING, true);
-            }
+<details class="mn"><summary>2. Екран програми</summary>
+<ul>
+<li><b>Вкладки зверху:</b> Об'єкт, Земля, Висота, Розмір, Точки, Сканер. Активна підсвічена жовтим.</li>
+<li><b>Компас</b> (зліва під вкладками): азимут у градусах і сторона світу, стрілка вказує на північ.</li>
+<li><b>Праворуч:</b> «Позиція» (режим), ⚙ налаштування, 📖 ця інструкція.</li>
+<li><b>Нижня панель:</b> велике число — результат; праворуч ± похибка й підказка; кнопка ⌄ згортає панель (⌃ розгортає), щоб бачити більше кадру. Жовтий рядок — підказки й попередження, нижче — повідомлення.</li>
+<li><b>Підпис</b> із правами внизу панелі видно завжди.</li>
+</ul></details>
 
-            let frameKeypoints = new cv.KeyPointVector();
-            let frameDescriptors = new cv.Mat();
-            orb.detectAndCompute(grayMat, new cv.Mat(), frameKeypoints, frameDescriptors);
+<details class="mn"><summary>3. Підготовка (один раз)</summary>
+<p><b>3.1. Висота камери.</b> Виміряй від землі до об'єктива, коли тримаєш телефон так, як будеш міряти. Вкладка «Земля» (або «Висота», «Точки»): впиши значення в метрах у «Висота камери над землею».</p>
+<p><b>3.2. Обнулення нахилу.</b></p>
+<ol>
+<li>Поклади телефон екраном вгору на рівну поверхню (стіл).</li>
+<li>Вкладка «Земля» → «Обнулити нахил». З'явиться «Нахил обнулено ✓».</li>
+</ol>
+<p><b>3.3. Калібрування камери (найважливіше для точності).</b></p>
+<ol>
+<li>Вкладка «Об'єкт». Вибери об'єкт відомого розміру: аркуш A4, двері, футбольні ворота (поле «📚 Обрати об'єкт»).</li>
+<li>Виміряй рулеткою відстань від телефона до об'єкта, наприклад 3 м.</li>
+<li>Постав жовтий і червоний маркери точно на краї об'єкта.</li>
+<li>Впиши відстань у «Справжня відстань, м» і натисни «Калібрувати».</li>
+<li>Повтори на 10 і 30 м. Програма бере середнє з точок.</li>
+</ol>
+<p class="n">Калібрування зберігається окремо для кожної камери (основна, ширококутна, теле) і для кожного зуму. Змінив зум чи камеру, відкалібруй знову.</p></details>
 
-            if (!frameDescriptors.empty() && frameDescriptors.rows > 0) {
-                for (let obj of trainedObjects) {
-                    if (!obj.descriptors || obj.descriptors.empty()) continue;
+<details class="mn"><summary>4. Вкладка «Об'єкт» (відстань за відомим розміром)</summary>
+<ol>
+<li>Натисни «📚 Обрати об'єкт» і вибери об'єкт у базі, або впиши розмір у метрах у поле праворуч.</li>
+<li>Наведи камеру так, щоб об'єкт був повністю в кадрі й дивись на нього прямо, а не під кутом.</li>
+<li>За потреби натисни «Стоп-кадр», щоб ставити маркери на нерухомому зображенні.</li>
+<li>Перетягни жовтий маркер на один край об'єкта, червоний на другий. Для ширини натисни «Міряю висоту ↕», воно стане «Міряю ширину ↔» і маркери стануть вертикальними.</li>
+<li>Читай число внизу. Значення «±» показує похибку від неточності постановки маркерів.</li>
+</ol>
+<p class="n">Чим більший об'єкт на екрані, тим точніший результат. Об'єкт має займати хоча б третину висоти екрана.</p></details>
 
-                    let matches = new cv.DMatchVector();
-                    try {
-                        matcher.match(obj.descriptors, frameDescriptors, matches);
+<details class="mn"><summary>5. Вкладка «Земля» (відстань за нахилом)</summary>
+<ol>
+<li>Впиши висоту камери й обнули нахил (розділ 3).</li>
+<li>Тримай телефон вертикально, екраном до себе, і нерухомо.</li>
+<li>Торкнись екрана в точці, де ціль торкається землі (низ колеса, підошва, основа стовпа). Хрестик переміститься. Найточніше, коли точка біля центру екрана.</li>
+<li>Велике число — горизонтальна відстань. Поруч «по лінії» — відстань по прямій. Рядок над кнопками показує крен, кут і ухил. Якщо крен більше 3°, випрями телефон.</li>
+<li>«Стоп-кадр» фіксує значення (береться медіана останніх замірів).</li>
+</ol>
+<p class="n">Працює для цілей на рівній землі нижче горизонту (кут більше 1,2°). Далі приблизно 50 м похибка швидко росте.</p></details>
 
-                        // Filter good matches
-                        let goodMatches = [];
-                        let minDist = 100;
-                        for (let i = 0; i < matches.size(); i++) {
-                            let dist = matches.get(i).distance;
-                            if (dist < minDist) minDist = dist;
-                        }
+<details class="mn"><summary>6. Вкладка «Висота» (висота споруд і дерев)</summary>
+<ol>
+<li>Якщо знаєш відстань до споруди, впиши її в поле. Якщо низ видно на землі, залиш поле порожнім, відстань порахується з висоти камери.</li>
+<li>Наведи хрестик на низ споруди й натисни «1 · Низ».</li>
+<li>Наведи хрестик на верх і натисни «2 · Верх».</li>
+<li>Число — висота. «Скинути» починає заново.</li>
+</ol></details>
 
-                        let matchThreshold = Math.max(25, minDist * 1.8);
-                        let matchedPoints = [];
+<details class="mn"><summary>7. Вкладка «Розмір» (розмір невідомого об'єкта)</summary>
+<ol>
+<li>Виміряй відстань до об'єкта у вкладці «Земля» або «Об'єкт».</li>
+<li>Перейди у «Розмір» і натисни «З «Земля»» (або впиши відстань вручну).</li>
+<li>Постав маркери на краї об'єкта. Число — його висота або ширина (перемикається кнопкою ↕/↔).</li>
+</ol></details>
 
-                        for (let i = 0; i < matches.size(); i++) {
-                            let m = matches.get(i);
-                            if (m.distance < matchThreshold) {
-                                let kp = frameKeypoints.get(m.trainIdx);
-                                matchedPoints.push({ x: kp.pt.x, y: kp.pt.y });
-                            }
-                        }
+<details class="mn"><summary>8. Вкладка «Точки» (відстань між точками й площа)</summary>
+<ol>
+<li>Впиши висоту камери й обнули нахил. Стій на одному місці й лише повертайся.</li>
+<li>Наведи хрестик на землю в першій точці й натисни «＋ Точка».</li>
+<li>Поверни телефон до наступної точки й знову «＋ Точка». Число покаже відстань між останніми двома.</li>
+<li>З третьої точки в рядку з'являться довжина ламаної, периметр і площа (м², соток, га). Внизу малюється план із підписами сторін.</li>
+<li>«Видалити останню» прибирає останню точку, «Очистити» всі.</li>
+</ol>
+<p class="n">Для правильної площі точки мають іти по колу (по контуру ділянки). Земля має бути рівною. Усі точки беруться з однієї позиції, тож далекі точки менш точні.</p></details>
 
-                        if (matchedPoints.length >= 8) {
-                            // Compute bounding box from matched points
-                            let minX = Math.min(...matchedPoints.map(p => p.x));
-                            let maxX = Math.max(...matchedPoints.map(p => p.x));
-                            let minY = Math.min(...matchedPoints.map(p => p.y));
-                            let maxY = Math.max(...matchedPoints.map(p => p.y));
+<details class="mn"><summary>9. Вкладка «Сканер»</summary>
+<ol>
+<li>Перший вхід зроби з інтернетом: програма один раз завантажить модель розпізнавання (кілька МБ). Далі вона працює й офлайн.</li>
+<li>Постав телефон нерухомо (на опору). З рук хитання камери заважає визначати рух.</li>
+<li>Наведи на сцену. Об'єкти отримують рамки: жовта з кутами — рухомий, сіра пунктирна — нерухомий. У підписі: назва і відстань. Під рамкою рухомого напрямок і швидкість.</li>
+<li>У списку внизу: назва, орієнтовні висота й ширина, стан («аналізую», «нерухомий» або напрямок і швидкість), азимут, відстань. Позначка «≤» означає, що об'єкт обрізаний краєм кадру.</li>
+</ol>
+<p><b>Налаштування сканера:</b> «Показувати» (усі чи лише рухомі), «Модель» (точна чи легка), «Дальність» (звичайна чи далека по частинах для дрібних далеких об'єктів), «Мін. впевненість» (зменш, якщо пропускає, збільш, якщо хибні рамки), «Сигнал, якщо ближче» (звук і вібрація, у режимі «Позиція» вимкнені).</p>
+<p><b>Що розпізнає:</b> людей, авто, автобуси, вантажівки, велосипеди, мотоцикли, собак, котів, коней, корів, овець, лавки, стільці, знак «Стоп», гідранти. Відстань і розмір беруться з типових розмірів класів, тому похибка 10–25 %.</p></details>
 
-                            let boxWidth = Math.max(40, maxX - minX);
-                            let boxHeight = Math.max(40, maxY - minY);
-                            let centerX = minX + boxWidth / 2;
-                            let centerY = minY + boxHeight / 2;
+<details class="mn"><summary>10. База розмірів</summary>
+<ol>
+<li>Відкривається кнопкою «📚 Обрати об'єкт» у вкладці «Об'єкт».</li>
+<li>Угорі перемикач: «Загальна база» і «🎖 Військова техніка» (довідник габаритів).</li>
+<li>Знайди об'єкт через пошук або вкладки категорій. «Нещодавні» показує останні вибрані.</li>
+<li>Торкнись рядка, розмір підставиться автоматично. Значок «≈» біля назви означає приблизне типове значення.</li>
+<li><b>Мої об'єкти:</b> у «Загальній базі» внизу впиши назву й розмір у метрах і натисни «＋». Видалити свій об'єкт можна хрестиком ✕ у категорії «Мої».</li>
+</ol></details>
 
-                            // Estimate distance based on real height and pixel height
-                            let pixelHeight = boxHeight;
-                            let distanceMeters = (obj.height * focalLength) / (pixelHeight * 100);
-                            distanceMeters = Math.max(0.1, distanceMeters).toFixed(2);
+<details class="mn"><summary>11. Стоп-кадр, серія, швидкість, зум, компас</summary>
+<ul>
+<li><b>Стоп-кадр</b> зупиняє зображення, «Продовжити» повертає живе відео.</li>
+<li><b>Серія ×10</b> робить 10 замірів, відкидає викиди й показує середнє з розкидом. Тримай телефон нерухомо.</li>
+<li><b>Швидкість A / B:</b> натисни A, через кілька секунд B. Показує швидкість зміни відстані (лише рух до вас чи від вас). Працює у вкладках «Об'єкт» і «Земля».</li>
+<li><b>Зум:</b> повзунок з'являється, якщо камера підтримує. Після зміни зуму калібруй знову.</li>
+<li><b>Одиниці:</b> ⚙ → «Одиниці» (метри, фути, ярди).</li>
+<li><b>Компас:</b> показує азимут (0° північ, 90° схід). Якщо стрілка «пливе», порухай телефон вісімкою для калібрування датчика.</li>
+</ul></details>
 
-                            // Draw AR Bounding Box & Info
-                            drawARBox(centerX, centerY, boxWidth, boxHeight, obj.name, distanceMeters, obj.height, obj.width);
-                            document.getElementById('scan-status').innerText = `Знайдено: ${obj.name} (${distanceMeters}м)`;
-                        }
-                    } catch (err) {
-                        console.error("Matching error:", err);
-                    }
-                    matches.delete();
-                }
-            }
-            frameKeypoints.delete();
-            frameDescriptors.delete();
-        }
+<details class="mn"><summary>12. Режим «Позиція»</summary>
+<ol>
+<li>Вмикається кнопкою «Позиція» вгорі або у ⚙. Увімкнений режим підсвічується червоним: «ПОЗИЦІЯ».</li>
+<li><b>Не на позиції (вимк.):</b> повна потужність, сканер працює без обмежень, зміни синхронізуються за ~3 секунди.</li>
+<li><b>На позиції (увімк.):</b> сканер працює рідше (економія батареї), звук і вібрація вимкнені, дані записуються на телефон. Відправка на сервер відбувається автоматично, коли з'явиться інтернет.</li>
+<li>Значок «⏳» поруч із кнопкою означає, що є незасинхронізовані зміни.</li>
+</ol></details>
 
-        // Render AR Bounding Box on Canvas
-        function drawARBox(cx, cy, w, h, name, distance, realH, realW) {
-            let x = cx - w / 2;
-            let y = cy - h / 2;
+<details class="mn"><summary>13. Захист входу (PIN і відбиток)</summary>
+<ol>
+<li>⚙ → «Захист входу». Впиши новий PIN (4–8 цифр) двічі й натисни «Встановити PIN».</li>
+<li>Щоб додати відбиток, натисни «Додати відбиток» і підтверди його на телефоні. У телефоні вже має бути налаштований відбиток або обличчя. PIN лишається запасним входом.</li>
+<li>У «Блокувати» обери, коли блокувати програму: одразу при виході, через 2 або 10 хв, або лише при запуску.</li>
+<li>Змінити PIN: впиши поточний, новий і повтор. Вимкнути захист: впиши поточний PIN і натисни «Вимкнути захист».</li>
+<li>Після 5 помилок поспіль вхід блокується на 30 с (далі довше).</li>
+</ol>
+<p class="n">Під час блокування камера вимикається. Якщо забув PIN, очисти дані сайту в налаштуваннях браузера, але тоді зникнуть усі локальні дані (зроби резервну копію заздалегідь).</p></details>
 
-            ctx.save();
-            ctx.strokeStyle = '#6366f1';
-            ctx.lineWidth = 3;
-            ctx.shadowColor = 'rgba(99, 102, 241, 0.6)';
-            ctx.shadowBlur = 12;
+<details class="mn"><summary>14. Синхронізація JSONBin</summary>
+<ol>
+<li>Зайди на jsonbin.io, зареєструйся й створи новий бін із вмістом {"v":1}. Скопіюй <b>Bin ID</b>.</li>
+<li>У розділі API Keys створи <b>Access Key</b> з правами Read і Update для цього біна (або візьми Master Key).</li>
+<li>У програмі: ⚙ → «Синхронізація». Встав Bin ID, ключ, обери його тип.</li>
+<li>Увімкни «Автосинхронізація» й натисни «Синхронізувати зараз». Має з'явитись «Синхронізовано ✓».</li>
+<li>Тепер зміни йдуть на сервер автоматично, а на іншому телефоні з тим самим Bin ID і ключем дані підтягнуться.</li>
+</ol>
+<p class="n">Синхронізуються «Мої» об'єкти й калібрування камер. У разі конфлікту новіший запис перемагає. Ключ зберігається лише на цьому телефоні.</p></details>
 
-            // Draw rounded or cornered bounding box
-            ctx.strokeRect(x, y, w, h);
+<details class="mn"><summary>15. Резервна копія</summary>
+<ol>
+<li>⚙ → «Резервна копія» → «⬇ Експорт JSON». Файл збережеться на телефон. Якщо завантаження не спрацювало, натисни «Копіювати JSON» і встав у нотатки.</li>
+<li>Відновлення: «⬆ Імпорт JSON» → вибери файл → підтверди. Дані об'єднаються з поточними.</li>
+<li>Фото програма не зберігає, тому окремого експорту з фото немає.</li>
+</ol></details>
 
-            // Draw corner markers
-            let cornerLen = Math.min(20, w / 4);
-            ctx.strokeStyle = '#a5b4fc';
-            ctx.lineWidth = 4;
-            // Top-left
-            ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
-            // Top-right
-            ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cornerLen); ctx.stroke();
-            // Bottom-left
-            ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
-            // Bottom-right
-            ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - cornerLen); ctx.stroke();
+<details class="mn"><summary>16. Робота без інтернету</summary>
+<p>Усі виміри, база, компас, точки й сканер працюють офлайн. Сканер потребує одного завантаження моделі з інтернетом. Синхронізація, оновлення програми й завантаження моделі — єдине, що потребує мережі. Перевір офлайн заздалегідь: відкрий програму з інтернетом, потім вимкни зв'язок і запусти її знову.</p></details>
 
-            // Label background
-            let labelText = `${name} | ${distance} м`;
-            let subText = `Висота: ${realH}см | Шл: ${realW}см`;
-            ctx.font = 'bold 13px Inter, sans-serif';
-            let textWidth = ctx.measureText(labelText).width;
+<details class="mn"><summary>17. Поради щодо точності</summary>
+<ul>
+<li>Калібруй на 2–3 відстанях і окремо для кожної камери й зуму.</li>
+<li>Тримай телефон двома руками, притисни лікті до тіла або став на опору.</li>
+<li>Став маркери на самі краї об'єкта, використовуй «Стоп-кадр».</li>
+<li>Міряй кілька разів («Серія ×10») і бери середнє.</li>
+<li>Для «Земля»: точна висота камери, обнулений нахил, рівна земля, ціль біля центру кадру.</li>
+<li>Дивись на об'єкт прямо, а не під кутом.</li>
+</ul></details>
 
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.fillRect(x, y - 36, Math.max(textWidth + 20, w), 32);
-            ctx.strokeStyle = '#4338ca';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x, y - 36, Math.max(textWidth + 20, w), 32);
+<details class="mn"><summary>18. Проблеми й що робити</summary>
+<ul>
+<li><b>Немає камери:</b> відкрий у Chrome/Safari напряму, дозволь камеру, перевір, що її не тримає інший додаток.</li>
+<li><b>Число стрибає:</b> тримай телефон нерухомо, використай «Стоп-кадр» або «Серію».</li>
+<li><b>Відстань завищена чи занижена:</b> відкалібруй камеру, перевір розмір об'єкта в базі.</li>
+<li><b>«Земля» не рахує:</b> опусти хрестик нижче горизонту, випрями телефон, обнули нахил.</li>
+<li><b>Сканер не бачить об'єктів:</b> зменш мінімальну впевненість, увімкни «Далеку» дальність, збільш зум, перевір освітлення.</li>
+<li><b>Не синхронізується:</b> перевір Bin ID, ключ і його права, наявність інтернету, розмір даних (до 100 КБ).</li>
+<li><b>Компас показує «—»:</b> дозволь датчики руху в браузері й порухай телефоном.</li>
+</ul></details>
 
-            // Label text
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(labelText, x + 10, y - 16);
+<details class="mn"><summary>19. Обмеження</summary>
+<p>Усі значення приблизні, особливо з позначкою «≈» і в сканері. Програма не замінює лазерний далекомір, не використовуй її для рішень, від яких залежить безпека. Захист входу локальний і не шифрує дані.</p></details>
 
-            ctx.font = '10px Inter, sans-serif';
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(subText, x + 10, y - 5);
+<div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+  </div>
+</div>
 
-            ctx.restore();
-        }
+<div id="lock" class="hide">
+  <div class="lk">
+    <h2>Дальномір</h2>
+    <div id="lkMsg">Введи PIN</div>
+    <div id="dots"></div>
+    <div id="pad"></div>
+    <button id="bioBtn" class="hide" style="width:100%;margin-top:12px">👆 Увійти за відбитком</button>
+    <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
+  </div>
+</div>
 
-        // Handle canvas tap for training new object
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const tapX = (e.clientX - rect.left) * scaleX;
-            const tapY = (e.clientY - rect.top) * scaleY;
+<script>
+(function(){
+const $=s=>document.querySelector(s),R=Math.PI/180;
+const V=$('#vid'),stage=$('#stage'),cross=$('#cross'),sheet=$('#sheet');
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const U={m:[1,'м'],ft:[3.28084,'фт'],yd:[1.09361,'ярд']};
+const CARD=['Пн','ПнСх','Сх','ПдСх','Пд','ПдЗх','Зх','ПнЗх'];
 
-            pendingTapCoords = { x: tapX, y: tapY };
-            openTrainModal();
-        });
+/* ---------- БАЗА РОЗМІРІВ: ЗАГАЛЬНА (м) ---------- */
+const RAW=`§Люди
+Дорослий чоловік, зріст|1.75
+Доросла жінка, зріст|1.62
+Підліток 14 років, зріст|1.65
+Дитина 10 років, зріст|1.40
+Дитина 5 років, зріст|1.10
+Дитина 2 роки, зріст|0.85
+Баскетболіст, зріст|2.00
+Людина сидячи, висота ≈|1.30
+Ширина плечей дорослого|0.45
+Голова людини, висота|0.23
+§Двері, вікна й паркани
+Міжкімнатні двері, висота|2.00
+Вхідні двері, висота|2.05
+Двері, ширина|0.90
+Подвійні двері, ширина ≈|1.40
+Балконні двері, висота ≈|2.20
+Вікно, висота ≈|1.40
+Вікно, ширина ≈|1.40
+Ворота гаража, висота ≈|2.10
+Ворота гаража, ширина ≈|2.50
+Паркан із профнастилу, висота|2.00
+Паркан-сітка, висота ≈|1.50
+Перила, висота ≈|1.00
+Сходинка, висота|0.17
+Кладка цегли, висота 10 рядів ≈|0.75
+§Меблі й побут
+Письмовий стіл, висота|0.75
+Сидіння стільця, висота|0.45
+Кухонна стільниця, висота|0.90
+Ліжко двоспальне, довжина ≈|2.00
+Ліжко двоспальне, ширина ≈|1.60
+Диван, довжина ≈|2.00
+Шафа-купе, висота ≈|2.40
+Холодильник, висота ≈|1.85
+Пральна машина, висота|0.85
+Газова плита, висота|0.85
+Телевізор 32″, ширина екрана|0.71
+Телевізор 43″, ширина екрана|0.95
+Телевізор 55″, ширина екрана|1.22
+Телевізор 65″, ширина екрана|1.44
+Телевізор 75″, ширина екрана|1.66
+Монітор 27″, ширина екрана|0.60
+Ноутбук 15″, ширина ≈|0.36
+Смартфон, довжина ≈|0.15
+Цегла, довжина|0.25
+Шлакоблок, довжина|0.39
+Лист ГКЛ, довжина|2.50
+Лист ГКЛ, ширина|1.20
+Лист фанери/OSB, довжина|2.44
+Лист фанери/OSB, ширина|1.22
+Піддон EUR, довжина|1.20
+Піддон EUR, ширина|0.80
+Бочка 200 л, висота|0.88
+Бочка 200 л, діаметр|0.58
+§Автомобілі
+Седан, довжина ≈|4.70
+Седан, ширина ≈|1.82
+Седан, висота ≈|1.45
+Хетчбек, довжина ≈|4.00
+Хетчбек, висота ≈|1.50
+Кросовер, висота ≈|1.65
+Позашляховик (SUV), довжина ≈|4.80
+Позашляховик (SUV), ширина ≈|1.90
+Позашляховик (SUV), висота ≈|1.80
+Пікап, довжина ≈|5.30
+Пікап, висота ≈|1.85
+Мінівен, висота ≈|1.75
+Колесо легковика, діаметр ≈|0.65
+Колесо джипа, діаметр ≈|0.78
+Номерний знак ЄС, ширина|0.52
+Номерний знак ЄС, висота|0.112
+§Вантажний і громадський транспорт
+Мікроавтобус, довжина ≈|5.50
+Мікроавтобус, висота ≈|2.50
+Мікроавтобус, ширина ≈|2.00
+Маршрутка (Sprinter), довжина ≈|6.00
+Маршрутка (Sprinter), висота ≈|2.60
+Газель, довжина ≈|5.50
+Газель, висота ≈|2.40
+Вантажівка 5 т, довжина ≈|7.00
+Вантажівка 5 т, висота ≈|3.20
+Фура, довжина (тягач + напівпричіп)|16.50
+Фура, висота (макс.)|4.00
+Фура, ширина|2.55
+Міський автобус, довжина|12.00
+Міський автобус, ширина|2.55
+Міський автобус, висота ≈|3.00
+Зчленований автобус, довжина|18.00
+Тролейбус, довжина ≈|12.00
+Трамвай Tatra T3, довжина|15.10
+Трамвай Tatra T3, ширина|2.50
+§Мото й велосипеди
+Велосипед, довжина ≈|1.75
+Велосипед, висота по кермо ≈|1.05
+Колесо велосипеда 28″, діаметр ≈|0.70
+Мотоцикл, довжина ≈|2.10
+Мотоцикл, висота ≈|1.20
+Скутер, довжина ≈|1.80
+Квадроцикл, довжина ≈|2.00
+§Залізниця й контейнери
+Колія, ширина (1520 мм)|1.52
+Колія, ширина (1435 мм)|1.435
+Пасажирський вагон, довжина|24.50
+Товарний піввагон, довжина ≈|13.90
+Електровоз ВЛ80, довжина ≈|32.80
+Контейнер 20′, довжина|6.06
+Контейнер 40′, довжина|12.19
+Контейнер, ширина|2.44
+Контейнер, висота|2.59
+Контейнер 40′ HC, висота|2.90
+§Авіація
+Cessna 172, довжина|8.28
+Cessna 172, розмах крил|11.0
+Cessna 172, висота|2.72
+Ан-2, довжина|12.40
+Ан-2, розмах крил|18.18
+Airbus A320, довжина|37.57
+Airbus A320, розмах крил|35.80
+Airbus A320, висота|11.76
+Boeing 737-800, довжина|39.50
+Boeing 737-800, розмах крил|35.80
+Boeing 737-800, висота|12.50
+Boeing 747-400, довжина|70.70
+Boeing 747-400, розмах крил|64.40
+Airbus A380, довжина|72.70
+Airbus A380, розмах крил|79.80
+Airbus A380, висота|24.10
+Вертоліт Мі-8, довжина фюзеляжу ≈|18.20
+Вертоліт Мі-8, діаметр гвинта|21.30
+§Сільгосптехніка
+Трактор МТЗ-82, довжина ≈|3.90
+Трактор МТЗ-82, висота ≈|2.80
+Трактор МТЗ-82, ширина ≈|1.97
+Круглий тюк соломи, діаметр ≈|1.50
+Зерновий комбайн, висота ≈|4.00
+§Дороги й розмітка
+Смуга руху, ширина ≈|3.50
+Смуга автомагістралі, ширина ≈|3.75
+Паркомісце, ширина ≈|2.50
+Паркомісце, довжина ≈|5.00
+Лінія розмітки, ширина ≈|0.15
+Смуга «зебри», ширина ≈|0.50
+Круглий знак, діаметр (II типорозмір) ≈|0.70
+Трикутний знак, сторона (II типорозмір) ≈|0.90
+Шлагбаум, довжина стріли ≈|4.00
+Дорожній конус, висота ≈|0.75
+Бордюр, висота ≈|0.15
+Автобусна зупинка, висота ≈|2.50
+§Мережі й опори
+Опора ЛЕП 0,4 кВ (бетон), над землею ≈|8.0
+Опора ЛЕП 10 кВ, висота ≈|10.0
+Опора ЛЕП 110 кВ, висота ≈|25.0
+Опора ЛЕП 330 кВ, висота ≈|35.0
+Вуличний ліхтар, висота ≈|8.0
+Опора контактної мережі, висота ≈|8.0
+Вишка мобільного зв'язку, висота ≈|40.0
+Водонапірна вежа, висота ≈|25.0
+Димар котельні, висота ≈|40.0
+Вітрогенератор, висота башти ≈|90.0
+Вітрогенератор, діаметр ротора ≈|100.0
+Біг-борд, ширина|6.00
+Біг-борд, висота|3.00
+Сітілайт, висота|1.75
+Сітілайт, ширина|1.20
+§Спорт
+Футбольні ворота, ширина|7.32
+Футбольні ворота, висота|2.44
+Футбольне поле, довжина ≈|105.0
+Футбольне поле, ширина ≈|68.0
+Міні-футбольні ворота, ширина|3.00
+Міні-футбольні ворота, висота|2.00
+Гандбольні ворота, ширина|3.00
+Гандбольні ворота, висота|2.00
+Хокейні ворота, ширина|1.83
+Хокейні ворота, висота|1.22
+Хокейний майданчик, довжина ≈|60.0
+Баскетбольне кільце, висота над підлогою|3.05
+Баскетбольне кільце, діаметр|0.45
+Баскетбольний щит, ширина|1.80
+Баскетбольний майданчик, довжина|28.0
+Баскетбольний майданчик, ширина|15.0
+Волейбольна сітка, висота (чоловіки)|2.43
+Волейбольна сітка, висота (жінки)|2.24
+Волейбольний майданчик, довжина|18.0
+Волейбольний майданчик, ширина|9.0
+Тенісний корт, довжина|23.77
+Тенісний корт, ширина (одиночна гра)|8.23
+Тенісний корт, ширина (парна гра)|10.97
+Тенісна сітка, висота в центрі|0.914
+Футбольний м'яч, діаметр|0.22
+Баскетбольний м'яч, діаметр|0.24
+Волейбольний м'яч, діаметр|0.21
+Тенісний м'яч, діаметр|0.067
+Лунка для гольфу, діаметр|0.108
+Бігова доріжка, довжина кола|400.0
+Бігова доріжка, ширина смуги|1.22
+Плавальний басейн, довжина (короткий)|25.0
+Плавальний басейн, довжина (олімпійський)|50.0
+Плавальна доріжка, ширина|2.50
+§Будівлі й споруди
+Поверх сучасного будинку, висота ≈|3.00
+Поверх панельного будинку, висота ≈|2.80
+Одноповерховий будинок, висота до коника ≈|5.0
+Двоповерховий будинок, висота ≈|8.0
+5-поверхова «хрущовка», висота ≈|14.5
+9-поверховий будинок, висота ≈|27.0
+16-поверховий будинок, висота ≈|48.0
+25-поверховий будинок, висота ≈|80.0
+Київська телевежа|385.0
+Батьківщина-Мати (з постаментом)|102.0
+Лаврська дзвіниця|96.5
+Ейфелева вежа|330.0
+Статуя Свободи (з постаментом)|93.0
+Бурдж-Халіфа|828.0
+CN Tower|553.3
+Біг-Бен (вежа)|96.0
+Пізанська вежа, висота|56.0
+Піраміда Хеопса, висота|138.5
+Колізей, висота|48.0
+Христос-Спаситель (Ріо), висота|38.0
+§Рослини
+Сосна, висота ≈|25.0
+Ялина, висота ≈|30.0
+Береза, висота ≈|20.0
+Дуб, висота ≈|25.0
+Тополя, висота ≈|30.0
+Липа, висота ≈|25.0
+Каштан, висота ≈|25.0
+Верба, висота ≈|15.0
+Яблуня, висота ≈|5.0
+Кущ, висота ≈|1.5
+§Тварини
+Лось, висота в холці ≈|1.90
+Благородний олень, висота в холці ≈|1.30
+Косуля, висота в холці ≈|0.75
+Кабан, висота в холці ≈|0.90
+Вовк, висота в холці ≈|0.80
+Лисиця, висота в холці ≈|0.40
+Ведмідь бурий на задніх лапах ≈|1.90
+Корова, висота в холці ≈|1.35
+Кінь, висота в холці ≈|1.60
+Вівця, висота в холці ≈|0.75
+Вівчарка, висота в холці ≈|0.62
+Лелека, розмах крил ≈|1.90
+Беркут, розмах крил ≈|2.10
+Африканський слон, висота в холці ≈|3.20
+Жираф, висота ≈|5.00
+Синій кит, довжина ≈|25.0
+§Папір і дрібниці
+Аркуш A4, довга сторона|0.297
+Аркуш A4, коротка сторона|0.210
+Аркуш A3, довга сторона|0.420
+Аркуш A2, довга сторона|0.594
+Аркуш A1, довга сторона|0.841
+Кредитна картка, довжина|0.0856
+Компакт-диск, діаметр|0.12
+Банкнота 1 долар США, довжина|0.156`;
 
-        function triggerManualTap() {
-            pendingTapCoords = { x: canvas.width / 2, y: canvas.height / 2 };
-            openTrainModal();
-        }
+/* ---------- БАЗА РОЗМІРІВ: ВІЙСЬКОВА ТЕХНІКА (м, відкриті довідники) ---------- */
+const RAWM=`§Танки
+Т-55, довжина з гарматою ≈|9.00
+Т-55, ширина ≈|3.27
+Т-55, висота ≈|2.35
+Т-64, довжина з гарматою ≈|9.20
+Т-64, ширина ≈|3.40
+Т-64, висота ≈|2.17
+Т-72, довжина з гарматою ≈|9.53
+Т-72, ширина ≈|3.59
+Т-72, висота ≈|2.23
+Т-80, довжина з гарматою ≈|9.90
+Т-80, ширина ≈|3.60
+Т-80, висота ≈|2.20
+Т-84 «Оплот», довжина з гарматою ≈|9.72
+Т-84 «Оплот», ширина ≈|3.56
+Т-84 «Оплот», висота ≈|2.20
+Т-90, довжина з гарматою ≈|9.53
+Т-90, ширина ≈|3.78
+Т-90, висота ≈|2.22
+Leopard 1A5, довжина з гарматою ≈|9.54
+Leopard 1A5, ширина ≈|3.37
+Leopard 1A5, висота ≈|2.39
+Leopard 2A4, довжина з гарматою|9.67
+Leopard 2A4, ширина|3.70
+Leopard 2A4, висота|2.79
+Leopard 2A6, довжина з гарматою ≈|10.97
+Leopard 2A6, ширина ≈|3.75
+Leopard 2A6, висота ≈|3.00
+M1 Abrams, довжина з гарматою|9.83
+M1 Abrams, ширина|3.66
+M1 Abrams, висота|2.44
+Challenger 2, довжина з гарматою ≈|11.55
+Challenger 2, ширина ≈|3.52
+Challenger 2, висота ≈|2.50
+Leclerc, довжина з гарматою ≈|9.87
+Leclerc, ширина ≈|3.71
+Leclerc, висота ≈|2.53
+§БМП, БТР і бронеавтомобілі
+БМП-1, довжина|6.74
+БМП-1, ширина|2.94
+БМП-1, висота ≈|2.15
+БМП-2, довжина|6.72
+БМП-2, ширина|3.15
+БМП-2, висота|2.45
+БМП-3, довжина|7.14
+БМП-3, ширина|3.20
+БМП-3, висота|2.30
+БТР-70, довжина|7.53
+БТР-70, ширина|2.80
+БТР-70, висота ≈|2.32
+БТР-80, довжина|7.65
+БТР-80, ширина|2.90
+БТР-80, висота ≈|2.46
+БРДМ-2, довжина|5.75
+БРДМ-2, ширина|2.35
+БРДМ-2, висота|2.31
+МТ-ЛБ, довжина ≈|6.45
+МТ-ЛБ, ширина ≈|2.86
+МТ-ЛБ, висота ≈|1.86
+M113, довжина ≈|4.86
+M113, ширина ≈|2.69
+M113, висота ≈|2.20
+M2 Bradley, довжина ≈|6.55
+M2 Bradley, ширина ≈|3.60
+M2 Bradley, висота ≈|3.00
+Marder 1A3, довжина ≈|6.88
+Marder 1A3, висота ≈|3.00
+Stryker, довжина|6.95
+Stryker, ширина|2.72
+Stryker, висота ≈|2.64
+HMMWV, довжина ≈|4.57
+HMMWV, ширина ≈|2.16
+HMMWV, висота ≈|1.83
+УАЗ-469, довжина|4.03
+УАЗ-469, ширина ≈|1.79
+УАЗ-469, висота ≈|2.05
+Урал-4320, довжина ≈|7.37
+Урал-4320, висота ≈|2.90
+§Артилерія, РСЗВ і ППО (самохідні платформи)
+2С1 «Гвоздика», довжина ≈|7.26
+2С1 «Гвоздика», ширина ≈|2.86
+2С1 «Гвоздика», висота ≈|2.40
+2С19 «Мста-С», довжина з гарматою ≈|11.90
+2С19 «Мста-С», ширина ≈|3.38
+2С19 «Мста-С», висота ≈|2.99
+PzH 2000, довжина з гарматою ≈|11.67
+PzH 2000, ширина ≈|3.48
+PzH 2000, висота ≈|3.40
+CAESAR 6×6, довжина ≈|10.00
+CAESAR 6×6, ширина ≈|2.55
+CAESAR 6×6, висота ≈|3.70
+БМ-21 «Град», довжина ≈|7.35
+БМ-21 «Град», ширина ≈|2.69
+БМ-21 «Град», висота ≈|3.09
+БМ-27 «Ураган», довжина ≈|9.63
+БМ-27 «Ураган», ширина ≈|2.80
+БМ-27 «Ураган», висота ≈|3.20
+HIMARS, довжина|7.00
+HIMARS, ширина|2.40
+HIMARS, висота|3.20
+M270 MLRS, довжина ≈|6.85
+M270 MLRS, ширина ≈|2.97
+M270 MLRS, висота ≈|2.57
+«Бук-М1» (пускова), довжина ≈|9.30
+«Бук-М1» (пускова), ширина ≈|3.25
+«Бук-М1» (пускова), висота ≈|3.80
+ЗСУ-23-4 «Шилка», довжина ≈|6.53
+ЗСУ-23-4 «Шилка», ширина ≈|3.10
+ЗСУ-23-4 «Шилка», висота ≈|3.80
+§Літаки: винищувачі й штурмовики
+Су-27, довжина|21.94
+Су-27, розмах крил|14.70
+Су-27, висота|5.93
+Су-25, довжина ≈|15.33
+Су-25, розмах крил|14.36
+Су-25, висота ≈|4.80
+Су-24М, довжина ≈|22.67
+Су-24М, розмах крил (розкриті) ≈|17.64
+Су-30СМ, довжина ≈|21.9
+Су-30СМ, розмах крил ≈|14.7
+Су-34, довжина ≈|23.34
+Су-34, розмах крил ≈|14.70
+Су-35С, довжина ≈|21.9
+Су-35С, розмах крил ≈|15.3
+МіГ-29, довжина|17.37
+МіГ-29, розмах крил|11.36
+МіГ-29, висота|4.73
+МіГ-31, довжина ≈|22.69
+МіГ-31, розмах крил ≈|13.46
+F-16C, довжина|15.06
+F-16C, розмах крил|9.96
+F-16C, висота ≈|4.88
+F-15C, довжина|19.43
+F-15C, розмах крил|13.05
+F-15C, висота|5.63
+F-22, довжина|18.90
+F-22, розмах крил|13.56
+F-35A, довжина|15.67
+F-35A, розмах крил|10.70
+F/A-18C, довжина|17.07
+F/A-18C, розмах крил ≈|11.43
+Eurofighter Typhoon, довжина|15.96
+Eurofighter Typhoon, розмах крил|10.95
+Rafale, довжина|15.27
+Rafale, розмах крил|10.80
+Gripen C, довжина|14.10
+Gripen C, розмах крил|8.40
+Mirage 2000, довжина|14.36
+Mirage 2000, розмах крил|9.13
+A-10C, довжина|16.26
+A-10C, розмах крил|17.42
+§Літаки: бомбардувальники й транспортні
+Ту-22М3, довжина ≈|41.46
+Ту-22М3, розмах крил (розкриті) ≈|34.28
+Ту-95МС, довжина|49.13
+Ту-95МС, розмах крил|50.04
+Ту-160, довжина|54.10
+Ту-160, розмах крил (розкриті)|55.70
+B-52H, довжина|48.50
+B-52H, розмах крил|56.40
+B-2 Spirit, довжина|21.00
+B-2 Spirit, розмах крил|52.40
+Іл-76МД, довжина|46.59
+Іл-76МД, розмах крил|50.50
+Ан-26, довжина ≈|23.80
+Ан-26, розмах крил ≈|29.20
+C-130H Hercules, довжина|29.79
+C-130H Hercules, розмах крил|40.40
+C-17 Globemaster III, довжина|53.04
+C-17 Globemaster III, розмах крил|51.75
+§Вертольоти
+Мі-8МТВ, довжина фюзеляжу ≈|18.17
+Мі-8МТВ, діаметр гвинта|21.29
+Мі-8МТВ, висота ≈|5.65
+Мі-24, довжина фюзеляжу ≈|17.51
+Мі-24, діаметр гвинта|17.30
+Мі-24, висота ≈|6.50
+Мі-28Н, довжина фюзеляжу ≈|17.01
+Мі-28Н, діаметр гвинта|17.20
+Ка-52, діаметр кожного гвинта|14.50
+Ка-52, висота ≈|4.93
+Мі-26, діаметр гвинта|32.00
+Мі-26, висота ≈|8.15
+AH-64 Apache, діаметр гвинта|14.63
+AH-64 Apache, висота ≈|4.95
+UH-60 Black Hawk, довжина фюзеляжу ≈|15.26
+UH-60 Black Hawk, діаметр гвинта ≈|16.36
+CH-47 Chinook, довжина фюзеляжу ≈|15.90
+CH-47 Chinook, діаметр гвинта ≈|18.30
+§Безпілотники
+Bayraktar TB2, довжина|6.50
+Bayraktar TB2, розмах крил|12.00
+Bayraktar Akinci, довжина ≈|12.20
+Bayraktar Akinci, розмах крил ≈|20.00
+MQ-9 Reaper, довжина|11.00
+MQ-9 Reaper, розмах крил|20.00
+RQ-4 Global Hawk, довжина ≈|14.50
+RQ-4 Global Hawk, розмах крил ≈|39.90
+Орлан-10, довжина ≈|1.80
+Орлан-10, розмах крил ≈|3.10
+Shahed-136 («Герань-2»), довжина ≈|3.50
+Shahed-136 («Герань-2»), розмах крил ≈|2.50
+DJI Mavic 3, довжина (розкладений)|0.347
+DJI Matrice 300 RTK, довжина (розкладений)|0.81
+DJI Matrice 300 RTK, ширина (розкладений)|0.67
+FPV-дрон 5″, діагональ рами ≈|0.22
+FPV-дрон 7″, діагональ рами ≈|0.30
+FPV-дрон 10″, діагональ рами ≈|0.43
+§Кораблі й катери
+Magura V5 (морський дрон), довжина ≈|5.50
+Катер «Айленд», довжина ≈|33.5
+Бронекатер «Гюрза-М», довжина ≈|23.0
+Ракетний корабель «Буян-М», довжина ≈|74.1
+Фрегат проєкту 11356, довжина ≈|124.8
+Великий десантний корабель «Ропуха», довжина ≈|112.5
+Ракетний крейсер проєкту 1164 «Слава», довжина|186.4
+Есмінець Arleigh Burke, довжина ≈|155.0
+Підводний човен Los Angeles, довжина ≈|110.3
+Авіаносець Nimitz, довжина ≈|332.8
+Авіаносець Gerald R. Ford, довжина ≈|337.0`;
 
-        // Modal Controllers
-        function openTrainModal() {
-            document.getElementById('inputName').value = '';
-            document.getElementById('inputHeight').value = '';
-            document.getElementById('inputWidth').value = '';
-            document.getElementById('trainModal').classList.remove('hidden');
-        }
+function parse(raw){const a=[];let c='';raw.split('\n').forEach(l=>{if(l[0]==='§')c=l.slice(1);else if(l.trim()){const i=l.lastIndexOf('|');a.push({c,n:l.slice(0,i),v:parseFloat(l.slice(i+1))})}});return a}
+const DB=parse(RAW),MIL=parse(RAWM);
 
-        function closeTrainModal() {
-            document.getElementById('trainModal').classList.add('hidden');
-            pendingTapCoords = null;
-        }
+/* ---------- цивільні класи для сканера: [назва, типова висота, м] ---------- */
+const CLS={person:['Людина',1.70],bicycle:['Велосипед',1.05],car:['Авто',1.50],motorcycle:['Мотоцикл',1.20],bus:['Автобус',3.00],truck:['Вантажівка',3.30],dog:['Собака',0.55],cat:['Кіт',0.30],horse:['Кінь',1.70],cow:['Корова',1.40],sheep:['Вівця',0.80],bench:['Лавка',0.85],chair:['Стілець',0.90],'fire hydrant':['Гідрант',0.75],'stop sign':['Знак «Стоп»',0.75]};
+const grp=c=>(c==='car'||c==='truck'||c==='bus')?'veh':((c==='bicycle'||c==='motorcycle')?'two':c);
 
-        function toggleLibraryModal() {
-            const modal = document.getElementById('libraryModal');
-            if (modal.classList.contains('hidden')) {
-                renderLibraryList();
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
+let mode='size',vert=true,frozen=false,frozenVal=null,frozenT=0,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
+let hrel=null,headAbs=null,absSeen=false,oBuf=[];
+let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
+let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
+let my=store.get('my',[]).map(x=>({id:x.id||uid(),n:x.n,v:x.v,t:x.t||1,del:!!x.del})),cat='Усі',cur=[],src='gen';
+let pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null,lastDet=0;
+let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35),regIdx=0,fpsT=[],scanStat={fps:0,all:0,sup:0};
+let posMode=store.get('pos',false),locked=false,entered='',suppress=0,hiddenAt=0,syncing=false,syncT=null,lastTry=0,cdT=null;
+const oc=document.createElement('canvas'),octx=oc.getContext('2d');
 
-        function toggleHelpModal() {
-            const modal = document.getElementById('helpModal');
-            modal.classList.toggle('hidden');
-        }
+function fmt(m){const[k,l]=U[unit];if(unit==='m'&&m>=1000)return[(m/1000).toFixed(2),'км'];const v=m*k;return[v.toFixed(v>=100?0:v>=10?1:2),l]}
+const fs=m=>fmt(m).join(' ');
+const ef=m=>{const[k,l]=U[unit],v=m*k;return v.toFixed(v<1?2:1)+' '+l};
+function fa(a){
+  const k=unit==='ft'?10.7639:unit==='yd'?1.19599:1,l=unit==='ft'?'фт²':unit==='yd'?'ярд²':'м²';
+  let s=(a*k).toFixed(a*k>=100?0:1)+' '+l;
+  if(unit==='m')s+=' ('+(a>=10000?(a/10000).toFixed(2)+' га':(a/100).toFixed(2)+' сот.')+')';
+  return s;
+}
+const say=t=>{$('#res').textContent=t};
 
-        // Save trained object logic with ORB descriptors extraction
-        function saveTrainedObject() {
-            const name = document.getElementById('inputName').value.trim();
-            const height = parseFloat(document.getElementById('inputHeight').value);
-            const width = parseFloat(document.getElementById('inputWidth').value);
+/* ---------- черга синхронізації й режим «Позиція» ---------- */
+const jbCfg=()=>store.get('jb',null);
+const autoOn=()=>{const c=jbCfg();return !!(c&&c.auto&&c.id&&c.key)};
+function updBadge(){
+  const d=store.get('dirty',false);
+  const b=$('#posB');
+  b.textContent=(posMode?'ПОЗИЦІЯ':'Позиція: вимк.')+(d?' · ⏳':'');
+  b.classList.toggle('on',posMode);
+  $('#posC').checked=posMode;
+  $('#netS').textContent='Зв\'язок: '+(navigator.onLine?'онлайн':'офлайн')+(d?' · є незасинхронізовані зміни':'');
+}
+function setPos(v){
+  posMode=v;store.set('pos',v);updBadge();
+  say(v?'Режим «Позиція» увімкнено: економія батареї, без звуку, синхронізація — коли з\'явиться інтернет':'Режим «Позиція» вимкнено: повна потужність, синхронізація одразу');
+  if(!v)scheduleSync();
+}
+function markDirty(){store.set('dirty',true);updBadge();scheduleSync()}
+function scheduleSync(){
+  if(!autoOn())return;
+  clearTimeout(syncT);
+  if(posMode)return;
+  syncT=setTimeout(()=>syncNow(false),3000);
+}
+function snapshot(){return{app:'Дальномір',v:1,t:Date.now(),my:my,Kp:store.get('Kp',{}),h:camH,u:unit,b:bias}}
+function mergeData(o,withSettings){
+  let n=0;
+  if(Array.isArray(o.my))o.my.forEach(r=>{
+    if(!r||typeof r.n!=='string'||!(r.v>0))return;
+    const id=r.id||uid(),l=my.find(x=>x.id===id);
+    if(!l){my.push({id,n:r.n.slice(0,80),v:+r.v,t:r.t||Date.now(),del:!!r.del});n++}
+    else if((r.t||0)>(l.t||0)){l.n=r.n.slice(0,80);l.v=+r.v;l.t=r.t;l.del=!!r.del;n++}
+  });
+  if(o.Kp&&typeof o.Kp==='object'){
+    const k=store.get('Kp',{});
+    for(const c in o.Kp){if(!k[c]&&Array.isArray(o.Kp[c]))k[c]=o.Kp[c].filter(x=>typeof x==='number'&&x>.3&&x<1.6).slice(-7)}
+    store.set('Kp',k);
+  }
+  if(withSettings){
+    if(o.h>0){camH=+o.h;store.set('h',camH);$('#hh').value=camH}
+    if(['m','ft','yd'].includes(o.u)){unit=o.u;store.set('u',unit);$('#unitSel').value=unit}
+    if(typeof o.b==='number'){bias=o.b;store.set('b',bias)}
+  }
+  store.set('my',my);
+  return n;
+}
+const jbS=t=>{$('#jbS').textContent=t};
+async function syncNow(manual){
+  const c=jbCfg();
+  if(!c||!c.id||!c.key){if(manual)jbS('Введи Bin ID і ключ');return}
+  if(!navigator.onLine){jbS('Немає інтернету — зміни в черзі');return}
+  if(syncing)return;
+  syncing=true;lastTry=Date.now();jbS('Синхронізація…');
+  const H={'X-Bin-Meta':'false'};H[c.kt==='master'?'X-Master-Key':'X-Access-Key']=c.key;
+  try{
+    const r=await fetch('https://api.jsonbin.io/v3/b/'+encodeURIComponent(c.id)+'/latest',{headers:H});
+    if(!r.ok)throw new Error('читання '+r.status);
+    const remote=await r.json();
+    if(remote&&typeof remote==='object')mergeData(remote,false);
+    const body=JSON.stringify({app:'Дальномір',v:1,t:Date.now(),my:my,Kp:store.get('Kp',{})});
+    if(body.length>95000)throw new Error('дані завеликі для безкоштовного JSONBin (100 КБ)');
+    const H2=Object.assign({'Content-Type':'application/json'},H);delete H2['X-Bin-Meta'];
+    const w=await fetch('https://api.jsonbin.io/v3/b/'+encodeURIComponent(c.id),{method:'PUT',headers:H2,body});
+    if(!w.ok)throw new Error('запис '+w.status);
+    store.set('dirty',false);store.set('jbT',Date.now());
+    jbS('Синхронізовано ✓ '+new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'}));
+    if(!$('#db').classList.contains('hide'))renderDB();
+  }catch(e){jbS('Помилка: '+e.message)}
+  syncing=false;updBadge();
+}
+window.addEventListener('online',()=>{updBadge();if(store.get('dirty',false)&&autoOn())syncNow(false)});
+window.addEventListener('offline',updBadge);
+setInterval(()=>{
+  if(!store.get('dirty',false)||!autoOn()||!navigator.onLine||syncing||locked)return;
+  if(!posMode||Date.now()-lastTry>300000)syncNow(false);
+},30000);
 
-            if (!name || isNaN(height) || isNaN(width)) {
-                alert('Будь ласка, заповніть усі поля коректно.');
-                return;
-            }
+/* ---------- база: вікно вибору ---------- */
+const baseArr=()=>src==='mil'?MIL:DB;
+const myLive=()=>my.filter(x=>!x.del);
+const allItems=()=>src==='mil'?MIL:DB.concat(myLive().map(x=>({c:'Мої',n:x.n,v:x.v,u:1,id:x.id})));
+function vfmt(v){const k=U[unit][0]*v;return Number(k.toFixed(k>=100?0:k>=10?1:k>=1?2:3))+' '+U[unit][1]}
+function renderChips(){
+  const cats=[];baseArr().forEach(x=>{if(!cats.includes(x.c))cats.push(x.c)});
+  const list=['Усі','Нещодавні'].concat(cats,src==='gen'?['Мої']:[]);
+  if(!list.includes(cat))cat='Усі';
+  $('#chips').innerHTML=list.map(c=>'<button class="chip'+(c===cat?' on':'')+'" data-c="'+esc(c)+'">'+esc(c)+'</button>').join('');
+}
+function renderDB(){
+  const q=$('#dbq').value.trim().toLowerCase(),rc=store.get('rc',[]);
+  let a=allItems();
+  if(cat==='Нещодавні')a=rc.map(n=>a.find(x=>x.n===n)).filter(Boolean);
+  else if(cat!=='Усі')a=a.filter(x=>x.c===cat);
+  if(q)a=a.filter(x=>x.n.toLowerCase().includes(q)||x.c.toLowerCase().includes(q));
+  cur=a;
+  const tot=src==='mil'?MIL.length:DB.length+myLive().length;
+  $('#cnt').textContent='Знайдено: '+a.length+' з '+tot+(src==='mil'?' · типові значення з відкритих довідників (≈ — приблизно)':'');
+  $('#dbl').innerHTML=a.map((x,i)=>'<button class="it" data-i="'+i+'"><span>'+esc(x.n)+'</span><span><b>'+vfmt(x.v)+'</b>'+(x.u?'<i data-d="'+i+'" aria-label="Видалити">✕</i>':'')+'</span></button>').join('')||'<small style="padding:14px">Нічого не знайдено</small>';
+}
+function setSrc(s){
+  src=s;cat='Усі';
+  $('#sg').classList.toggle('on',s==='gen');$('#sm').classList.toggle('on',s==='mil');
+  $('#dba').classList.toggle('hide',s==='mil');
+  $('#dbq').placeholder=s==='mil'?'Пошук: Т-72, F-16, Bayraktar, Мі-8…':'Пошук: авто, двері, ворота…';
+  renderChips();renderDB();
+}
+function openDB(){$('#db').classList.remove('hide');setSrc(src)}
+function closeDB(){$('#db').classList.add('hide')}
+function choose(it){
+  objSize=it.v;objName=it.n;$('#sz').value=it.v;$('#pick').textContent='📚 '+it.n;
+  store.set('sz',it.v);store.set('sn',it.n);
+  const rc=store.get('rc',[]).filter(n=>n!==it.n);rc.unshift(it.n);store.set('rc',rc.slice(0,8));
+  closeDB();say('Об\'єкт: '+it.n+' — '+vfmt(it.v));
+}
+$('#pick').onclick=openDB;
+$('#dbx').onclick=closeDB;
+$('#dbq').oninput=renderDB;
+$('#sg').onclick=()=>setSrc('gen');
+$('#sm').onclick=()=>setSrc('mil');
+$('#chips').onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;cat=b.dataset.c;renderChips();renderDB()};
+$('#dbl').onclick=e=>{
+  const d=e.target.closest('[data-d]');
+  if(d){const it=cur[+d.dataset.d],m=my.find(q=>q.id===it.id);if(m){m.del=true;m.t=Date.now();store.set('my',my);markDirty()}renderDB();return}
+  const b=e.target.closest('[data-i]');if(b)choose(cur[+b.dataset.i]);
+};
+$('#dbadd').onclick=()=>{
+  const n=$('#dbn').value.trim().slice(0,80),v=parseFloat($('#dbv').value);
+  if(!n||!(v>0))return;
+  my.push({id:uid(),n,v,t:Date.now(),del:false});store.set('my',my);markDirty();
+  $('#dbn').value='';$('#dbv').value='';cat='Мої';renderChips();renderDB();
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDB();$('#set').classList.add('hide');$('#man').classList.add('hide')}});
 
-            if (!cvReady || !grayMat || !orb) {
-                alert('OpenCV.js ще не завантажено або камера не готова.');
-                return;
-            }
+/* ---------- калібрування (по камері) ---------- */
+const kpts=()=>(store.get('Kp',{})[camKey]||[]);
+const getK=()=>{const a=kpts();return a.length?med(a):0.75};
+function kinfo(){const n=kpts().length;$('#kinfo').textContent='Камера: '+camKey+' · '+(n?'точок калібрування: '+n:'стандартне калібрування')+' · K='+getK().toFixed(3)}
 
-            // Extract region of interest around tap coords (or center)
-            let tx = pendingTapCoords ? pendingTapCoords.x : canvas.width / 2;
-            let ty = pendingTapCoords ? pendingTapCoords.y : canvas.height / 2;
-            
-            let roiSize = 150;
-            let rx = Math.max(0, Math.min(grayMat.cols - roiSize, tx - roiSize / 2));
-            let ry = Math.max(0, Math.min(grayMat.rows - roiSize, ty - roiSize / 2));
-            let roiRect = new cv.Rect(rx, ry, Math.min(roiSize, grayMat.cols - rx), Math.min(roiSize, grayMat.rows - ry));
-            
-            let roi = grayMat.roi(roiRect);
-            let keypoints = new cv.KeyPointVector();
-            let descriptors = new cv.Mat();
+/* ---------- видима зона маркерів ---------- */
+function zone(){
+  const r=stage.getBoundingClientRect();
+  if(vert){
+    const a=($('#top').getBoundingClientRect().bottom-r.top+8)/r.height;
+    const b=(sheet.getBoundingClientRect().top-r.top-8)/r.height;
+    return b>a+.05?{min:a,max:b}:{min:.1,max:.5};
+  }
+  return{min:.03,max:.97};
+}
+function resetMarkers(){const z=zone(),w=z.max-z.min;p=[z.min+w*.2,z.min+w*.8]}
+function layout(){
+  stage.style.setProperty('--sh',sheet.getBoundingClientRect().height+'px');
+  if(!inited){inited=true;resetMarkers()}else{const z=zone();p=p.map(v=>clamp(v,z.min,z.max))}
+  render();
+}
+if(window.ResizeObserver)new ResizeObserver(layout).observe(sheet);
+window.addEventListener('resize',layout);
 
-            orb.detectAndCompute(roi, new cv.Mat(), keypoints, descriptors);
+/* ---------- камера ---------- */
+function stopCam(){if(V.srcObject){V.srcObject.getTracks().forEach(t=>t.stop());V.srcObject=null}}
+async function startCam(id){
+  $('#msg').style.display='none';
+  try{
+    stopCam();
+    const vc={width:{ideal:1920},height:{ideal:1080}};
+    if(id)vc.deviceId={exact:id};else vc.facingMode={ideal:'environment'};
+    const st=await navigator.mediaDevices.getUserMedia({audio:false,video:vc});
+    V.srcObject=st;track=st.getVideoTracks()[0];camKey=track.label||'default';
+    zoom=1;$('#zwrap').classList.add('hide');
+    const caps=track.getCapabilities?track.getCapabilities():{};
+    if(caps.zoom){const z=$('#zoom');z.min=caps.zoom.min;z.max=caps.zoom.max;z.step=caps.zoom.step||0.1;z.value=caps.zoom.min;zoom=caps.zoom.min;$('#zwrap').classList.remove('hide');$('#zv').textContent=zoom.toFixed(1)+'×'}
+    try{
+      const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+      const cur=track.getSettings().deviceId;
+      $('#cam').innerHTML=devs.map((d,i)=>'<option value="'+d.deviceId+'"'+(d.deviceId===cur?' selected':'')+'>'+esc(d.label||'Камера '+(i+1))+'</option>').join('');
+    }catch(_){}
+    kinfo();
+  }catch(e){
+    $('#msgt').textContent='Немає доступу до камери. Дозволь камеру в браузері і відкрий сторінку напряму (https).';
+    $('#msg').style.display='flex';
+  }
+}
+$('#retry').onclick=()=>startCam();
+$('#cam').onchange=e=>{ema=null;buf=[];trk=[];startCam(e.target.value)};
+$('#zoom').oninput=e=>{zoom=+e.target.value;$('#zv').textContent=zoom.toFixed(1)+'×';ema=null;trk=[];try{track.applyConstraints({advanced:[{zoom}]})}catch(_){}};
 
-            const newObj = {
-                id: 'obj_' + Date.now(),
-                name: name,
-                height: height,
-                width: width,
-                descriptors: descriptors.clone(),
-                keypointsCount: keypoints.size()
-            };
+/* ---------- датчики: нахил, напрямок, компас ---------- */
+function bearing(a,b,g){
+  const E=-(Math.cos(g)*Math.sin(a)*Math.sin(b)+Math.cos(a)*Math.sin(g));
+  const N=-(Math.sin(a)*Math.sin(g)-Math.cos(a)*Math.cos(g)*Math.sin(b));
+  return (Math.atan2(E,N)/R+360)%360;
+}
+function setHead(v){if(headAbs==null)headAbs=v;else{const d=((v-headAbs+540)%360)-180;headAbs=(headAbs+d*.2+360)%360}}
+function onOri(e){
+  if(e.beta==null)return;
+  const a=(e.alpha||0)*R,b=e.beta*R,g=(e.gamma||0)*R;
+  eRaw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))/R;
+  roll=e.gamma||0;
+  if(e.alpha!=null)hrel=bearing(a,b,g);
+  if(typeof e.webkitCompassHeading==='number'&&!absSeen)setHead(e.webkitCompassHeading);
+  oBuf.push({t:performance.now(),e:eRaw,h:hrel});if(oBuf.length>60)oBuf.shift();
+}
+function onAbs(e){
+  if(e.alpha==null||e.beta==null)return;
+  absSeen=true;setHead(bearing(e.alpha*R,e.beta*R,(e.gamma||0)*R));
+}
+function listenOri(){window.addEventListener('deviceorientation',onOri,true);window.addEventListener('deviceorientationabsolute',onAbs,true)}
+async function askSensor(){
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&DeviceOrientationEvent.requestPermission){
+      const r=await DeviceOrientationEvent.requestPermission();
+      if(r!=='granted'){$('#sens').classList.remove('hide');return}
+    }
+    $('#sens').classList.add('hide');listenOri();
+  }catch(e){$('#sens').classList.remove('hide')}
+}
+$('#sens').onclick=askSensor;
+document.addEventListener('click',()=>askSensor(),{once:true});
+$('#zero').onclick=()=>{
+  if(eRaw==null)return say('Немає даних датчика нахилу');
+  if(Math.abs(eRaw+90)>8)return say('Поклади телефон екраном вгору на рівну поверхню');
+  bias=eRaw+90;store.set('b',bias);ema=null;buf=[];say('Нахил обнулено ✓ (поправка '+bias.toFixed(2)+'°)');
+};
+function lvl(t){
+  const el=$('#lvl'),bad=Math.abs(roll)>3;
+  el.className=bad?'bad':'';
+  el.textContent='Крен '+roll.toFixed(1)+'°'+(t!=null?' · кут '+t.toFixed(1)+'° · ухил '+(Math.tan(t*R)*100).toFixed(0)+'%':'')+(bad?' — випрями телефон':'');
+}
+function compass(){
+  const h=headAbs;
+  $('#az').textContent=h==null?'—':Math.round(h)+'°';
+  $('#card').textContent=h==null?'':CARD[Math.round(h/45)%8];
+  $('#rose').setAttribute('transform','rotate('+(h==null?0:-h)+' 13 13)');
+}
+function oRange(ms){
+  const t=performance.now(),a=oBuf.filter(o=>t-o.t<ms);
+  if(a.length<3)return 0;
+  const es=a.map(o=>o.e);let r=Math.max(...es)-Math.min(...es);
+  if(a[0].h!=null){const h0=a[0].h,ds=a.map(o=>((o.h-h0+540)%360)-180);r=Math.max(r,Math.max(...ds)-Math.min(...ds))}
+  return r;
+}
+function oStats(){
+  const t=performance.now(),a=oBuf.filter(o=>t-o.t<600&&o.h!=null);
+  if(a.length<6)return null;
+  const e=med(a.map(o=>o.e));
+  const sx=a.reduce((s,o)=>s+Math.sin(o.h*R),0),cy=a.reduce((s,o)=>s+Math.cos(o.h*R),0);
+  return{e,h:(Math.atan2(sx,cy)/R+360)%360};
+}
 
-            trainedObjects.push(newObj);
-            saveStorage();
+/* ---------- геометрія ---------- */
+function geo(){
+  const vw=V.videoWidth||1280,vh=V.videoHeight||720,r=stage.getBoundingClientRect();
+  const s=Math.max(r.width/vw,r.height/vh);
+  return{r,s,f:getK()*Math.max(vw,vh)*zoom};
+}
+function tElev(g){
+  if(eRaw==null)return null;
+  const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
+  return eRaw-bias-off;
+}
+function groundPt(ex,hd,g){
+  const e=ex*R,h=hd*R;
+  const u=((tgt.x-.5)*g.r.width/g.s)/g.f,v=((tgt.y-.5)*g.r.height/g.s)/g.f;
+  const F=[Math.cos(e)*Math.sin(h),Math.cos(e)*Math.cos(h),Math.sin(e)];
+  const Rt=[Math.cos(h),-Math.sin(h),0];
+  const D=[Math.sin(e)*Math.sin(h),Math.sin(e)*Math.cos(h),-Math.cos(e)];
+  const r=[F[0]+u*Rt[0]+v*D[0],F[1]+u*Rt[1]+v*D[1],F[2]+u*Rt[2]+v*D[2]];
+  if(r[2]>=-0.02)return null;
+  const t=camH/-r[2];
+  return{x:r[0]*t,y:r[1]*t};
+}
+function compute(){
+  const g=geo();
+  if(mode==='size'||mode==='dim'){
+    const len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
+    if(span<4)return{warn:'Розведи маркери по краях об\'єкта'};
+    if(mode==='size'){const d=objSize*g.f/span;return{d,err:d*(2/g.s)/span}}
+    const D=parseFloat($('#dd').value);
+    if(!(D>0))return{warn:'Задай відстань до об\'єкта'};
+    const s=span*D/g.f;return{d:s,err:s*(2/g.s)/span,sub:vert?'висота':'ширина'};
+  }
+  const t=tElev(g);
+  if(t==null)return{warn:'Чекаю дані датчика нахилу…'};
+  if(mode==='height')return{t};
+  if(t>-1.2)return{warn:'Ціль біля горизонту або вище — опусти хрестик до основи цілі',t};
+  const r=-t*R;
+  return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
+}
 
-            roi.delete();
-            keypoints.delete();
-            descriptors.delete();
+/* ---------- точки на землі й площа ---------- */
+function ptsInfo(){
+  const n=pts.length,o={n};
+  if(n>=2){const a=pts[n-2],b=pts[n-1];o.seg=Math.hypot(b.x-a.x,b.y-a.y);o.err=Math.hypot(a.err,b.err)}
+  let L=0;for(let i=1;i<n;i++)L+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);o.len=L;
+  if(n>=3){let A=0,P=0;for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n];A+=a.x*b.y-b.x*a.y;P+=Math.hypot(b.x-a.x,b.y-a.y)}o.area=Math.abs(A)/2;o.per=P}
+  return o;
+}
+function planSvg(){
+  if(!pts.length)return'';
+  const W=300,H=150,m=24;
+  const xs=pts.map(q=>q.x).concat(0),ys=pts.map(q=>q.y).concat(0);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const sc=Math.min((W-2*m)/Math.max(x1-x0,.01),(H-2*m)/Math.max(y1-y0,.01));
+  const tx=x=>m+(x-x0)*sc+((W-2*m)-(x1-x0)*sc)/2,ty=y=>H-m-(y-y0)*sc-((H-2*m)-(y1-y0)*sc)/2;
+  const P=pts.map(q=>[tx(q.x),ty(q.y)]);
+  let s='<svg viewBox="0 0 300 150" width="100%" style="display:block;margin-top:8px;background:rgba(255,255,255,.04);border-radius:10px" role="img" aria-label="План точок">';
+  if(P.length>=3)s+='<polygon points="'+P.map(q=>q.join(',')).join(' ')+'" style="fill:#ffb21e;fill-opacity:.15;stroke:#ffb21e;stroke-width:1.5"/>';
+  else if(P.length===2)s+='<polyline points="'+P.map(q=>q.join(',')).join(' ')+'" style="fill:none;stroke:#ffb21e;stroke-width:1.5"/>';
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1],b=pts[i],mx=(P[i-1][0]+P[i][0])/2,my_=(P[i-1][1]+P[i][1])/2;
+    s+='<text x="'+mx+'" y="'+(my_-4)+'" text-anchor="middle" style="fill:#e9efe6;font-size:11px;font-family:system-ui,sans-serif">'+esc(fs(Math.hypot(b.x-a.x,b.y-a.y)))+'</text>';
+  }
+  if(P.length>=3){const a=pts[pts.length-1],b=pts[0],mx=(P[P.length-1][0]+P[0][0])/2,my_=(P[P.length-1][1]+P[0][1])/2;
+    s+='<text x="'+mx+'" y="'+(my_-4)+'" text-anchor="middle" style="fill:#8fa3a0;font-size:11px;font-family:system-ui,sans-serif">'+esc(fs(Math.hypot(b.x-a.x,b.y-a.y)))+'</text>'}
+  s+='<path d="M'+(tx(0)-5)+' '+(ty(0)+5)+' L'+tx(0)+' '+(ty(0)-6)+' L'+(tx(0)+5)+' '+(ty(0)+5)+' Z" style="fill:#8fa3a0"/>';
+  P.forEach((q,i)=>{s+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="4" style="fill:#ffb21e"/><text x="'+(q[0]+7)+'" y="'+(q[1]+4)+'" style="fill:#e9efe6;font-size:11px;font-family:system-ui,sans-serif">'+(i+1)+'</text>'});
+  return s+'</svg>';
+}
+function refreshPts(){
+  const o=ptsInfo();
+  let t='';
+  if(o.n>=2)t='Остання: '+fs(o.seg)+' ± '+ef(o.err)+' · довжина ламаної: '+fs(o.len);
+  if(o.area!=null)t+=' · площа: '+fa(o.area)+' · периметр: '+fs(o.per);
+  say(t||(o.n?'Точок: '+o.n:''));
+  $('#plan').innerHTML=planSvg();
+}
+function addPoint(){
+  if(eRaw==null||hrel==null)return say('Немає даних датчиків (нахил і напрямок)');
+  const st=oStats();
+  if(!st)return say('Зачекай мить — збираю дані датчика');
+  const P=groundPt(st.e-bias,st.h,geo());
+  if(!P)return say('Хрестик має бути нижче горизонту — опусти його на землю');
+  const d=Math.hypot(P.x,P.y),dep=Math.atan2(camH,d);
+  const err=Math.hypot(camH*.0087/Math.pow(Math.sin(dep),2),.01*d);
+  pts.push({x:P.x,y:P.y,d,err});
+  refreshPts();
+}
+$('#addP').onclick=addPoint;
+$('#delP').onclick=()=>{pts.pop();refreshPts()};
+$('#clrP').onclick=()=>{pts=[];refreshPts()};
 
-            closeTrainModal();
-            document.getElementById('scan-status').innerText = `Успішно навчено: ${name}`;
-        }
+/* ---------- сканер ---------- */
+function loadScript(u){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error(u));document.head.appendChild(s)})}
+async function ensureModel(){
+  if(loading)return;
+  if(model&&modelBase===smodel)return;
+  loading=true;
+  try{if(model&&model.dispose)model.dispose()}catch(e){}
+  model=null;
+  scanMsg='Завантажую модель ('+(smodel==='mobilenet_v2'?'точна':'легка')+')…';
+  try{
+    if(!window.tf)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js');
+    if(!window.cocoSsd)await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js');
+    model=await cocoSsd.load({base:smodel});modelBase=smodel;
+    scanMsg='';
+  }catch(e){scanMsg='Не вдалося завантажити модель. Відкрий вкладку з інтернетом (потрібно один раз).'}
+  loading=false;
+}
+function iou(a,b){
+  const x1=Math.max(a[0],b[0]),y1=Math.max(a[1],b[1]),x2=Math.min(a[0]+a[2],b[0]+b[2]),y2=Math.min(a[1]+a[3],b[1]+b[3]);
+  const i=Math.max(0,x2-x1)*Math.max(0,y2-y1);
+  return i/(a[2]*a[3]+b[2]*b[3]-i||1);
+}
+function slope(a,b){
+  const n=a.length,ma=a.reduce((s,x)=>s+x,0)/n,mb=b.reduce((s,x)=>s+x,0)/n;
+  let num=0,den=0;for(let i=0;i<n;i++){num+=(a[i]-ma)*(b[i]-mb);den+=(a[i]-ma)*(a[i]-ma)}
+  return den>0?num/den:0;
+}
+function motion(k,g,shk){
+  const h=k.hist;if(h.length<4)return;
+  const t0=h[0].t,dt=(h[h.length-1].t-t0)/1000;if(dt<1.0)return;
+  const ts=h.map(q=>(q.t-t0)/1000),W=(V.videoWidth||1280)/2;
+  const ds=h.map(q=>q.d),ls=h.map(q=>(q.cx-W)*q.d/g.f);
+  const vr=slope(ts,ds),vl=slope(ts,ls),sp=Math.hypot(vr,vl);
+  const dm=ds.reduce((s,x)=>s+x,0)/ds.length;
+  k.v=sp;k.ready=true;
+  if(shk)return;
+  const disp=sp*dt,thr=Math.max(.7,.12*dm);
+  if(!k.moving&&sp>1.0&&disp>thr)k.moving=true;
+  else if(k.moving&&(sp<.6||disp<thr*.6))k.moving=false;
+  k.dirTxt=Math.abs(vr)>.7*Math.abs(vl)&&Math.abs(vr)>.8?(vr<0?'до вас':'від вас'):'вбік';
+}
+function updateTracks(out,t){
+  const g=geo(),vh=V.videoHeight||720,win=srange==='2'?3500:2200;
+  shake=oRange(1200)>1.2;
+  const used=new Set();
+  out.filter(o=>CLS[o.class]).forEach(o=>{
+    const cx=o.bbox[0]+o.bbox[2]/2,cy=o.bbox[1]+o.bbox[3]/2,sz=Math.max(o.bbox[2],o.bbox[3]);
+    let best=null,bs=1e9;
+    trk.forEach(k=>{
+      if(grp(k.cls)!==grp(o.class)||used.has(k.id))return;
+      const kx=k.box[0]+k.box[2]/2,ky=k.box[1]+k.box[3]/2;
+      const dist=Math.hypot(cx-kx,cy-ky),v=iou(k.box,o.bbox),lim=Math.max(k.box[2],k.box[3],sz)*.8;
+      if(v>.15||dist<lim){const sc=dist/lim-v;if(sc<bs){bs=sc;best=k}}
+    });
+    if(!best){best={id:nid++,cls:o.class,votes:{},hist:[],moving:false,ready:false,v:0,dirTxt:'',alerted:false,d:null,hits:0,score:o.score,box:o.bbox.slice()};trk.push(best)}
+    used.add(best.id);
+    best.box=best.box.map((v,i)=>v+(o.bbox[i]-v)*.6);
+    best.seen=t;best.hits++;
+    best.score=best.score*.6+o.score*.4;
+    best.votes[o.class]=(best.votes[o.class]||0)+o.score;
+    let bc=best.cls,bv=-1;for(const c in best.votes){if(best.votes[c]>bv){bv=best.votes[c];bc=c}}
+    best.cls=bc;best.name=CLS[bc][0];best.H=CLS[bc][1];
+    best.cut=o.bbox[1]<=2||o.bbox[1]+o.bbox[3]>=vh-2;
+    const raw=best.H*g.f/best.box[3];
+    best.d=best.d==null?raw:best.d+(raw-best.d)*.35;
+    best.hist.push({t,cx:best.box[0]+best.box[2]/2,d:best.d});
+    while(best.hist.length&&t-best.hist[0].t>win)best.hist.shift();
+    motion(best,g,shake);
+  });
+  trk=trk.filter(k=>t-k.seen<(srange==='2'?4000:2000));
+  if($('#alOn').checked){
+    const lim=parseFloat($('#alD').value)||30;
+    visTracks().forEach(k=>{
+      if(k.d<lim&&!k.alerted){k.alerted=true;beep();say('Сигнал: '+k.name+' ближче '+fs(lim)+' ('+fs(k.d)+')')}
+      else if(k.d>lim*1.25)k.alerted=false;
+    });
+  }
+}
+function regions(){
+  const vw=V.videoWidth,vh=V.videoHeight;
+  if(srange!=='2')return[[0,0,vw,vh]];
+  const w=Math.round(vw*.6),h=Math.round(vh*.6);
+  return[[0,0,vw,vh],[0,0,w,h],[vw-w,0,w,h],[0,vh-h,w,h],[vw-w,vh-h,w,h]];
+}
+async function detectStep(){
+  if(det||!model||mode!=='scan'||frozen||locked||V.readyState<2||!V.videoWidth)return;
+  const now=performance.now();
+  if(posMode&&now-lastDet<700)return;
+  lastDet=now;
+  det=true;
+  try{
+    const vw=V.videoWidth,vh=V.videoHeight,rs=regions(),r=rs[regIdx%rs.length];regIdx++;
+    let inp=V,sx=0,sy=0,k=1;
+    if(r[2]<vw||r[3]<vh){
+      const cw=Math.min(r[2],960),ch=Math.round(r[3]*cw/r[2]);
+      oc.width=cw;oc.height=ch;octx.drawImage(V,r[0],r[1],r[2],r[3],0,0,cw,ch);
+      inp=oc;sx=r[0];sy=r[1];k=r[2]/cw;
+    }
+    let out=await model.detect(inp,30,sconf/100);
+    out.forEach(o=>{o.bbox=[o.bbox[0]*k+sx,o.bbox[1]*k+sy,o.bbox[2]*k,o.bbox[3]*k]});
+    const nAll=out.length;
+    const m=4*k;
+    out=out.filter(o=>{
+      const x1=o.bbox[0],y1=o.bbox[1],x2=x1+o.bbox[2],y2=y1+o.bbox[3];
+      if(sx>0&&x1<=sx+m)return false;
+      if(sx+r[2]<vw&&x2>=sx+r[2]-m)return false;
+      if(sy>0&&y1<=sy+m)return false;
+      if(sy+r[3]<vh&&y2>=sy+r[3]-m)return false;
+      return o.bbox[3]>=12;
+    });
+    const t=performance.now();
+    updateTracks(out,t);
+    fpsT.push(t);if(fpsT.length>10)fpsT.shift();
+    scanStat={fps:fpsT.length>1?(fpsT.length-1)/((t-fpsT[0])/1000):0,all:nAll,sup:out.filter(o=>CLS[o.class]).length};
+  }catch(e){}
+  det=false;
+}
+function visTracks(){
+  const t=(frozen&&mode==='scan')?frozenT:performance.now(),f=$('#scf').value,win=srange==='2'?2500:900;
+  return trk.filter(k=>t-k.seen<win&&(k.hits>=2||k.score>=.6)&&(f==='all'||k.moving)).sort((a,b)=>a.d-b.d);
+}
+function beep(){
+  if(posMode)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.frequency.value=880;o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(.2,actx.currentTime);o.start();o.stop(actx.currentTime+.18);
+  }catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}
+}
+$('#alOn').onchange=e=>{if(e.target.checked){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(_){}}};
+function brg(k){
+  const f=geo().f;
+  return (headAbs+Math.atan(((k.box[0]+k.box[2]/2)-(V.videoWidth||1280)/2)/f)/R+360)%360;
+}
+const dtxt=k=>(k.cut?'≤ ':'')+fs(k.d);
+function rowHtml(k){
+  const wm=k.H*k.box[2]/k.box[3];
+  const state=!k.ready?'аналізую':k.moving?(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год'):'нерухомий';
+  const az=headAbs!=null?' · аз. '+Math.round(brg(k))+'°':'';
+  return '<div class="sr"><span class="dot'+(k.moving?'':' st')+'"></span><span class="sn">'+esc(k.name)+'<small>≈ в '+ef(k.H)+' × ш '+ef(wm)+' · '+state+az+'</small></span><b>'+dtxt(k)+'</b></div>';
+}
+function renderList(now){
+  if(now-lastList<250)return;
+  lastList=now;
+  const v=visTracks(),mv=v.filter(k=>k.moving).length;
+  $('#scl').innerHTML=(v.length?'<small style="margin:0 0 4px">Рухомих: '+mv+' · інших: '+(v.length-mv)+'</small>':'')+v.slice(0,8).map(rowHtml).join('')+(v.length>8?'<small>…і ще '+(v.length-8)+'</small>':'');
+  $('#scs').textContent=model?('Модель: '+(smodel==='mobilenet_v2'?'точна':'легка')+' · '+scanStat.fps.toFixed(1)+' кадр/с · у кадрі знайдено: '+scanStat.all+' (підтримуваних: '+scanStat.sup+')'):(scanMsg||'');
+}
+function drawOv(){
+  const c=$('#ov'),r=stage.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  const W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
+  if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+  const x=c.getContext('2d');
+  x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);
+  if(mode!=='scan')return;
+  const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720;
+  const ox=(r.width-vw*g.s)/2,oy=(r.height-vh*g.s)/2;
+  x.font='600 13px system-ui,sans-serif';x.textBaseline='middle';
+  visTracks().forEach(k=>{
+    const X=k.box[0]*g.s+ox,Y=k.box[1]*g.s+oy,Wd=k.box[2]*g.s,Ht=k.box[3]*g.s;
+    const col=k.moving?'#ffb21e':'#8fa3a0',L=Math.max(4,Math.min(14,Wd/3,Ht/3));
+    x.strokeStyle=col;x.lineWidth=k.moving?2:1.5;
+    if(k.moving){
+      x.beginPath();
+      x.moveTo(X,Y+L);x.lineTo(X,Y);x.lineTo(X+L,Y);
+      x.moveTo(X+Wd-L,Y);x.lineTo(X+Wd,Y);x.lineTo(X+Wd,Y+L);
+      x.moveTo(X+Wd,Y+Ht-L);x.lineTo(X+Wd,Y+Ht);x.lineTo(X+Wd-L,Y+Ht);
+      x.moveTo(X+L,Y+Ht);x.lineTo(X,Y+Ht);x.lineTo(X,Y+Ht-L);
+      x.stroke();
+    }else{x.setLineDash([5,4]);x.strokeRect(X,Y,Wd,Ht);x.setLineDash([])}
+    const lab=k.name+' · '+dtxt(k),tw=x.measureText(lab).width+10,ly=Math.max(0,Y-20);
+    x.fillStyle=col;x.fillRect(X,ly,tw,18);
+    x.fillStyle='#0c171b';x.fillText(lab,X+5,ly+9);
+    if(k.moving){x.fillStyle=col;x.fillText(k.dirTxt+' · '+(k.v*3.6).toFixed(0)+' км/год',X,Math.min(r.height-8,Y+Ht+11))}
+  });
+}
 
-        // Render library list in modal
-        function renderLibraryList() {
-            const listEl = document.getElementById('libraryList');
-            if (trainedObjects.length === 0) {
-                listEl.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">База навчених об'єктів порожня.<br>Тапніть по об'єкту на камері, щоб додати перший.</div>`;
-                return;
-            }
+/* ---------- відображення ---------- */
+function view(){
+  if(mode==='scan'){
+    const v=visTracks();
+    if(!v.length)return{warn:scanMsg||(model?'Шукаю об\'єкти… наведи камеру на людей чи авто':'')};
+    const n=v[0];
+    return{d:n.d,err:n.d*.2,sub:n.name+(!n.ready?' · аналізую':n.moving?' · '+n.dirTxt:' · нерухомий'),warn:shake?'Тримай телефон нерухомо — рух камери заважає':''};
+  }
+  if(mode==='pts'){
+    const g=geo();lvl(tElev(g));
+    if(eRaw==null)return{warn:'Чекаю дані датчиків…'};
+    const P=groundPt(eRaw-bias,hrel||0,g);
+    if(!P)return{warn:'Опусти хрестик на землю (нижче горизонту)'};
+    const o=ptsInfo();
+    if(o.seg!=null)return{d:o.seg,err:o.err,sub:'P'+(o.n-1)+'→P'+o.n};
+    return{d:Math.hypot(P.x,P.y),sub:'до цілі',warn:o.n?'Додай ще точку':''};
+  }
+  const raw=compute();
+  if(mode==='height'){
+    lvl(raw.t);
+    if(raw.t!=null){eBuf.push(raw.t);if(eBuf.length>15)eBuf.shift()}
+    if(raw.warn)return raw;
+    if(hs.e1==null)return{warn:'Наведи хрестик на низ і натисни «Низ»'};
+    if(hs.e2==null)return{warn:'Тепер наведи на верх і натисни «Верх»',res:'Низ: '+hs.e1.toFixed(1)+'°'};
+    const m=parseFloat($('#hd').value);
+    const D=m>0?m:(hs.e1<-1.2?camH/Math.tan(-hs.e1*R):null);
+    if(!D)return{warn:'Низ вище горизонту — впиши відстань вручну'};
+    const a1=hs.e1*R,a2=hs.e2*R;
+    return{d:D*(Math.tan(a2)-Math.tan(a1)),err:D*.0087*Math.hypot(1/Math.cos(a1)**2,1/Math.cos(a2)**2),sub:'відстань '+fs(D),res:'Низ '+hs.e1.toFixed(1)+'° · Верх '+hs.e2.toFixed(1)+'°'};
+  }
+  if(mode==='ground'){
+    lvl(raw.t);
+    if(raw.d==null){ema=null;return raw}
+    buf.push(raw.d);if(buf.length>25)buf.shift();
+    ema=ema==null?raw.d:ema+(raw.d-ema)*.2;
+    lastDist=ema;
+    if(frozen&&frozenVal)return frozenVal;
+    return{d:ema,err:raw.err,sub:'по лінії '+fs(raw.L),raw:raw.d};
+  }
+  if(raw.d==null)return raw;
+  if(mode==='size')lastDist=raw.d;
+  return{d:raw.d,err:raw.err,sub:raw.sub,raw:raw.d};
+}
+function loop(now){
+  if(!locked){
+    const o=view();lastO=o;
+    if(o.d!=null&&isFinite(o.d)){
+      const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
+      $('#sub').textContent=[o.err!=null?'±'+ef(o.err):'',o.sub||''].filter(Boolean).join(' · ');
+    }else{$('#num').textContent='—';$('#sub').textContent=''}
+    $('#warn').textContent=o.warn||'';
+    if(o.res!==undefined)say(o.res);
+    if(ser&&o.raw!=null&&now-ser.t>130){
+      ser.a.push(o.raw);ser.t=now;$('#ser').textContent='Серія '+ser.a.length+'/10';
+      if(ser.a.length>=10)endSeries();
+    }
+    detectStep();drawOv();compass();
+    if(mode==='scan')renderList(now);
+  }
+  requestAnimationFrame(loop);
+}
+function endSeries(){
+  const a=ser.a;ser=null;$('#ser').textContent='Серія ×10';
+  const m=med(a),mad=med(a.map(x=>Math.abs(x-m)))*1.4826;
+  const k=mad>0?a.filter(x=>Math.abs(x-m)<=2.5*mad):a;
+  const mean=k.reduce((s,x)=>s+x,0)/k.length;
+  const sd=Math.sqrt(k.reduce((s,x)=>s+(x-mean)**2,0)/Math.max(1,k.length-1));
+  say('Серія: '+fs(mean)+' ± '+ef(sd)+' (використано '+k.length+' з '+a.length+')');
+}
+$('#ser').onclick=()=>{
+  if(ser){ser=null;$('#ser').textContent='Серія ×10';return}
+  ser={a:[],t:0};say('Тримай телефон нерухомо…');
+};
 
-            listEl.innerHTML = trainedObjects.map((obj, index) => `
-                py-3 flex items-center justify-between text-xs
-                <div class="py-2.5 flex items-center justify-between">
-                    <div>
-                        <h4 class="font-bold text-white">${obj.name}</h4>
-                        <p class="text-[11px] text-slate-400">Висота: ${obj.height}см | Ширина: ${obj.width}см | Точок: ${obj.keypointsCount}</p>
-                    </div>
-                    <button onclick="deleteTrainedObject('${obj.id}')" class="text-rose-400 hover:text-rose-300 p-2">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
+/* ---------- інтерфейс ---------- */
+function render(){
+  stage.className=vert?'v':'h';
+  const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height'||mode==='pts';
+  [$('#m1'),$('#m2')].forEach((m,i)=>{m.style[vert?'top':'left']=p[i]*100+'%';m.style[vert?'left':'top']='';m.style.display=mk?'block':'none'});
+  cross.style.display=cr?'block':'none';
+  cross.style.left=tgt.x*100+'%';cross.style.top=tgt.y*100+'%';
+}
+document.querySelectorAll('.mk i').forEach((h,i)=>{
+  h.addEventListener('pointerdown',e=>{h.setPointerCapture(e.pointerId);e.preventDefault()});
+  h.addEventListener('pointermove',e=>{
+    if(!h.hasPointerCapture(e.pointerId))return;
+    const r=stage.getBoundingClientRect(),z=zone();
+    p[i]=clamp(vert?(e.clientY-r.top)/r.height:(e.clientX-r.left)/r.width,z.min,z.max);render();
+  });
+});
+stage.addEventListener('pointerdown',e=>{
+  if(mode!=='ground'&&mode!=='height'&&mode!=='pts')return;
+  const r=stage.getBoundingClientRect();
+  tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];eBuf=[];render();
+});
+$('#col').onclick=()=>{
+  const m=sheet.classList.toggle('min');
+  $('#col').textContent=m?'⌃':'⌄';
+  $('#col').setAttribute('aria-label',m?'Розгорнути панель':'Згорнути панель');
+};
+const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],scan:['p-scan']};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.m;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
+  document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!PN[mode].includes(x.id)));
+  $('#lvl').classList.toggle('hide',mode!=='ground'&&mode!=='height'&&mode!=='pts');
+  $('#bt2').classList.toggle('hide',mode!=='size'&&mode!=='ground'&&mode!=='dim');
+  ema=null;buf=[];eBuf=[];ser=null;$('#ser').textContent='Серія ×10';
+  frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';say('');
+  if(mode==='ground'||mode==='height'||mode==='pts')askSensor();
+  if(mode==='pts')refreshPts();
+  if(mode==='scan'){trk=[];fpsT=[];ensureModel()}
+  layout();
+});
+document.querySelectorAll('.ori').forEach(b=>b.onclick=()=>{
+  vert=!vert;
+  document.querySelectorAll('.ori').forEach(x=>x.textContent=vert?'Міряю висоту ↕':'Міряю ширину ↔');
+  resetMarkers();render();
+});
+$('#sz').oninput=e=>{
+  const v=parseFloat(e.target.value);
+  if(v>0){objSize=v;objName='Свій розмір';store.set('sz',v);store.set('sn',objName);$('#pick').textContent='📚 Свій розмір'}
+};
+$('#hh').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){camH=v;store.set('h',v);ema=null;buf=[]}};
+$('#fromG').onclick=()=>{
+  if(lastDist==null)return say('Спочатку виміряй відстань у режимі «Земля» або «Об\'єкт»');
+  $('#dd').value=lastDist.toFixed(2);say('Відстань взято: '+fs(lastDist));
+};
+$('#cal').onclick=()=>{
+  const d=parseFloat($('#cd').value);
+  if(!(d>0))return say('Введи справжню відстань до об\'єкта, м');
+  const g=geo(),len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
+  if(span<4)return say('Спочатку постав маркери на об\'єкт');
+  const vw=V.videoWidth||1280,vh=V.videoHeight||720;
+  const k=d*span/(objSize*Math.max(vw,vh)*zoom);
+  if(k<.3||k>1.6)return say('Дивні дані — перевір розмір об\'єкта й відстань');
+  const all=store.get('Kp',{}),a=all[camKey]||[];a.push(k);all[camKey]=a.slice(-7);store.set('Kp',all);
+  kinfo();markDirty();say('Відкалібровано ✓ (точок: '+all[camKey].length+')');
+};
+$('#kreset').onclick=()=>{const all=store.get('Kp',{});delete all[camKey];store.set('Kp',all);kinfo();say('Калібрування цієї камери скинуто')};
+$('#frz').onclick=()=>{
+  frozen=!frozen;
+  if(frozen){frozenT=performance.now();if(mode==='ground'&&lastO&&lastO.d!=null)frozenVal=lastO;V.pause()}
+  else{frozenVal=null;ema=null;buf=[];V.play()}
+  $('#frz').textContent=frozen?'Продовжити':'Стоп-кадр';
+};
+$('#lo').onclick=()=>{if(eBuf.length<3)return say('Немає даних нахилу');hs={e1:med(eBuf),e2:null};say('Низ: '+hs.e1.toFixed(1)+'°')};
+$('#hi').onclick=()=>{
+  if(hs.e1==null)return say('Спочатку натисни «Низ»');
+  if(eBuf.length<3)return say('Немає даних нахилу');
+  hs.e2=med(eBuf);
+};
+$('#hr').onclick=()=>{hs={e1:null,e2:null};say('')};
+$('#sa').onclick=()=>{
+  if(lastDist==null||(mode!=='ground'&&mode!=='size'))return say('Швидкість міряється в режимах «Об\'єкт» і «Земля»');
+  spd={d:lastDist,t:performance.now()};say('A: '+fs(lastDist)+'. Через кілька секунд натисни B');
+};
+$('#sb').onclick=()=>{
+  if(!spd||lastDist==null)return say('Спочатку натисни «Швидкість A»');
+  const dt=(performance.now()-spd.t)/1000,dd=Math.abs(lastDist-spd.d);
+  if(dt<.5)return say('Зачекай трохи між A і B');
+  const v=dd/dt;
+  say('Швидкість (радіальна): '+(v*3.6).toFixed(1)+' км/год · '+v.toFixed(1)+' м/с'+(unit!=='m'?' · '+(v*2.23694).toFixed(1)+' миль/год':'')+' · Δ '+fs(dd)+' за '+dt.toFixed(1)+' с');
+  spd=null;
+};
+$('#unitSel').onchange=e=>{unit=e.target.value;store.set('u',unit);if(mode==='pts')refreshPts()};
+$('#scm').onchange=e=>{smodel=e.target.value;store.set('sm',smodel);trk=[];fpsT=[];if(mode==='scan')ensureModel()};
+$('#scr').onchange=e=>{srange=e.target.value;store.set('sr',srange);trk=[];regIdx=0;fpsT=[]};
+$('#scc').oninput=e=>{sconf=+e.target.value;store.set('sc',sconf);$('#scv').textContent=sconf+'%'};
 
-        function deleteTrainedObject(id) {
-            const index = trainedObjects.findIndex(o => o.id === id);
-            if (index !== -1) {
-                if (trainedObjects[index].descriptors) {
-                    trainedObjects[index].descriptors.delete();
-                }
-                trainedObjects.splice(index, 1);
-                saveStorage();
-                renderLibraryList();
-            }
-        }
+/* ---------- налаштування, інструкція, режим «Позиція» ---------- */
+function openSet(){
+  const c=jbCfg()||{};
+  $('#jbId').value=c.id||'';$('#jbKey').value=c.key||'';$('#jbKt').value=c.kt||'access';$('#jbAuto').checked=!!c.auto;
+  $('#lkm').value=store.get('lkm','exit');
+  updSec();updBadge();
+  $('#set').classList.remove('hide');
+}
+$('#setB').onclick=openSet;
+$('#setX').onclick=()=>$('#set').classList.add('hide');
+$('#manB').onclick=()=>$('#man').classList.remove('hide');
+$('#manX').onclick=()=>$('#man').classList.add('hide');
+$('#posB').onclick=()=>setPos(!posMode);
+$('#posC').onchange=e=>setPos(e.target.checked);
 
-        function clearLibrary() {
-            if (confirm('Ви впевнені, що хочете очистити всю базу об\'єктів?')) {
-                trainedObjects.forEach(obj => {
-                    if (obj.descriptors) obj.descriptors.delete();
-                });
-                trainedObjects = [];
-                saveStorage();
-                renderLibraryList();
-            }
-        }
-    </script>
+function saveJb(){
+  store.set('jb',{id:$('#jbId').value.trim(),key:$('#jbKey').value.trim(),kt:$('#jbKt').value,auto:$('#jbAuto').checked});
+  scheduleSync();
+}
+['#jbId','#jbKey'].forEach(s=>$(s).oninput=saveJb);
+['#jbKt','#jbAuto'].forEach(s=>$(s).onchange=saveJb);
+$('#jbNow').onclick=()=>{saveJb();syncNow(true)};
+
+/* ---------- резервна копія ---------- */
+const bk=t=>{$('#bkS').textContent=t};
+function dl(name,text){
+  const b=new Blob([text],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+}
+$('#exJ').onclick=()=>{
+  const d=new Date(),s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  dl('dalnomir-'+s+'.json',JSON.stringify(snapshot(),null,1));
+  bk('Файл збережено (перевір папку «Завантаження»). Об\'єктів у «Мої»: '+myLive().length);
+};
+$('#exC').onclick=async()=>{
+  try{await navigator.clipboard.writeText(JSON.stringify(snapshot()));bk('JSON скопійовано в буфер обміну')}
+  catch(e){bk('Не вдалося скопіювати. Скористайся експортом у файл')}
+};
+$('#imJ').onclick=()=>{suppress=Date.now()+90000;$('#imF').click()};
+$('#imF').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';suppress=Date.now()+5000;
+  if(!f)return;
+  try{
+    if(f.size>1000000)throw new Error('файл завеликий');
+    const o=JSON.parse(await f.text());
+    if(!o||o.app!=='Дальномір')throw new Error('це не файл Дальноміра');
+    if(!confirm('Об\'єднати дані з файлу з поточними? Нічого не буде видалено.'))return;
+    const n=mergeData(o,true);
+    markDirty();kinfo();bk('Імпортовано записів: '+n);
+  }catch(err){bk('Помилка імпорту: '+err.message)}
+};
+
+/* ---------- PIN і відбиток пальця ---------- */
+const enc=new TextEncoder();
+const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a)));
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function hashPin(pin,saltB64,iter){
+  const key=await crypto.subtle.importKey('raw',enc.encode(pin),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:unb64(saltB64),iterations:iter,hash:'SHA-256'},key,256);
+  return b64(bits);
+}
+async function setPin(pin){
+  const s=b64(crypto.getRandomValues(new Uint8Array(16))),i=150000;
+  store.set('pin',{s,i,l:pin.length,h:await hashPin(pin,s,i)});
+}
+async function verifyPin(pin){
+  const r=store.get('pin',null);
+  if(!r||!/^\d{4,8}$/.test(pin||''))return false;
+  try{return (await hashPin(pin,r.s,r.i))===r.h}catch(e){return false}
+}
+const secM=t=>{$('#secM').textContent=t};
+function updSec(){
+  const has=!!store.get('pin',null),bio=!!store.get('bio',null);
+  $('#secS').textContent=has?('Захист увімкнено: PIN'+(bio?' + відбиток':'')):'Захист вимкнено';
+  $('#r0').classList.toggle('hide',!has);
+  $('#pinSet').textContent=has?'Змінити PIN':'Встановити PIN';
+  $('#pinOff').classList.toggle('hide',!has);
+  $('#bioRow').classList.toggle('hide',!has||!window.PublicKeyCredential);
+  $('#bioReg').classList.toggle('hide',bio);
+  $('#bioOff').classList.toggle('hide',!bio);
+  $('#lkRow').classList.toggle('hide',!has);
+  $('#pn1').placeholder=has?'Новий PIN (4–8 цифр)':'PIN (4–8 цифр)';
+}
+$('#pinSet').onclick=async()=>{
+  const a=$('#pn1').value.trim(),b=$('#pn2').value.trim(),cur=$('#pn0').value.trim(),has=!!store.get('pin',null);
+  if(!/^\d{4,8}$/.test(a))return secM('PIN має містити 4–8 цифр');
+  if(a!==b)return secM('PIN не збігаються');
+  if(has&&!(await verifyPin(cur)))return secM('Поточний PIN невірний');
+  await setPin(a);
+  ['#pn0','#pn1','#pn2'].forEach(s=>$(s).value='');
+  secM(has?'PIN змінено ✓':'PIN встановлено ✓');updSec();
+};
+$('#pinOff').onclick=async()=>{
+  const cur=$('#pn0').value.trim();
+  if(!(await verifyPin(cur)))return secM('Для вимкнення впиши поточний PIN');
+  store.set('pin',null);store.set('bio',null);store.set('fail',{n:0,until:0});
+  ['#pn0','#pn1','#pn2'].forEach(s=>$(s).value='');
+  secM('Захист вимкнено');updSec();
+};
+$('#lkm').onchange=e=>store.set('lkm',e.target.value);
+$('#bioReg').onclick=async()=>{
+  try{
+    suppress=Date.now()+90000;
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'Дальномір'},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'user',displayName:'Користувач'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},
+      timeout:60000,attestation:'none'}});
+    store.set('bio',{id:b64(cred.rawId)});secM('Відбиток додано ✓');updSec();
+  }catch(e){secM('Не вдалося додати відбиток. Потрібен https і налаштований відбиток чи обличчя в телефоні.')}
+  suppress=Date.now()+3000;
+};
+$('#bioOff').onclick=()=>{store.set('bio',null);secM('Відбиток прибрано');updSec()};
+
+/* ---------- екран блокування ---------- */
+function renderDots(){
+  const l=(store.get('pin',null)||{l:4}).l;
+  $('#dots').innerHTML=Array.from({length:l},(_,i)=>'<i class="'+(i<entered.length?'f':'')+'"></i>').join('');
+}
+function buildPad(){
+  const ks=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  $('#pad').innerHTML=ks.map(k=>k===''?'<span></span>':'<button data-k="'+k+'" aria-label="'+(k==='⌫'?'Стерти':k)+'">'+k+'</button>').join('');
+}
+function cooldown(){
+  const f=store.get('fail',{n:0,until:0}),left=Math.ceil((f.until-Date.now())/1000);
+  return left>0?left:0;
+}
+function showCd(){
+  clearInterval(cdT);
+  const tick=()=>{
+    const s=cooldown();
+    if(s>0){$('#lkMsg').textContent='Забагато спроб. Зачекай '+s+' с'}
+    else{clearInterval(cdT);$('#lkMsg').textContent='Введи PIN'}
+  };
+  tick();cdT=setInterval(tick,1000);
+}
+function lockApp(){
+  if(!store.get('pin',null))return;
+  locked=true;entered='';
+  $('#set').classList.add('hide');$('#man').classList.add('hide');closeDB();
+  $('#lock').classList.remove('hide');
+  $('#bioBtn').classList.toggle('hide',!(store.get('bio',null)&&window.PublicKeyCredential));
+  renderDots();
+  stopCam();
+  if(cooldown()>0)showCd();else $('#lkMsg').textContent='Введи PIN';
+  if(store.get('bio',null)&&cooldown()===0)setTimeout(bioLogin,350);
+}
+function unlockApp(){
+  locked=false;entered='';clearInterval(cdT);
+  $('#lock').classList.add('hide');
+  startCam();afterUnlock();
+}
+function afterUnlock(){
+  updBadge();
+  if(autoOn()&&navigator.onLine&&!posMode)syncNow(false);
+}
+async function bioLogin(){
+  const b=store.get('bio',null);
+  if(!b||!window.PublicKeyCredential||!locked)return;
+  try{
+    suppress=Date.now()+90000;
+    await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{type:'public-key',id:unb64(b.id)}],
+      userVerification:'required',timeout:60000}});
+    suppress=Date.now()+3000;
+    unlockApp();
+  }catch(e){suppress=Date.now()+3000;if(locked)$('#lkMsg').textContent='Відбиток не підтверджено. Введи PIN.'}
+}
+$('#bioBtn').onclick=bioLogin;
+$('#pad').onclick=async e=>{
+  const b=e.target.closest('[data-k]');if(!b||!locked)return;
+  if(cooldown()>0)return showCd();
+  const k=b.dataset.k,r=store.get('pin',null);if(!r)return unlockApp();
+  if(k==='⌫'){entered=entered.slice(0,-1);renderDots();return}
+  if(entered.length>=r.l)return;
+  entered+=k;renderDots();
+  if(entered.length===r.l){
+    const ok=await verifyPin(entered);
+    if(ok){store.set('fail',{n:0,until:0});unlockApp();return}
+    const f=store.get('fail',{n:0,until:0});f.n=(f.n||0)+1;
+    if(f.n%5===0)f.until=Date.now()+30000*Math.pow(2,f.n/5-1);
+    store.set('fail',f);
+    entered='';renderDots();
+    if(cooldown()>0)showCd();else $('#lkMsg').textContent='Невірний PIN. Спроб до паузи: '+(5-(f.n%5));
+  }
+};
+document.addEventListener('visibilitychange',()=>{
+  if(!store.get('pin',null)||locked)return;
+  const m=store.get('lkm','exit');
+  if(document.hidden){
+    hiddenAt=Date.now();
+    if(m==='exit'&&Date.now()>suppress)lockApp();
+  }else{
+    if(m!=='never'&&m!=='exit'&&hiddenAt&&Date.now()>suppress&&Date.now()-hiddenAt>(+m)*60000)lockApp();
+    else if(!V.srcObject||!V.srcObject.active)startCam();
+  }
+});
+
+/* ---------- запуск ---------- */
+$('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;$('#pick').textContent='📚 '+objName;
+$('#scm').value=smodel;$('#scr').value=srange;$('#scc').value=sconf;$('#scv').textContent=sconf+'%';
+buildPad();updBadge();
+layout();listenOri();requestAnimationFrame(loop);
+if(store.get('pin',null))lockApp();else{startCam();afterUnlock()}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script>
 </body>
-</html>
-```
+    </html>
