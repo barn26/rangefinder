@@ -164,6 +164,8 @@ details.mn[open] summary{color:var(--amb)}
     <div id="p-tilt" class="pn hide">
       <div class="row"><label>Висота камери над землею, м</label><input id="hh" type="number" step="0.01" min="0.1" inputmode="decimal"><button id="zero">Обнулити нахил</button></div>
       <small>Обнулення: поклади телефон екраном вгору на рівну поверхню і натисни кнопку. Роби це раз після встановлення.</small>
+      <div class="row"><button id="hAuto">📏 Визначити висоту камери (A4 на землі)</button></div>
+      <small>Поклади білий аркуш A4 на землю на темний фон, тримай телефон так, як будеш міряти, і наведи камеру майже прямо вниз на аркуш (не менше 75° нижче горизонту, аркуш має займати 20–70% кадру). Висота запишеться в поле вище. Камеру краще відкалібрувати заздалегідь.</small>
       <button id="sens" class="pri hide" style="width:100%;margin-top:8px">Дозволити датчики</button>
     </div>
 
@@ -323,7 +325,7 @@ details.mn[open] summary{color:var(--amb)}
 </ul></details>
 
 <details class="mn"><summary>3. Підготовка (один раз)</summary>
-<p><b>3.1. Висота камери.</b> Виміряй від землі до об'єктива, коли тримаєш телефон так, як будеш міряти. Вкладка «Земля» (або «Висота», «Точки»): впиши значення в метрах у «Висота камери над землею».</p>
+<p><b>3.1. Висота камери.</b> Виміряй від землі до об'єктива, коли тримаєш телефон так, як будеш міряти. Вкладка «Земля» (або «Висота», «Точки»): впиши значення в метрах у «Висота камери над землею». <b>Автоматично:</b> поклади білий аркуш A4 на землю на темний фон, наведи камеру майже прямо вниз на аркуш (не менше 75° нижче горизонту, аркуш займає 20–70% кадру) і натисни «📏 Визначити висоту камери». Програма за розміром аркуша порахує висоту й впише її в поле. Камеру краще відкалібрувати заздалегідь.</p>
 <p><b>3.2. Обнулення нахилу.</b></p>
 <ol>
 <li>Поклади телефон екраном вгору на рівну поверхню (стіл).</li>
@@ -2065,6 +2067,29 @@ $('#a4cal').onclick=()=>{
   kinfo();markDirty();say('A4 знайдено, відкалібровано ✓ (K='+k.toFixed(3)+', точок: '+all[camKey].length+')');
 };
 
+/* автовизначення висоти камери: аркуш A4 на землі під камерою */
+$('#hAuto').onclick=()=>{
+  if(!V.videoWidth)return say('Камера ще не готова');
+  if(eRaw==null)return say('Немає даних датчика нахилу. Дозволь датчики');
+  const dep0=-(eRaw-bias);
+  if(dep0<75)return say('Наведи камеру майже прямо вниз: зараз '+dep0.toFixed(0)+'° нижче горизонту, потрібно не менше 75°');
+  const r=detectA4();
+  if(!r)return say('Не знайшов аркуш A4. Поклади білий аркуш на землю на темний фон під камеру, щоб він займав 20–70% кадру');
+  if(r.err)return say(r.err);
+  const g=geo(),vw=V.videoWidth,vh=V.videoHeight;
+  const realX=r.w>=r.h?0.297:0.210;
+  const span=Math.abs(uax(r.x+r.w-vw/2,g)-uax(r.x-vw/2,g));
+  if(span<20)return say('Аркуш занадто малий у кадрі: піднеси камеру нижче або візьми більший предмет');
+  const Z=realX*g.f/span;
+  const v=((r.y+r.h/2)-vh/2)/g.f;
+  const hgt=Z*(Math.sin(dep0*R)+v*Math.cos(dep0*R));
+  a4box={x:r.x,y:r.y,w:r.w,h:r.h,t:performance.now()};
+  if(!(hgt>.2&&hgt<3.5))return say('Дивний результат ('+hgt.toFixed(2)+' м): перевір, що аркуш лежить на землі, а камеру наведено вниз');
+  const rel=Math.hypot(1.5*(vw/320)/r.w,kpts().length?.03:.1),err=hgt*rel;
+  camH=+hgt.toFixed(2);$('#hh').value=camH;store.set('h',camH);ema=null;buf=[];
+  say('Висота камери: '+camH.toFixed(2)+' м (±'+err.toFixed(2)+') ✓ Записано в поле.'+(kpts().length?'':' Камера не відкалібрована, похибка може сягати 10%.'));
+};
+
 /* нахиломір */
 const iMed=()=>{const a=iBuf.slice(-12);return a.length<4?null:{b:med(a.map(o=>o.b)),g:med(a.map(o=>o.g))}};
 function slopeTxt(a){
@@ -2145,4 +2170,4 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 })();
 </script>
 </body>
-</html>
+</html>  
