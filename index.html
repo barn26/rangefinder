@@ -30,7 +30,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 #cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
 #cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
 #top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:4px}
-.tab{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:12px;font-weight:600}
+.tab{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:11px;font-weight:600}
 .tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
 #cmp{position:absolute;left:10px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;pointer-events:none}
 #cmp b{font-weight:600;font-variant-numeric:tabular-nums}
@@ -38,6 +38,8 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 #tr{position:absolute;right:8px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;gap:6px}
 .tb{padding:5px 10px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;font-weight:600;line-height:1.3}
 .tb.on{border-color:var(--red);color:var(--red)}
+.tb.lit{border-color:var(--amb);color:var(--amb)}
+#iout{white-space:pre-line}
 #sheet{position:absolute;left:0;right:0;bottom:0;max-height:50vh;overflow-y:auto;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 14px calc(8px + env(safe-area-inset-bottom,0px));border-radius:18px 18px 0 0}
 #sheet.min #ctl{display:none}
 #read{display:flex;align-items:baseline;gap:10px}
@@ -124,6 +126,7 @@ details.mn[open] summary{color:var(--amb)}
   <button class="tab" data-m="height" title="Висота за кутами">Висота</button>
   <button class="tab" data-m="dim" title="Розмір об'єкта">Розмір</button>
   <button class="tab" data-m="pts" title="Точки й площа">Точки</button>
+  <button class="tab" data-m="incl" title="Нахиломір">Кут</button>
   <button class="tab" data-m="scan" title="Сканер">Сканер</button>
 </div>
 <div id="cmp" aria-label="Компас">
@@ -131,6 +134,7 @@ details.mn[open] summary{color:var(--amb)}
   <b id="az">—</b><span id="card"></span>
 </div>
 <div id="tr">
+  <button id="torchB" class="tb hide" aria-label="Ліхтарик">🔦</button>
   <button id="posB" class="tb">Позиція: вимк.</button>
   <button id="setB" class="tb" aria-label="Налаштування">⚙</button>
   <button id="manB" class="tb" aria-label="Інструкція">📖</button>
@@ -146,6 +150,7 @@ details.mn[open] summary{color:var(--amb)}
         <input id="cd" type="number" step="0.1" min="0.3" inputmode="decimal" placeholder="Справжня відстань, м" style="flex:1.4;width:auto">
         <button id="cal">Калібрувати</button>
       </div>
+      <div class="row"><button id="a4cal" class="pri">📄 Автокалібрування по аркушу A4</button></div>
       <small id="kinfo"></small>
       <small>Постав маркери на краї об'єкта. Калібруй на кількох відстанях, точність зросте.</small>
     </div>
@@ -177,6 +182,23 @@ details.mn[open] summary{color:var(--amb)}
       <div class="row"><button id="addP" class="pri">＋ Точка</button><button id="delP">Видалити останню</button><button id="clrP">Очистити</button></div>
       <div id="plan"></div>
       <small>Стій на місці й лише повертайся. Наведи хрестик на землю в першій точці й натисни «＋ Точка», потім у наступній. Торкнись екрана, щоб перемістити хрестик. Щоб площа порахувалась правильно, точки мають іти по колу. Земля має бути рівною.</small>
+    </div>
+
+    <div id="p-incl" class="pn hide">
+      <div class="row"><label>Режим</label><select id="imode"><option value="surf">Телефон на поверхні</option><option value="cam">Приціл камерою</option></select></div>
+      <div class="row">
+        <svg id="ivial" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Бульбашковий рівень" style="flex:0 0 96px">
+          <circle cx="48" cy="48" r="44" fill="none" stroke="#8fa3a0" stroke-width="1.5"/>
+          <circle cx="48" cy="48" r="10" fill="none" stroke="#8fa3a0" stroke-width="1"/>
+          <line x1="48" y1="4" x2="48" y2="92" stroke="#8fa3a0" stroke-opacity=".3"/>
+          <line x1="4" y1="48" x2="92" y2="48" stroke="#8fa3a0" stroke-opacity=".3"/>
+          <circle id="ibub" cx="48" cy="48" r="8" fill="#ffb21e"/>
+        </svg>
+        <div id="iout" style="flex:1;font-size:13px;line-height:1.5"></div>
+      </div>
+      <div class="row" id="irow"><button id="izero">Нуль тут</button><button id="ires">Скинути нуль</button></div>
+      <div class="row"><button id="ical">Калібрувати рівень (180°)</button></div>
+      <small id="ihint"></small>
     </div>
 
     <div id="p-scan" class="pn hide">
@@ -224,6 +246,10 @@ details.mn[open] summary{color:var(--amb)}
       <div class="row"><label>Камера</label><select id="cam"></select></div>
       <div class="row"><label>Одиниці</label><select id="unitSel"><option value="m">Метри</option><option value="ft">Фути</option><option value="yd">Ярди</option></select></div>
       <div class="row"><button id="kreset">Скинути калібрування цієї камери</button></div>
+      <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="wlC">Не гасити екран, поки програма відкрита</label></div>
+      <div class="row"><label style="display:flex;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" id="lvC">Показувати рівень (бульбашку) в кадрі</label></div>
+      <div class="row"><label>Корекція спотворення</label><select id="dsel"><option value="auto">Авто</option><option value="0">Вимк.</option><option value="1">Слабка</option><option value="2">Середня</option><option value="3">Сильна</option></select></div>
+      <small id="dinfo"></small>
       <small>Розміри, висоту камери й відстані вводь у метрах.</small>
     </div>
 
@@ -288,9 +314,10 @@ details.mn[open] summary{color:var(--amb)}
 
 <details class="mn"><summary>2. Екран програми</summary>
 <ul>
-<li><b>Вкладки зверху:</b> Об'єкт, Земля, Висота, Розмір, Точки, Сканер. Активна підсвічена жовтим.</li>
+<li><b>Вкладки зверху:</b> Об'єкт, Земля, Висота, Розмір, Точки, Кут, Сканер. Активна підсвічена жовтим.</li>
 <li><b>Компас</b> (зліва під вкладками): азимут у градусах і сторона світу, стрілка вказує на північ.</li>
-<li><b>Праворуч:</b> «Позиція» (режим), ⚙ налаштування, 📖 ця інструкція.</li>
+<li><b>Праворуч:</b> 🔦 ліхтарик (якщо камера його підтримує), «Позиція» (режим), ⚙ налаштування, 📖 ця інструкція.</li>
+<li><b>Рівень у кадрі:</b> «бульбашка» крену над нижньою панеллю (див. розділ 13).</li>
 <li><b>Нижня панель:</b> велике число — результат; праворуч ± похибка й підказка; кнопка ⌄ згортає панель (⌃ розгортає), щоб бачити більше кадру. Жовтий рядок — підказки й попередження, нижче — повідомлення.</li>
 <li><b>Підпис</b> із правами внизу панелі видно завжди.</li>
 </ul></details>
@@ -309,6 +336,14 @@ details.mn[open] summary{color:var(--amb)}
 <li>Постав жовтий і червоний маркери точно на краї об'єкта.</li>
 <li>Впиши відстань у «Справжня відстань, м» і натисни «Калібрувати».</li>
 <li>Повтори на 10 і 30 м. Програма бере середнє з точок.</li>
+</ol>
+<p><b>Швидкий спосіб: автокалібрування по аркушу A4.</b></p>
+<ol>
+<li>Поклади білий аркуш A4 на темний фон (стіл, підлога, темна дошка).</li>
+<li>Виміряй точну відстань від телефона до аркуша й впиши її в «Справжня відстань, м».</li>
+<li>Дивись на аркуш прямо: він має бути по центру кадру, рівно (сторони паралельні краям екрана), займати 20–70% висоти кадру й не торкатися країв.</li>
+<li>Натисни «📄 Автокалібрування по аркушу A4». З'явиться зелена рамка «A4 ✓», маркери стануть на краї аркуша, калібрування збережеться.</li>
+<li>Повтори на 2–3 відстанях. Якщо аркуш не знаходиться, програма скаже, що не так (фон, нахил, розмір).</li>
 </ol>
 <p class="n">Калібрування зберігається окремо для кожної камери (основна, ширококутна, теле) і для кожного зуму. Змінив зум чи камеру, відкалібруй знову.</p></details>
 
@@ -329,8 +364,9 @@ details.mn[open] summary{color:var(--amb)}
 <li>Торкнись екрана в точці, де ціль торкається землі (низ колеса, підошва, основа стовпа). Хрестик переміститься. Найточніше, коли точка біля центру екрана.</li>
 <li>Велике число — горизонтальна відстань. Поруч «по лінії» — відстань по прямій. Рядок над кнопками показує крен, кут і ухил. Якщо крен більше 3°, випрями телефон.</li>
 <li>«Стоп-кадр» фіксує значення (береться медіана останніх замірів).</li>
+<li><b>Ціль не на землі</b> (вікно, дах, верхівка дерева, дрон на відомій висоті): впиши її приблизну висоту над землею в поле «Висота цілі над землею, м» і наведи хрестик на саму ціль. Вона може бути вище горизонту, тоді хрестик треба підняти вище. Для цілей на землі залиш 0 (значення скидається на 0 при запуску).</li>
 </ol>
-<p class="n">Працює для цілей на рівній землі нижче горизонту (кут більше 1,2°). Далі приблизно 50 м похибка швидко росте.</p></details>
+<p class="n">Для цілі нижче камери кут має бути нижче горизонту більше ніж на 1,2°, для цілі вище камери кут над горизонтом теж більше 1,2°. Висота цілі має відрізнятися від висоти камери щонайменше на 0,3 м. Далі приблизно 50 м, а також при неточній висоті цілі, похибка швидко росте.</p></details>
 
 <details class="mn"><summary>6. Вкладка «Висота» (висота споруд і дерев)</summary>
 <ol>
@@ -357,7 +393,30 @@ details.mn[open] summary{color:var(--amb)}
 </ol>
 <p class="n">Для правильної площі точки мають іти по колу (по контуру ділянки). Земля має бути рівною. Усі точки беруться з однієї позиції, тож далекі точки менш точні.</p></details>
 
-<details class="mn"><summary>9. Вкладка «Сканер»</summary>
+<details class="mn"><summary>9. Вкладка «Кут» (нахиломір)</summary>
+<p><b>Що дає:</b> міряє кут нахилу в градусах, у відсотках, у вигляді 1:N і в мм на метр. Підходить для ухилу підлоги й стяжки, пандуса, даху, сходів, дороги, схилу, а також щоб перевірити, чи стоїть щось рівно.</p>
+<p><b>Режим «Телефон на поверхні»</b></p>
+<ol>
+<li>Вкладка «Кут», режим «Телефон на поверхні».</li>
+<li>Поклади телефон екраном вгору плашмя на поверхню (або приклади до рейки чи ребра довгим боком).</li>
+<li>Зачекай секунду. Велике число — кут нахилу. Під ним ухил у %, у вигляді 1:N і в мм/м. Праворуч від бульбашки — складові «уздовж» (зверху вниз по телефону) і «впоперек». Бульбашка в колі їде до високої сторони й стає зеленою, коли поверхня майже рівна.</li>
+<li>«Стоп-кадр» заморожує число.</li>
+</ol>
+<p><b>Відносний кут.</b> Поклади телефон на поверхню, яку береш за нуль (наприклад підлога), натисни «Нуль тут», потім поклади на другу (пандус). Число покаже кут відносно першої поверхні. «Скинути нуль» повертає абсолютні значення.</p>
+<p><b>Калібрування рівня (раз на кілька місяців).</b></p>
+<ol>
+<li>Поклади телефон на стійку площину, натисни «Калібрувати рівень (180°)».</li>
+<li>Поверни телефон на 180° на те саме місце й натисни кнопку ще раз.</li>
+<li>Програма виведе поправку датчика. Після цього точність близько 0,2–0,3°, без калібрування приблизно 0,5° і гірше.</li>
+</ol>
+<p><b>Режим «Приціл камерою»</b></p>
+<ol>
+<li>Тримай телефон вертикально й торкнись екрана на потрібній точці.</li>
+<li>Число — кут візування над (+) або під (−) горизонтом. Для далеких точок вздовж схилу чи дороги воно наближається до кута цього схилу.</li>
+</ol>
+<p class="n">Для відповідальних робіт звіряй результат із будівельним рівнем. Телефон має лежати на чистій і рівній поверхні (чохол і виступи камери дають похибку).</p></details>
+
+<details class="mn"><summary>10. Вкладка «Сканер»</summary>
 <ol>
 <li>Перший вхід зроби з інтернетом: програма один раз завантажить модель розпізнавання (кілька МБ). Далі вона працює й офлайн.</li>
 <li>Постав телефон нерухомо (на опору). З рук хитання камери заважає визначати рух.</li>
@@ -367,7 +426,7 @@ details.mn[open] summary{color:var(--amb)}
 <p><b>Налаштування сканера:</b> «Показувати» (усі чи лише рухомі), «Модель» (точна чи легка), «Дальність» (звичайна чи далека по частинах для дрібних далеких об'єктів), «Мін. впевненість» (зменш, якщо пропускає, збільш, якщо хибні рамки), «Сигнал, якщо ближче» (звук і вібрація, у режимі «Позиція» вимкнені).</p>
 <p><b>Що розпізнає:</b> людей, авто, автобуси, вантажівки, велосипеди, мотоцикли, собак, котів, коней, корів, овець, лавки, стільці, знак «Стоп», гідранти. Відстань і розмір беруться з типових розмірів класів, тому похибка 10–25 %.</p></details>
 
-<details class="mn"><summary>10. База розмірів</summary>
+<details class="mn"><summary>11. База розмірів</summary>
 <ol>
 <li>Відкривається кнопкою «📚 Обрати об'єкт» у вкладці «Об'єкт».</li>
 <li>Угорі перемикач: «Загальна база» і «🎖 Військова техніка» (довідник габаритів).</li>
@@ -376,7 +435,7 @@ details.mn[open] summary{color:var(--amb)}
 <li><b>Мої об'єкти:</b> у «Загальній базі» внизу впиши назву й розмір у метрах і натисни «＋». Видалити свій об'єкт можна хрестиком ✕ у категорії «Мої».</li>
 </ol></details>
 
-<details class="mn"><summary>11. Стоп-кадр, серія, швидкість, зум, компас</summary>
+<details class="mn"><summary>12. Стоп-кадр, серія, швидкість, зум, компас</summary>
 <ul>
 <li><b>Стоп-кадр</b> зупиняє зображення, «Продовжити» повертає живе відео.</li>
 <li><b>Серія ×10</b> робить 10 замірів, відкидає викиди й показує середнє з розкидом. Тримай телефон нерухомо.</li>
@@ -386,7 +445,22 @@ details.mn[open] summary{color:var(--amb)}
 <li><b>Компас:</b> показує азимут (0° північ, 90° схід). Якщо стрілка «пливе», порухай телефон вісімкою для калібрування датчика.</li>
 </ul></details>
 
-<details class="mn"><summary>12. Режим «Позиція»</summary>
+<details class="mn"><summary>13. Екран, ліхтарик і рівень у кадрі</summary>
+<ul>
+<li><b>Екран не гасне.</b> Поки програма відкрита, екран не вимикається (⚙ → «Не гасити екран…», за замовчуванням увімкнено). Працює в сучасних Chrome і Safari. Після виходу з програми й повернення блокування екрана вмикається знову.</li>
+<li><b>Ліхтарик 🔦.</b> Кнопка зверху справа з'являється, якщо камера підтримує ліхтарик (зазвичай Android Chrome, на iPhone в браузері недоступний). Увімкнений ліхтарик підсвічений жовтим.</li>
+<li><b>Рівень у кадрі.</b> Над нижньою панеллю видно «бульбашку» крену, тобто нахилу телефона вбік, як у керма. Зелена до 1°, жовта до 3°, червона більше. Число справа — крен у градусах. Для точних замірів тримай бульбашку зеленою. Вимкнути можна в ⚙ → «Показувати рівень в кадрі».</li>
+</ul></details>
+
+<details class="mn"><summary>14. Корекція спотворення об'єктива</summary>
+<ul>
+<li><b>Навіщо.</b> Ширококутні камери «роздувають» краї кадру, тому об'єкти біля країв міряються з похибкою. Корекція її зменшує у вкладках «Об'єкт», «Розмір», «Земля», «Висота», «Точки». У «Сканері» вона не діє.</li>
+<li><b>Як налаштувати.</b> ⚙ → «Корекція спотворення»: «Авто» (для ширококутної камери вмикається середня, для основної вимкнена) або вручну: «Вимк.», «Слабка», «Середня», «Сильна». Налаштування окреме для кожної камери.</li>
+<li><b>Як підібрати вручну.</b> У вкладці «Об'єкт» виміряй об'єкт відомого розміру (аркуш A4, рулетку на стіні) спершу в центрі кадру, потім біля краю на тій самій відстані. Обери рівень, при якому значення збігаються.</li>
+<li><b>Важливо.</b> Після зміни корекції відкалібруй камеру знову (розділ 3.3).</li>
+</ul></details>
+
+<details class="mn"><summary>15. Режим «Позиція»</summary>
 <ol>
 <li>Вмикається кнопкою «Позиція» вгорі або у ⚙. Увімкнений режим підсвічується червоним: «ПОЗИЦІЯ».</li>
 <li><b>Не на позиції (вимк.):</b> повна потужність, сканер працює без обмежень, зміни синхронізуються за ~3 секунди.</li>
@@ -394,7 +468,7 @@ details.mn[open] summary{color:var(--amb)}
 <li>Значок «⏳» поруч із кнопкою означає, що є незасинхронізовані зміни.</li>
 </ol></details>
 
-<details class="mn"><summary>13. Захист входу (PIN і відбиток)</summary>
+<details class="mn"><summary>16. Захист входу (PIN і відбиток)</summary>
 <ol>
 <li>⚙ → «Захист входу». Впиши новий PIN (4–8 цифр) двічі й натисни «Встановити PIN».</li>
 <li>Щоб додати відбиток, натисни «Додати відбиток» і підтверди його на телефоні. У телефоні вже має бути налаштований відбиток або обличчя. PIN лишається запасним входом.</li>
@@ -404,7 +478,7 @@ details.mn[open] summary{color:var(--amb)}
 </ol>
 <p class="n">Під час блокування камера вимикається. Якщо забув PIN, очисти дані сайту в налаштуваннях браузера, але тоді зникнуть усі локальні дані (зроби резервну копію заздалегідь).</p></details>
 
-<details class="mn"><summary>14. Синхронізація JSONBin</summary>
+<details class="mn"><summary>17. Синхронізація JSONBin</summary>
 <ol>
 <li>Зайди на jsonbin.io, зареєструйся й створи новий бін із вмістом {"v":1}. Скопіюй <b>Bin ID</b>.</li>
 <li>У розділі API Keys створи <b>Access Key</b> з правами Read і Update для цього біна (або візьми Master Key).</li>
@@ -414,17 +488,17 @@ details.mn[open] summary{color:var(--amb)}
 </ol>
 <p class="n">Синхронізуються «Мої» об'єкти й калібрування камер. У разі конфлікту новіший запис перемагає. Ключ зберігається лише на цьому телефоні.</p></details>
 
-<details class="mn"><summary>15. Резервна копія</summary>
+<details class="mn"><summary>18. Резервна копія</summary>
 <ol>
 <li>⚙ → «Резервна копія» → «⬇ Експорт JSON». Файл збережеться на телефон. Якщо завантаження не спрацювало, натисни «Копіювати JSON» і встав у нотатки.</li>
 <li>Відновлення: «⬆ Імпорт JSON» → вибери файл → підтверди. Дані об'єднаються з поточними.</li>
 <li>Фото програма не зберігає, тому окремого експорту з фото немає.</li>
 </ol></details>
 
-<details class="mn"><summary>16. Робота без інтернету</summary>
+<details class="mn"><summary>19. Робота без інтернету</summary>
 <p>Усі виміри, база, компас, точки й сканер працюють офлайн. Сканер потребує одного завантаження моделі з інтернетом. Синхронізація, оновлення програми й завантаження моделі — єдине, що потребує мережі. Перевір офлайн заздалегідь: відкрий програму з інтернетом, потім вимкни зв'язок і запусти її знову.</p></details>
 
-<details class="mn"><summary>17. Поради щодо точності</summary>
+<details class="mn"><summary>20. Поради щодо точності</summary>
 <ul>
 <li>Калібруй на 2–3 відстанях і окремо для кожної камери й зуму.</li>
 <li>Тримай телефон двома руками, притисни лікті до тіла або став на опору.</li>
@@ -434,7 +508,7 @@ details.mn[open] summary{color:var(--amb)}
 <li>Дивись на об'єкт прямо, а не під кутом.</li>
 </ul></details>
 
-<details class="mn"><summary>18. Проблеми й що робити</summary>
+<details class="mn"><summary>21. Проблеми й що робити</summary>
 <ul>
 <li><b>Немає камери:</b> відкрий у Chrome/Safari напряму, дозволь камеру, перевір, що її не тримає інший додаток.</li>
 <li><b>Число стрибає:</b> тримай телефон нерухомо, використай «Стоп-кадр» або «Серію».</li>
@@ -442,10 +516,11 @@ details.mn[open] summary{color:var(--amb)}
 <li><b>«Земля» не рахує:</b> опусти хрестик нижче горизонту, випрями телефон, обнули нахил.</li>
 <li><b>Сканер не бачить об'єктів:</b> зменш мінімальну впевненість, увімкни «Далеку» дальність, збільш зум, перевір освітлення.</li>
 <li><b>Не синхронізується:</b> перевір Bin ID, ключ і його права, наявність інтернету, розмір даних (до 100 КБ).</li>
+<li><b>A4 не знаходиться:</b> білий аркуш на темний фон, по центру, рівно, 20–70% висоти кадру, не торкається країв, без блиску й тіней.</li>
 <li><b>Компас показує «—»:</b> дозволь датчики руху в браузері й порухай телефоном.</li>
 </ul></details>
 
-<details class="mn"><summary>19. Обмеження</summary>
+<details class="mn"><summary>22. Обмеження</summary>
 <p>Усі значення приблизні, особливо з позначкою «≈» і в сканері. Програма не замінює лазерний далекомір, не використовуй її для рішень, від яких залежить безпека. Захист входу локальний і не шифрує дані.</p></details>
 
 <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
@@ -965,9 +1040,9 @@ const CLS={person:['Людина',1.70],bicycle:['Велосипед',1.05],car:
 const grp=c=>(c==='car'||c==='truck'||c==='bus')?'veh':((c==='bicycle'||c==='motorcycle')?'two':c);
 
 let mode='size',vert=true,frozen=false,frozenVal=null,frozenT=0,zoom=1,track=null,eRaw=null,roll=0,ema=null,inited=false;
-let hrel=null,headAbs=null,absSeen=false,oBuf=[];
+let hrel=null,headAbs=null,absSeen=false,oBuf=[],iBuf=[];
 let p=[.25,.5],tgt={x:.5,y:.4},buf=[],eBuf=[],ser=null,spd=null,lastO=null,lastDist=null,hs={e1:null,e2:null};
-let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
+let unit=store.get('u','m'),bias=store.get('b',0),camH=store.get('h',1.5),tgtH=0,objSize=store.get('sz',1.75),objName=store.get('sn','Дорослий чоловік, зріст'),camKey='default';
 let my=store.get('my',[]).map(x=>({id:x.id||uid(),n:x.n,v:x.v,t:x.t||1,del:!!x.del})),cat='Усі',cur=[],src='gen';
 let pts=[],model=null,modelBase='',loading=false,scanMsg='',trk=[],nid=1,det=false,shake=false,lastList=0,actx=null,lastDet=0;
 let smodel=store.get('sm','mobilenet_v2'),srange=store.get('sr','1'),sconf=store.get('sc',35),regIdx=0,fpsT=[],scanStat={fps:0,all:0,sup:0};
@@ -1142,7 +1217,7 @@ if(window.ResizeObserver)new ResizeObserver(layout).observe(sheet);
 window.addEventListener('resize',layout);
 
 /* ---------- камера ---------- */
-function stopCam(){if(V.srcObject){V.srcObject.getTracks().forEach(t=>t.stop());V.srcObject=null}}
+function stopCam(){if(V.srcObject){V.srcObject.getTracks().forEach(t=>t.stop());V.srcObject=null}torchOn=false;$('#torchB').classList.remove('lit')}
 async function startCam(id){
   $('#msg').style.display='none';
   try{
@@ -1159,7 +1234,7 @@ async function startCam(id){
       const cur=track.getSettings().deviceId;
       $('#cam').innerHTML=devs.map((d,i)=>'<option value="'+d.deviceId+'"'+(d.deviceId===cur?' selected':'')+'>'+esc(d.label||'Камера '+(i+1))+'</option>').join('');
     }catch(_){}
-    kinfo();
+    kinfo();updDist();torchUI(caps);wakeOn();
   }catch(e){
     $('#msgt').textContent='Немає доступу до камери. Дозволь камеру в браузері і відкрий сторінку напряму (https).';
     $('#msg').style.display='flex';
@@ -1180,7 +1255,8 @@ function onOri(e){
   if(e.beta==null)return;
   const a=(e.alpha||0)*R,b=e.beta*R,g=(e.gamma||0)*R;
   eRaw=Math.asin(clamp(-Math.cos(b)*Math.cos(g),-1,1))/R;
-  roll=e.gamma||0;
+  roll=Math.asin(clamp(-Math.cos(b)*Math.sin(g),-1,1))/R;
+  iBuf.push({b:e.beta,g:e.gamma||0});if(iBuf.length>20)iBuf.shift();
   if(e.alpha!=null)hrel=bearing(a,b,g);
   if(typeof e.webkitCompassHeading==='number'&&!absSeen)setHead(e.webkitCompassHeading);
   oBuf.push({t:performance.now(),e:eRaw,h:hrel});if(oBuf.length>60)oBuf.shift();
@@ -1240,12 +1316,13 @@ function geo(){
 }
 function tElev(g){
   if(eRaw==null)return null;
-  const off=Math.atan(((tgt.y-.5)*g.r.height/g.s)/g.f)/R;
+  const q=ud((tgt.x-.5)*g.r.width/g.s,(tgt.y-.5)*g.r.height/g.s,g);
+  const off=Math.atan(q[1]/g.f)/R;
   return eRaw-bias-off;
 }
 function groundPt(ex,hd,g){
   const e=ex*R,h=hd*R;
-  const u=((tgt.x-.5)*g.r.width/g.s)/g.f,v=((tgt.y-.5)*g.r.height/g.s)/g.f;
+  const q=ud((tgt.x-.5)*g.r.width/g.s,(tgt.y-.5)*g.r.height/g.s,g),u=q[0]/g.f,v=q[1]/g.f;
   const F=[Math.cos(e)*Math.sin(h),Math.cos(e)*Math.cos(h),Math.sin(e)];
   const Rt=[Math.cos(h),-Math.sin(h),0];
   const D=[Math.sin(e)*Math.sin(h),Math.sin(e)*Math.cos(h),-Math.cos(e)];
@@ -1257,7 +1334,7 @@ function groundPt(ex,hd,g){
 function compute(){
   const g=geo();
   if(mode==='size'||mode==='dim'){
-    const len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
+    const span=spanPx(g);
     if(span<4)return{warn:'Розведи маркери по краях об\'єкта'};
     if(mode==='size'){const d=objSize*g.f/span;return{d,err:d*(2/g.s)/span}}
     const D=parseFloat($('#dd').value);
@@ -1267,9 +1344,12 @@ function compute(){
   const t=tElev(g);
   if(t==null)return{warn:'Чекаю дані датчика нахилу…'};
   if(mode==='height')return{t};
-  if(t>-1.2)return{warn:'Ціль біля горизонту або вище — опусти хрестик до основи цілі',t};
-  const r=-t*R;
-  return{d:camH/Math.tan(r),err:camH*.0087/Math.pow(Math.sin(r),2),L:camH/Math.sin(r),t};
+  const dz=camH-tgtH;
+  if(Math.abs(dz)<.3)return{warn:'Висота цілі майже збігається з висотою камери — за кутом відстань не порахувати',t};
+  if(dz>0&&t>-1.2)return{warn:'Ціль біля горизонту або вище — опусти хрестик до основи цілі або впиши висоту цілі',t};
+  if(dz<0&&t<1.2)return{warn:'Ціль вище камери — підніми хрестик вище горизонту',t};
+  const a=Math.abs(t)*R,H=Math.abs(dz);
+  return{d:H/Math.tan(a),err:H*.0087/Math.pow(Math.sin(a),2),L:H/Math.sin(a),t};
 }
 
 /* ---------- точки на землі й площа ---------- */
@@ -1481,6 +1561,7 @@ function drawOv(){
   if(c.width!==W||c.height!==H){c.width=W;c.height=H}
   const x=c.getContext('2d');
   x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);
+  drawA4(x,r);drawVial(x,r);
   if(mode!=='scan')return;
   const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720;
   const ox=(r.width-vw*g.s)/2,oy=(r.height-vh*g.s)/2;
@@ -1506,6 +1587,7 @@ function drawOv(){
 
 /* ---------- відображення ---------- */
 function view(){
+  if(mode==='incl'){const o=inclView();if(frozen&&frozenVal&&o.txt!==undefined)return frozenVal;return o}
   if(mode==='scan'){
     const v=visTracks();
     if(!v.length)return{warn:scanMsg||(model?'Шукаю об\'єкти… наведи камеру на людей чи авто':'')};
@@ -1541,7 +1623,7 @@ function view(){
     ema=ema==null?raw.d:ema+(raw.d-ema)*.2;
     lastDist=ema;
     if(frozen&&frozenVal)return frozenVal;
-    return{d:ema,err:raw.err,sub:'по лінії '+fs(raw.L),raw:raw.d};
+    return{d:ema,err:raw.err,sub:'по лінії '+fs(raw.L)+(tgtH!==0?' · ціль на '+ef(tgtH):''),raw:raw.d};
   }
   if(raw.d==null)return raw;
   if(mode==='size')lastDist=raw.d;
@@ -1550,7 +1632,8 @@ function view(){
 function loop(now){
   if(!locked){
     const o=view();lastO=o;
-    if(o.d!=null&&isFinite(o.d)){
+    if(o.txt!==undefined){$('#num').textContent=o.txt;$('#unit').textContent=o.u||'';$('#sub').textContent=o.sub||''}
+    else if(o.d!=null&&isFinite(o.d)){
       const[n,u]=fmt(o.d);$('#num').textContent=n;$('#unit').textContent=u;
       $('#sub').textContent=[o.err!=null?'±'+ef(o.err):'',o.sub||''].filter(Boolean).join(' · ');
     }else{$('#num').textContent='—';$('#sub').textContent=''}
@@ -1581,7 +1664,7 @@ $('#ser').onclick=()=>{
 /* ---------- інтерфейс ---------- */
 function render(){
   stage.className=vert?'v':'h';
-  const mk=mode==='size'||mode==='dim',cr=mode==='ground'||mode==='height'||mode==='pts';
+  const mk=mode==='size'||mode==='dim',cr=needCross();
   [$('#m1'),$('#m2')].forEach((m,i)=>{m.style[vert?'top':'left']=p[i]*100+'%';m.style[vert?'left':'top']='';m.style.display=mk?'block':'none'});
   cross.style.display=cr?'block':'none';
   cross.style.left=tgt.x*100+'%';cross.style.top=tgt.y*100+'%';
@@ -1595,7 +1678,7 @@ document.querySelectorAll('.mk i').forEach((h,i)=>{
   });
 });
 stage.addEventListener('pointerdown',e=>{
-  if(mode!=='ground'&&mode!=='height'&&mode!=='pts')return;
+  if(!needCross())return;
   const r=stage.getBoundingClientRect();
   tgt={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};ema=null;buf=[];eBuf=[];render();
 });
@@ -1604,7 +1687,7 @@ $('#col').onclick=()=>{
   $('#col').textContent=m?'⌃':'⌄';
   $('#col').setAttribute('aria-label',m?'Розгорнути панель':'Згорнути панель');
 };
-const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],scan:['p-scan']};
+const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],incl:['p-incl'],scan:['p-scan']};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
@@ -1613,7 +1696,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   $('#bt2').classList.toggle('hide',mode!=='size'&&mode!=='ground'&&mode!=='dim');
   ema=null;buf=[];eBuf=[];ser=null;$('#ser').textContent='Серія ×10';
   frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';say('');
-  if(mode==='ground'||mode==='height'||mode==='pts')askSensor();
+  if(mode==='ground'||mode==='height'||mode==='pts'||mode==='incl')askSensor();
   if(mode==='pts')refreshPts();
   if(mode==='scan'){trk=[];fpsT=[];ensureModel()}
   layout();
@@ -1628,6 +1711,7 @@ $('#sz').oninput=e=>{
   if(v>0){objSize=v;objName='Свій розмір';store.set('sz',v);store.set('sn',objName);$('#pick').textContent='📚 Свій розмір'}
 };
 $('#hh').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){camH=v;store.set('h',v);ema=null;buf=[]}};
+$('#th').oninput=e=>{const v=parseFloat(e.target.value);tgtH=isFinite(v)?clamp(v,-500,2000):0;ema=null;buf=[]};
 $('#fromG').onclick=()=>{
   if(lastDist==null)return say('Спочатку виміряй відстань у режимі «Земля» або «Об\'єкт»');
   $('#dd').value=lastDist.toFixed(2);say('Відстань взято: '+fs(lastDist));
@@ -1635,7 +1719,7 @@ $('#fromG').onclick=()=>{
 $('#cal').onclick=()=>{
   const d=parseFloat($('#cd').value);
   if(!(d>0))return say('Введи справжню відстань до об\'єкта, м');
-  const g=geo(),len=vert?g.r.height:g.r.width,span=Math.abs(p[1]-p[0])*len/g.s;
+  const g=geo(),span=spanPx(g);
   if(span<4)return say('Спочатку постав маркери на об\'єкт');
   const vw=V.videoWidth||1280,vh=V.videoHeight||720;
   const k=d*span/(objSize*Math.max(vw,vh)*zoom);
@@ -1646,7 +1730,7 @@ $('#cal').onclick=()=>{
 $('#kreset').onclick=()=>{const all=store.get('Kp',{});delete all[camKey];store.set('Kp',all);kinfo();say('Калібрування цієї камери скинуто')};
 $('#frz').onclick=()=>{
   frozen=!frozen;
-  if(frozen){frozenT=performance.now();if(mode==='ground'&&lastO&&lastO.d!=null)frozenVal=lastO;V.pause()}
+  if(frozen){frozenT=performance.now();if((mode==='ground'&&lastO&&lastO.d!=null)||(mode==='incl'&&lastO&&lastO.txt!==undefined))frozenVal=lastO;V.pause()}
   else{frozenVal=null;ema=null;buf=[];V.play()}
   $('#frz').textContent=frozen?'Продовжити':'Стоп-кадр';
 };
@@ -1679,6 +1763,7 @@ function openSet(){
   const c=jbCfg()||{};
   $('#jbId').value=c.id||'';$('#jbKey').value=c.key||'';$('#jbKt').value=c.kt||'access';$('#jbAuto').checked=!!c.auto;
   $('#lkm').value=store.get('lkm','exit');
+  $('#wlC').checked=store.get('wl',true);$('#lvC').checked=lvOn;updDist();
   updSec();updBadge();
   $('#set').classList.remove('hide');
 }
@@ -1819,7 +1904,7 @@ function lockApp(){
   $('#lock').classList.remove('hide');
   $('#bioBtn').classList.toggle('hide',!(store.get('bio',null)&&window.PublicKeyCredential));
   renderDots();
-  stopCam();
+  stopCam();wakeOff();
   if(cooldown()>0)showCd();else $('#lkMsg').textContent='Введи PIN';
   if(store.get('bio',null)&&cooldown()===0)setTimeout(bioLogin,350);
 }
@@ -1875,6 +1960,181 @@ document.addEventListener('visibilitychange',()=>{
   }
 });
 
+/* ---------- екран, ліхтарик, спотворення, A4, нахиломір, рівень ---------- */
+let wl=null,torchOn=false,lvOn=store.get('lv',true),imode=store.get('im','surf'),izero={b:0,g:0},calA=null,a4box=null;
+const needCross=()=>mode==='ground'||mode==='height'||mode==='pts'||(mode==='incl'&&imode==='cam');
+
+async function wakeOn(){
+  try{
+    if(!store.get('wl',true)||!('wakeLock' in navigator)||locked||document.hidden||wl)return;
+    wl=await navigator.wakeLock.request('screen');
+    wl.addEventListener('release',()=>{wl=null});
+  }catch(e){wl=null}
+}
+function wakeOff(){try{if(wl){wl.release();wl=null}}catch(e){wl=null}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)wakeOn()});
+$('#wlC').onchange=e=>{store.set('wl',e.target.checked);if(e.target.checked)wakeOn();else wakeOff()};
+$('#lvC').onchange=e=>{lvOn=e.target.checked;store.set('lv',lvOn)};
+
+function torchUI(caps){torchOn=false;$('#torchB').classList.remove('lit');$('#torchB').classList.toggle('hide',!(caps&&caps.torch))}
+async function setTorch(v){
+  try{await track.applyConstraints({advanced:[{torch:v}]});torchOn=v;$('#torchB').classList.toggle('lit',v)}
+  catch(e){say('Ліхтарик недоступний на цій камері')}
+}
+$('#torchB').onclick=()=>setTorch(!torchOn);
+
+const DLV={'0':0,'1':.05,'2':.12,'3':.25};
+const distLevel=()=>store.get('dist',{})[camKey]||'auto';
+function distK(){const l=distLevel();if(l==='auto')return /ultra|wide|0\.5|широк/i.test(camKey)?.12:0;return DLV[l]||0}
+function updDist(){$('#dsel').value=distLevel();$('#dinfo').textContent='Коефіцієнт спотворення для цієї камери: '+distK().toFixed(2)+(distLevel()==='auto'?' (авто)':'')}
+$('#dsel').onchange=e=>{const d=store.get('dist',{});d[camKey]=e.target.value;store.set('dist',d);updDist();say('Корекцію змінено — відкалібруй камеру знову')};
+function ud(dx,dy,g){const k=distK();if(!k)return[dx,dy];const u=dx/g.f,v=dy/g.f,q=1+k*(u*u+v*v);return[dx*q,dy*q]}
+function uax(x,g){const k=distK(),q=x/g.f;return x*(1+k*q*q)}
+function spanPx(g){const c=vert?g.r.height:g.r.width;return Math.abs(uax((p[1]-.5)*c/g.s,g)-uax((p[0]-.5)*c/g.s,g))}
+
+/* автокалібрування по аркушу A4 */
+function detectA4(){
+  const vw=V.videoWidth,vh=V.videoHeight;
+  if(!vw||!vh)return null;
+  const W=320,H=Math.max(40,Math.round(W*vh/vw)),N=W*H;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const c2=cv.getContext('2d',{willReadFrequently:true});c2.drawImage(V,0,0,W,H);
+  const d=c2.getImageData(0,0,W,H).data,gr=new Float32Array(N),bl=new Float32Array(N);
+  for(let i=0;i<N;i++)gr[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){let t=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)t+=gr[(y+j)*W+x+i];bl[y*W+x]=t/9}
+  const hist=new Float64Array(256);for(let i=0;i<N;i++)hist[Math.min(255,bl[i]|0)]++;
+  let sum=0;for(let i=0;i<256;i++)sum+=i*hist[i];
+  let sb=0,wb=0,mx=0,thr=128;
+  for(let i=0;i<256;i++){
+    wb+=hist[i];if(!wb)continue;
+    const wf=N-wb;if(!wf)break;
+    sb+=i*hist[i];
+    const mb=sb/wb,mf=(sum-sb)/wf,v=wb*wf*(mb-mf)*(mb-mf);
+    if(v>mx){mx=v;thr=i}
+  }
+  const sx=W>>1,sy=H>>1;let seed=-1;
+  const maxR=Math.floor(Math.min(W,H)*.25);
+  for(let rad=0;rad<=maxR&&seed<0;rad++){
+    for(let dy=-rad;dy<=rad&&seed<0;dy++)for(let dx=-rad;dx<=rad;dx++){
+      if(Math.max(Math.abs(dx),Math.abs(dy))!==rad)continue;
+      const X=sx+dx,Y=sy+dy;
+      if(X>0&&X<W-1&&Y>0&&Y<H-1&&bl[Y*W+X]>thr){seed=Y*W+X;break}
+    }
+  }
+  if(seed<0)return null;
+  const seen=new Uint8Array(N),st=new Int32Array(N);let sp=0;st[sp++]=seed;seen[seed]=1;
+  let x0=W,x1=0,y0=H,y1=0,area=0;
+  while(sp){
+    const q=st[--sp],X=q%W,Y=(q/W)|0;area++;
+    if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;
+    const nb=[q-1,q+1,q-W,q+W];
+    for(let k=0;k<4;k++){
+      const n=nb[k];if(n<0||n>=N||seen[n])continue;
+      if(Math.abs(n%W-X)>1)continue;
+      if(bl[n]>thr){seen[n]=1;st[sp++]=n}
+    }
+  }
+  const bw=x1-x0+1,bh=y1-y0+1;
+  if(x0<=1||y0<=1||x1>=W-2||y1>=H-2)return{err:'Не вдалося відокремити аркуш від фону: поклади його на темну поверхню, щоб він не торкався країв кадру'};
+  if(bh<H*.18&&bw<W*.18)return{err:'Аркуш занадто малий у кадрі: підійди ближче або візьми більший предмет'};
+  const fill=area/(bw*bh),asp=Math.max(bw,bh)/Math.min(bw,bh);
+  if(fill<.7)return{err:'Не схоже на прямокутник: тримай аркуш рівно, без складок і тіней'};
+  if(asp<1.28||asp>1.56)return{err:'Пропорції не як у A4 (знайдено '+asp.toFixed(2)+', має бути 1,41): тримай аркуш рівно, дивись прямо'};
+  const s=vw/W;
+  return{x:x0*s,y:y0*s,w:bw*s,h:bh*s,asp};
+}
+$('#a4cal').onclick=()=>{
+  const d=parseFloat($('#cd').value);
+  if(!(d>0))return say('Спочатку введи справжню відстань до аркуша, м, у поле «Справжня відстань»');
+  if(!V.videoWidth)return say('Камера ще не готова');
+  const r=detectA4();
+  if(!r)return say('Не знайшов аркуш A4. Поклади білий аркуш на темний фон по центру кадру, рівно, щоб він займав 20–70% висоти кадру');
+  if(r.err)return say(r.err);
+  const g=geo(),vw=V.videoWidth,vh=V.videoHeight;
+  const a=vert?r.y-vh/2:r.x-vw/2,along=vert?r.h:r.w,longAlong=vert?r.h>=r.w:r.w>=r.h,size=longAlong?0.297:0.210;
+  const span=Math.abs(uax(a+along,g)-uax(a,g));
+  const k=d*span/(size*Math.max(vw,vh)*zoom);
+  a4box={x:r.x,y:r.y,w:r.w,h:r.h,t:performance.now()};
+  const ox=(g.r.width-vw*g.s)/2,oy=(g.r.height-vh*g.s)/2,len=vert?g.r.height:g.r.width,z=zone();
+  const e0=vert?oy+r.y*g.s:ox+r.x*g.s,e1=vert?oy+(r.y+r.h)*g.s:ox+(r.x+r.w)*g.s;
+  p=[clamp(e0/len,z.min,z.max),clamp(e1/len,z.min,z.max)];render();
+  if(k<.3||k>1.6)return say('Дивний результат (K='+k.toFixed(2)+'). Перевір відстань і що це справді аркуш A4');
+  objSize=size;objName='Аркуш A4, '+(longAlong?'довга':'коротка')+' сторона';
+  $('#sz').value=size;$('#pick').textContent='📚 '+objName;store.set('sz',size);store.set('sn',objName);
+  const all=store.get('Kp',{}),arr=all[camKey]||[];arr.push(k);all[camKey]=arr.slice(-7);store.set('Kp',all);
+  kinfo();markDirty();say('A4 знайдено, відкалібровано ✓ (K='+k.toFixed(3)+', точок: '+all[camKey].length+')');
+};
+
+/* нахиломір */
+const iMed=()=>{const a=iBuf.slice(-12);return a.length<4?null:{b:med(a.map(o=>o.b)),g:med(a.map(o=>o.g))}};
+function slopeTxt(a){
+  const r=Math.tan(a*R),pc=r*100,mm=r*1000;
+  return 'ухил '+pc.toFixed(pc<10?1:0)+'% · '+(r>.002?'1:'+(1/r).toFixed(1/r<10?1:0):'1:∞')+' · '+mm.toFixed(mm<10?1:0)+' мм/м';
+}
+function inclView(){
+  const surf=imode==='surf';
+  $('#ivial').style.display=surf?'':'none';
+  $('#irow').classList.toggle('hide',!surf);
+  $('#ical').classList.toggle('hide',!surf);
+  $('#ihint').textContent=surf?'Поклади телефон екраном вгору плашмя на поверхню. Бульбашка їде до високої сторони. «Нуль тут» робить поточну поверхню нульовою (кут відносно неї).':'Тримай телефон вертикально й торкнись екрана на точці. Число — кут візування над (+) або під (−) горизонтом; для далеких точок вздовж схилу чи дороги воно наближається до кута схилу.';
+  if(!surf){
+    const t=tElev(geo());
+    if(t==null){$('#iout').textContent='';return{warn:'Чекаю дані датчика нахилу…'}}
+    $('#iout').textContent='';
+    return{txt:(t>=0?'+':'−')+Math.abs(t).toFixed(1),u:'°',sub:slopeTxt(Math.abs(t))};
+  }
+  const m=iMed();
+  if(!m)return{warn:'Чекаю дані датчика нахилу…'};
+  if(Math.abs(m.b)>45||Math.abs(m.g)>45)return{warn:'Поклади телефон екраном вгору плашмя на поверхню'};
+  const off=store.get('lvlOff',{b:0,g:0}),bd=m.b-off.b-izero.b,gd=m.g-off.g-izero.g;
+  const br=bd*R,gr=gd*R,ang=Math.acos(clamp(Math.cos(br)*Math.cos(gr),-1,1))/R,K=390;
+  const bub=$('#ibub');
+  bub.setAttribute('cx',48+clamp(-Math.sin(gr)*K,-34,34));
+  bub.setAttribute('cy',48+clamp(-Math.sin(br)*K,-34,34));
+  bub.setAttribute('fill',ang<.3?'#5fd68a':ang<2?'#ffb21e':'#ff5a3c');
+  $('#iout').textContent='Уздовж: '+bd.toFixed(1)+'° ('+(bd>=0?'верх вище':'верх нижче')+')\nВпоперек: '+gd.toFixed(1)+'° ('+(gd>=0?'правий край нижче':'правий край вище')+')'+(off.ok?'':'\nБез калібрування рівня ±0,5°');
+  return{txt:ang.toFixed(1),u:'°',sub:slopeTxt(ang)};
+}
+$('#imode').onchange=e=>{imode=e.target.value;store.set('im',imode);frozen=false;frozenVal=null;render();say('')};
+$('#izero').onclick=()=>{
+  const m=iMed();if(!m)return say('Немає даних датчика');
+  const off=store.get('lvlOff',{b:0,g:0});izero={b:m.b-off.b,g:m.g-off.g};say('Нуль встановлено на цій поверхні');
+};
+$('#ires').onclick=()=>{izero={b:0,g:0};say('Нуль скинуто')};
+$('#ical').onclick=()=>{
+  const m=iMed();
+  if(!m)return say('Немає даних датчика');
+  if(Math.abs(m.b)>20||Math.abs(m.g)>20)return say('Поклади телефон екраном вгору плашмя на поверхню');
+  if(!calA){calA=m;$('#ical').textContent='Крок 2/2: поверни на 180° і натисни';say('Крок 1/2 готовий. Поверни телефон на 180° (екран вгору) на те саме місце й натисни ще раз');return}
+  const a=calA;calA=null;$('#ical').textContent='Калібрувати рівень (180°)';
+  const off={b:(a.b+m.b)/2,g:(a.g+m.g)/2,ok:true};
+  if(Math.abs(off.b)>3||Math.abs(off.g)>3)return say('Дивні дані: переконайся, що поверхня стабільна, а телефон повернуто саме на 180°');
+  store.set('lvlOff',off);say('Рівень відкалібровано ✓ (поправка: уздовж '+off.b.toFixed(2)+'°, впоперек '+off.g.toFixed(2)+'°)');
+};
+
+/* малювання: рамка A4 і бульбашка крену */
+function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
+function drawA4(x,r){
+  if(!a4box||performance.now()-a4box.t>4500)return;
+  const g=geo(),vw=V.videoWidth||1280,vh=V.videoHeight||720,ox=(r.width-vw*g.s)/2,oy=(r.height-vh*g.s)/2;
+  x.setLineDash([]);x.strokeStyle='#5fd68a';x.lineWidth=3;
+  x.strokeRect(ox+a4box.x*g.s,oy+a4box.y*g.s,a4box.w*g.s,a4box.h*g.s);
+  x.fillStyle='#5fd68a';x.font='600 13px system-ui,sans-serif';x.textBaseline='middle';
+  x.fillText('A4 ✓',ox+a4box.x*g.s+6,Math.max(14,oy+a4box.y*g.s-12));
+}
+function drawVial(x,r){
+  if(!lvOn||eRaw==null||locked||(mode==='incl'&&imode==='surf'))return;
+  const W=190,H=24,cx=r.width/2,a=cx-W/2,top=Math.max(110,sheet.getBoundingClientRect().top-r.top-H-10);
+  rr(x,a,top,W,H,12);x.fillStyle='rgba(12,23,27,.72)';x.fill();x.strokeStyle='rgba(233,239,230,.35)';x.lineWidth=1;x.setLineDash([]);x.stroke();
+  x.strokeStyle='rgba(233,239,230,.5)';x.beginPath();x.moveTo(cx-14,top+4);x.lineTo(cx-14,top+H-4);x.moveTo(cx+14,top+4);x.lineTo(cx+14,top+H-4);x.stroke();
+  const ar=Math.abs(roll),col=ar<1?'#5fd68a':ar<3?'#ffb21e':'#ff5a3c';
+  const bx=cx+clamp(roll/6,-1,1)*(W/2-16);
+  x.beginPath();x.arc(bx,top+H/2,8,0,Math.PI*2);x.fillStyle=col;x.fill();
+  x.font='600 12px system-ui,sans-serif';x.textBaseline='middle';x.fillStyle=col;
+  x.fillText('крен '+roll.toFixed(1)+'°',a+W+8,top+H/2);
+}
+$('#imode').value=imode;$('#wlC').checked=store.get('wl',true);$('#lvC').checked=lvOn;updDist();
+
 /* ---------- запуск ---------- */
 $('#sz').value=objSize;$('#hh').value=camH;$('#unitSel').value=unit;$('#pick').textContent='📚 '+objName;
 $('#scm').value=smodel;$('#scr').value=srange;$('#scc').value=sconf;$('#scv').textContent=sconf+'%';
@@ -1885,4 +2145,4 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 })();
 </script>
 </body>
-    </html>
+</html>
