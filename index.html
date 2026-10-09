@@ -29,8 +29,9 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;backgrou
 #cross::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;-webkit-mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(#000 35%,transparent 35% 65%,#000 65%)}
 #cross::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;-webkit-mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%);mask:linear-gradient(90deg,#000 35%,transparent 35% 65%,#000 65%)}
 #cross b{position:absolute;inset:32px;border-radius:50%;border:2px solid var(--amb)}
-#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:4px}
-.tab{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:11px;font-weight:600}
+#top{position:absolute;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+#top::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;padding:10px 3px;white-space:nowrap;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--mute);font:inherit;font-size:11px;font-weight:600}
 .tab.on{color:var(--bg);background:var(--amb);border-color:var(--amb)}
 #cmp{position:absolute;left:10px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-size:12px;pointer-events:none}
 #cmp b{font-weight:600;font-variant-numeric:tabular-nums}
@@ -127,6 +128,7 @@ details.mn[open] summary{color:var(--amb)}
   <button class="tab" data-m="dim" title="Розмір об'єкта">Розмір</button>
   <button class="tab" data-m="pts" title="Точки й площа">Точки</button>
   <button class="tab" data-m="incl" title="Нахиломір">Кут</button>
+  <button class="tab" data-m="niv" title="Нівелір: перепад висот">Нівел.</button>
   <button class="tab" data-m="scan" title="Сканер">Сканер</button>
 </div>
 <div id="cmp" aria-label="Компас">
@@ -223,6 +225,15 @@ details.mn[open] summary{color:var(--amb)}
       <small>Поставте телефон нерухомо: рух камери заважає визначати рух об'єктів. Для далеких і дрібних об'єктів вмикай «Далека» й збільшуй зум. Відстань і розмір приблизні (типові розміри класів), швидкість орієнтовна. У режимі «Позиція» звук і вібрація вимкнені.</small>
     </div>
 
+    <div id="p-niv" class="pn hide">
+      <div class="row"><label>Відстань до точки, м</label><input id="nvD" type="number" step="0.1" min="0.5" inputmode="decimal"><button id="nvFrom">З «Об'єкт»</button></div>
+      <div class="row"><label>Яка це відстань</label><select id="nvM"><option value="h">Горизонтальна</option><option value="s">По лінії погляду</option></select></div>
+      <div class="row"><button id="nvAdd" class="pri">＋ Точка</button><button id="nvDel">Видалити останню</button><button id="nvClr">Очистити</button></div>
+      <div id="nvT"></div>
+      <div class="row"><button id="nvCopy">Копіювати таблицю</button></div>
+      <small>Наведи хрестик на основу точки (торкнись екрана, щоб його перемістити), впиши відстань до неї й натисни «＋ Точка». Число зверху показує, на скільки точка вище чи нижче за твоє місце (або за обраний репер). Ухили між точками мають сенс, коли точки лежать на одній лінії від тебе. Висота камери береться з поля «Висота камери над землею».</small>
+    </div>
+
     <div class="row" id="bt1"><button id="frz">Стоп-кадр</button></div>
     <div class="row" id="bt2"><button id="ser">Серія ×10</button><button id="sa">Швидкість A</button><button id="sb">B</button></div>
     <div class="row hide" id="zwrap"><label>Зум</label><input id="zoom" type="range"><b id="zv" style="min-width:34px;text-align:right">1×</b></div>
@@ -316,7 +327,7 @@ details.mn[open] summary{color:var(--amb)}
 
 <details class="mn"><summary>2. Екран програми</summary>
 <ul>
-<li><b>Вкладки зверху:</b> Об'єкт, Земля, Висота, Розмір, Точки, Кут, Сканер. Активна підсвічена жовтим.</li>
+<li><b>Вкладки зверху:</b> Об'єкт, Земля, Висота, Розмір, Точки, Кут, Нівел., Сканер. Активна підсвічена жовтим.</li>
 <li><b>Компас</b> (зліва під вкладками): азимут у градусах і сторона світу, стрілка вказує на північ.</li>
 <li><b>Праворуч:</b> 🔦 ліхтарик (якщо камера його підтримує), «Позиція» (режим), ⚙ налаштування, 📖 ця інструкція.</li>
 <li><b>Рівень у кадрі:</b> «бульбашка» крену над нижньою панеллю (див. розділ 13).</li>
@@ -522,7 +533,19 @@ details.mn[open] summary{color:var(--amb)}
 <li><b>Компас показує «—»:</b> дозволь датчики руху в браузері й порухай телефоном.</li>
 </ul></details>
 
-<details class="mn"><summary>22. Обмеження</summary>
+<details class="mn"><summary>22. Вкладка «Нівел.» (перепад висот)</summary>
+<ol>
+<li>Впиши висоту камери над землею (поле вгорі панелі), обнули нахил і за потреби відкалібруй камеру.</li>
+<li>Наведи хрестик на основу точки, висоту якої міряєш (кілок, поріг, край канави). Торкнись екрана, щоб перемістити хрестик.</li>
+<li>Впиши відстань до точки. Вибери, яка вона: «Горизонтальна» (виміряна рівно) або «По лінії погляду» (напряму до точки). Кнопка «З «Об'єкт»» бере відстань, виміряну маркерами у вкладці «Об'єкт», наприклад по рейці чи людині біля точки.</li>
+<li>Велике число — на скільки точка вище чи нижче за твоє місце (знак «+» вище, «−» нижче). Поруч показано ухил і похибку.</li>
+<li>Натисни «＋ Точка», щоб записати її в таблицю. Повтори для інших точок (наприклад, на 5, 10, 15 і 20 м по одній лінії). Внизу з'явиться таблиця висот з ухилами між сусідніми точками та профіль місцевості.</li>
+<li>«Репер»: натисни біля потрібної точки, і всі висоти покажуться відносно неї. «Я (ноги)» повертає нуль до твого місця.</li>
+<li>«Копіювати таблицю» кладе дані в буфер обміну у вигляді тексту з розділювачем «;» для вставки в нотатки чи таблицю.</li>
+</ol>
+<p class="n">Формула: висота = висота камери + відстань × tan(кут). Похибка залежить від відстані й кута датчика (близько 0,3–0,5°): на 10 м приблизно ±5–9 см, на 20 м ±10–17 см, на 50 м ±26–44 см. Для орієнтовного ухилу двору, водостоку, терас і канав цього достатньо. Для закладки фундаменту й розмітки з точністю 1–2 см потрібен лазерний чи гідравлічний нівелір. Ухили між точками мають сенс, коли вони лежать на одній лінії від тебе: якщо напрямок відрізняється понад 15°, програма попередить значком ⚠.</p></details>
+
+<details class="mn"><summary>23. Обмеження</summary>
 <p>Усі значення приблизні, особливо з позначкою «≈» і в сканері. Програма не замінює лазерний далекомір, не використовуй її для рішень, від яких залежить безпека. Захист входу локальний і не шифрує дані.</p></details>
 
 <div class="ft">© 2026 Всі права захищені<br>РОЗРОБИВ: НАКОНЕЧНИЙ В. М.<br>"БАРС"</div>
@@ -1108,7 +1131,7 @@ function mergeData(o,withSettings){
   return n;
 }
 const jbS=t=>{$('#jbS').textContent=t};
-async function syncNow(manual){
+  async function syncNow(manual){
   const c=jbCfg();
   if(!c||!c.id||!c.key){if(manual)jbS('Введи Bin ID і ключ');return}
   if(!navigator.onLine){jbS('Немає інтернету — зміни в черзі');return}
@@ -1589,6 +1612,7 @@ function drawOv(){
 
 /* ---------- відображення ---------- */
 function view(){
+  if(mode==='niv'){const o=nvView();if(frozen&&frozenVal&&o.txt!==undefined)return frozenVal;return o}
   if(mode==='incl'){const o=inclView();if(frozen&&frozenVal&&o.txt!==undefined)return frozenVal;return o}
   if(mode==='scan'){
     const v=visTracks();
@@ -1689,17 +1713,18 @@ $('#col').onclick=()=>{
   $('#col').textContent=m?'⌃':'⌄';
   $('#col').setAttribute('aria-label',m?'Розгорнути панель':'Згорнути панель');
 };
-const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],incl:['p-incl'],scan:['p-scan']};
+const PN={size:['p-size'],dim:['p-dim'],ground:['p-tilt','p-ground'],height:['p-tilt','p-height'],pts:['p-tilt','p-pts'],incl:['p-incl'],niv:['p-tilt','p-niv'],scan:['p-scan']};
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
   mode=b.dataset.m;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
   document.querySelectorAll('.pn').forEach(x=>x.classList.toggle('hide',!PN[mode].includes(x.id)));
-  $('#lvl').classList.toggle('hide',mode!=='ground'&&mode!=='height'&&mode!=='pts');
+  $('#lvl').classList.toggle('hide',mode!=='ground'&&mode!=='height'&&mode!=='pts'&&mode!=='niv');
   $('#bt2').classList.toggle('hide',mode!=='size'&&mode!=='ground'&&mode!=='dim');
   ema=null;buf=[];eBuf=[];ser=null;$('#ser').textContent='Серія ×10';
   frozen=false;frozenVal=null;V.play&&V.play();$('#frz').textContent='Стоп-кадр';say('');
-  if(mode==='ground'||mode==='height'||mode==='pts'||mode==='incl')askSensor();
+  if(mode==='ground'||mode==='height'||mode==='pts'||mode==='incl'||mode==='niv')askSensor();
   if(mode==='pts')refreshPts();
+  if(mode==='niv'){nvBuf=[];nvRender()}
   if(mode==='scan'){trk=[];fpsT=[];ensureModel()}
   layout();
 });
@@ -1732,7 +1757,7 @@ $('#cal').onclick=()=>{
 $('#kreset').onclick=()=>{const all=store.get('Kp',{});delete all[camKey];store.set('Kp',all);kinfo();say('Калібрування цієї камери скинуто')};
 $('#frz').onclick=()=>{
   frozen=!frozen;
-  if(frozen){frozenT=performance.now();if((mode==='ground'&&lastO&&lastO.d!=null)||(mode==='incl'&&lastO&&lastO.txt!==undefined))frozenVal=lastO;V.pause()}
+  if(frozen){frozenT=performance.now();if((mode==='ground'&&lastO&&lastO.d!=null)||((mode==='incl'||mode==='niv')&&lastO&&lastO.txt!==undefined))frozenVal=lastO;V.pause()}
   else{frozenVal=null;ema=null;buf=[];V.play()}
   $('#frz').textContent=frozen?'Продовжити':'Стоп-кадр';
 };
@@ -1964,7 +1989,7 @@ document.addEventListener('visibilitychange',()=>{
 
 /* ---------- екран, ліхтарик, спотворення, A4, нахиломір, рівень ---------- */
 let wl=null,torchOn=false,lvOn=store.get('lv',true),imode=store.get('im','surf'),izero={b:0,g:0},calA=null,a4box=null;
-const needCross=()=>mode==='ground'||mode==='height'||mode==='pts'||(mode==='incl'&&imode==='cam');
+const needCross=()=>mode==='ground'||mode==='height'||mode==='pts'||mode==='niv'||(mode==='incl'&&imode==='cam');
 
 async function wakeOn(){
   try{
@@ -2090,6 +2115,93 @@ $('#hAuto').onclick=()=>{
   say('Висота камери: '+camH.toFixed(2)+' м (±'+err.toFixed(2)+') ✓ Записано в поле.'+(kpts().length?'':' Камера не відкалібрована, похибка може сягати 10%.'));
 };
 
+/* нівелір: перепад висот */
+let nvPts=store.get('nvp',[]),nvRep=store.get('nvr',-1),nvBuf=[];
+const nvSave=()=>{store.set('nvp',nvPts);store.set('nvr',nvRep)};
+function nivVal(t,D,m){
+  const a=t*R;let Dh,H;
+  if(m==='s'){Dh=D*Math.cos(a);H=camH+D*Math.sin(a)}
+  else{Dh=D;H=camH+D*Math.tan(a)}
+  const dA=.0087,eA=m==='s'?D*Math.cos(a)*dA:D/Math.pow(Math.cos(a),2)*dA;
+  return{Dh,H,err:Math.hypot(eA,.02,.01*D*Math.abs(Math.sin(a)))};
+}
+const nvFmt=m=>{const v=m*U[unit][0];return(v>=0?'+':'−')+Math.abs(v).toFixed(2)+' '+U[unit][1]};
+const nvBase=()=>(nvRep>=0&&nvPts[nvRep])?nvPts[nvRep].H:0;
+function nvSlope(dh,dd){
+  if(dd<.05)return'—';
+  const k=dh/dd*100,a=Math.abs(k);
+  return(k>=0?'підйом ':'спуск ')+a.toFixed(1)+'%'+(a>.2?' (1:'+(100/a).toFixed(0)+')':'');
+}
+function nvView(){
+  const g=geo(),t=tElev(g);lvl(t);
+  if(t==null)return{warn:'Чекаю дані датчика нахилу…'};
+  nvBuf.push(t);if(nvBuf.length>20)nvBuf.shift();
+  const D=parseFloat($('#nvD').value),m=$('#nvM').value;
+  if(!(D>0))return{warn:'Впиши відстань до точки'};
+  if(Math.abs(t)>75)return{warn:'Кут завеликий: відійди далі від точки'};
+  const r=nivVal(t,D,m),rp=(nvRep>=0&&nvPts[nvRep])?nvPts[nvRep]:null,rel=r.H-nvBase(),v=rel*U[unit][0];
+  const sl=rp?((r.Dh-rp.Dh)>.2?nvSlope(rel,r.Dh-rp.Dh):'—'):(r.Dh>.2?nvSlope(r.H,r.Dh):'—');
+  return{txt:(rel>=0?'+':'−')+Math.abs(v).toFixed(2),u:U[unit][1],sub:(rel>=.005?'вище':rel<=-.005?'нижче':'на рівні')+' за '+(rp?rp.n+' (репер)':'твоє місце')+' · '+sl+' · ±'+ef(r.err)};
+}
+function nvChart(rows,base){
+  if(rows.length<2)return'';
+  const W=300,H=140,mx=26,my=18;
+  const x1=Math.max(...rows.map(r=>r.Dh),1),ys=rows.map(r=>r.H-base).concat(0);
+  const ymin=Math.min(...ys),yr=Math.max(Math.max(...ys)-ymin,.2);
+  const X=v=>mx+v/x1*(W-2*mx),Y=v=>H-my-(v-ymin)/yr*(H-2*my),f='font-size:11px;font-family:system-ui,sans-serif';
+  let t='<svg viewBox="0 0 300 140" width="100%" style="display:block;margin-top:8px;background:rgba(255,255,255,.04);border-radius:10px" role="img" aria-label="Профіль місцевості">';
+  t+='<line x1="'+mx+'" x2="'+(W-mx)+'" y1="'+Y(0).toFixed(1)+'" y2="'+Y(0).toFixed(1)+'" style="stroke:#8fa3a0;stroke-width:1;stroke-dasharray:4 3"/>';
+  t+='<polyline points="'+rows.map(r=>X(r.Dh).toFixed(1)+','+Y(r.H-base).toFixed(1)).join(' ')+'" style="fill:none;stroke:#ffb21e;stroke-width:1.5"/>';
+  rows.forEach(r=>{
+    const x=X(r.Dh),y=Y(r.H-base),d=r.H-base;
+    t+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" style="fill:'+(r.foot?'#8fa3a0':'#ffb21e')+'"/><text x="'+x.toFixed(1)+'" y="'+(y-8).toFixed(1)+'" text-anchor="middle" style="fill:#e9efe6;'+f+'">'+esc((d>=0?'+':'−')+Math.abs(d*U[unit][0]).toFixed(2))+'</text>';
+  });
+  t+='<text x="'+mx+'" y="'+(H-3)+'" style="fill:#8fa3a0;'+f+'">0</text><text x="'+(W-mx)+'" y="'+(H-3)+'" text-anchor="end" style="fill:#8fa3a0;'+f+'">'+esc(fs(x1))+'</text></svg>';
+  return t;
+}
+function nvRows(){
+  return[{n:'Я (ноги)',Dh:0,H:0,err:0,foot:true,i:-1}].concat(nvPts.map((q,i)=>Object.assign({},q,{i}))).sort((a,b)=>a.Dh-b.Dh);
+}
+function nvRender(){
+  const base=nvBase(),rows=nvRows();let h='';
+  if(!nvPts.length)h='<small>Точок ще немає. Впиши відстань, наведи хрестик на основу точки й натисни «＋ Точка».</small>';
+  rows.forEach((r,k)=>{
+    const prev=k>0?rows[k-1]:null;
+    let note=fs(r.Dh)+(r.err?' · ±'+ef(r.err):'');
+    if(prev){
+      const far=prev.brg!=null&&r.brg!=null&&Math.abs(((r.brg-prev.brg+540)%360)-180)>15;
+      note+=' · '+(far?'⚠ інший напрямок':nvSlope(r.H-prev.H,r.Dh-prev.Dh)+' від '+prev.n);
+    }
+    h+='<div class="sr"><span class="dot'+(r.i===nvRep?'':' st')+'"></span><span class="sn">'+esc(r.n)+(r.i===nvRep?' (репер)':'')+'<small>'+note+'</small></span><b>'+nvFmt(r.H-base)+'</b><button data-nr="'+r.i+'" style="padding:4px 8px;font-size:12px;flex:0 0 auto">Репер</button></div>';
+  });
+  $('#nvT').innerHTML=h+nvChart(rows,base);
+}
+$('#nvT').onclick=e=>{const b=e.target.closest('[data-nr]');if(!b)return;nvRep=+b.dataset.nr;nvSave();nvRender()};
+$('#nvFrom').onclick=()=>{
+  if(lastDist==null)return say('Спочатку виміряй відстань у вкладці «Об\'єкт» (маркерами на предметі відомого розміру)');
+  $('#nvD').value=lastDist.toFixed(2);$('#nvM').value='s';say('Відстань взято: '+fs(lastDist)+' (по лінії погляду)');
+};
+$('#nvAdd').onclick=()=>{
+  if(nvBuf.length<5)return say('Наведи хрестик на точку й зачекай мить: збираю дані датчика');
+  const D=parseFloat($('#nvD').value),m=$('#nvM').value;
+  if(!(D>0))return say('Впиши відстань до точки');
+  const t=med(nvBuf);
+  if(Math.abs(t)>75)return say('Кут завеликий для цього методу: відійди далі');
+  const r=nivVal(t,D,m);
+  nvPts.push({n:'T'+(nvPts.length+1),Dh:r.Dh,H:r.H,err:r.err,brg:headAbs});
+  nvSave();nvRender();
+  say('Точку T'+nvPts.length+' додано: '+nvFmt(r.H-nvBase())+' на відстані '+fs(r.Dh));
+};
+$('#nvDel').onclick=()=>{nvPts.pop();if(nvRep>=nvPts.length)nvRep=-1;nvSave();nvRender()};
+$('#nvClr').onclick=()=>{nvPts=[];nvRep=-1;nvSave();nvRender()};
+$('#nvCopy').onclick=async()=>{
+  const base=nvBase();
+  let t='Точка;Відстань, м;Висота відносно '+(nvRep>=0&&nvPts[nvRep]?nvPts[nvRep].n:'твого місця')+', м;Похибка, м\n';
+  nvRows().forEach(r=>{t+=r.n+';'+r.Dh.toFixed(2)+';'+(r.H-base).toFixed(2)+';'+r.err.toFixed(2)+'\n'});
+  try{await navigator.clipboard.writeText(t);say('Таблицю скопійовано')}catch(e){say('Не вдалося скопіювати')}
+};
+nvRender();
+
 /* нахиломір */
 const iMed=()=>{const a=iBuf.slice(-12);return a.length<4?null:{b:med(a.map(o=>o.b)),g:med(a.map(o=>o.g))}};
 function slopeTxt(a){
@@ -2170,4 +2282,4 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 })();
 </script>
 </body>
-</html>  
+</html>
